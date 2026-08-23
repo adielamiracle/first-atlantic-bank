@@ -186,23 +186,23 @@ export const AccountDetailPage: React.FC = () => {
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
       {/* Top Header & Navigation Switcher */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-4 sm:p-6 rounded-2xl border border-slate-200 shadow-xs">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white dark:bg-[#0a192f] p-4 sm:p-6 rounded-2xl border border-slate-200 dark:border-[#1e3656] shadow-xs transition-colors">
         <div>
-          <h1 className="text-xl sm:text-2xl font-bold font-serif text-slate-900">
+          <h1 className="text-xl sm:text-2xl font-bold font-serif text-slate-900 dark:text-white">
             Account Management &amp; Banking Dossier
           </h1>
-          <p className="text-xs text-slate-500 mt-0.5">
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
             Real-time IBAN ledger, clearing identifiers, and official account opening portal.
           </p>
         </div>
 
-        <div className="flex items-center gap-2 bg-slate-100 p-1 rounded-xl border border-slate-200 self-stretch sm:self-auto">
+        <div className="flex items-center gap-2 bg-slate-100 dark:bg-slate-800/80 p-1 rounded-xl border border-slate-200 dark:border-slate-700 self-stretch sm:self-auto">
           <button
             onClick={() => setActiveTab('LEDGER')}
-            className={`flex-1 sm:flex-none px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
+            className={`flex-1 sm:flex-none px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
               activeTab === 'LEDGER'
-                ? 'bg-[#0a192f] text-white shadow-xs'
-                : 'text-slate-600 hover:text-slate-900'
+                ? 'bg-[#0a192f] dark:bg-[#112a4a] text-white shadow-xs border border-transparent dark:border-[#c5a880]/30'
+                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
             }`}
           >
             <Building2 className="w-3.5 h-3.5 text-[#d4af37]" />
@@ -213,10 +213,10 @@ export const AccountDetailPage: React.FC = () => {
               setActiveTab('APPLY');
               setSubmittedRef(null);
             }}
-            className={`flex-1 sm:flex-none px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
+            className={`flex-1 sm:flex-none px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
               activeTab === 'APPLY'
-                ? 'bg-[#0a192f] text-white shadow-xs'
-                : 'text-slate-600 hover:text-slate-900'
+                ? 'bg-[#0a192f] dark:bg-[#112a4a] text-white shadow-xs border border-transparent dark:border-[#c5a880]/30'
+                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
             }`}
           >
             <PlusCircle className="w-3.5 h-3.5 text-emerald-400" />
@@ -232,17 +232,17 @@ export const AccountDetailPage: React.FC = () => {
         <div className="space-y-6">
           {/* Account Selector Tabs */}
           {accounts.length > 0 ? (
-            <div className="flex gap-2 overflow-x-auto pb-2 border-b border-slate-200">
+            <div className="flex gap-2 overflow-x-auto pb-2 border-b border-slate-200 dark:border-slate-800">
               {accounts.map((acc) => {
-                const isSelected = selectedAccountId === acc.id || (!selectedAccountId && acc.id === accounts[0].id);
+                const isSelected = selectedAccountId === acc.id || (!selectedAccountId && acc.id === accounts[0]?.id);
                 return (
                   <button
                     key={acc.id}
                     onClick={() => setSelectedAccountId(acc.id)}
-                    className={`px-4 py-2.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all flex items-center gap-2 ${
+                    className={`px-4 py-2.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all flex items-center gap-2 cursor-pointer ${
                       isSelected
-                        ? 'bg-[#0a192f] text-white shadow-sm border border-slate-900'
-                        : 'bg-white text-slate-700 hover:bg-slate-50 border border-slate-200'
+                        ? 'bg-[#0a192f] dark:bg-[#112a4a] text-white shadow-sm border border-slate-900 dark:border-[#c5a880]/50'
+                        : 'bg-white dark:bg-[#0a192f] text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 border border-slate-200 dark:border-[#1e3656]'
                     }`}
                   >
                     <span>{acc.name}</span>
@@ -252,15 +252,15 @@ export const AccountDetailPage: React.FC = () => {
               })}
             </div>
           ) : (
-            <div className="bg-amber-50 border border-amber-200 rounded-2xl p-6 text-center space-y-3">
-              <AlertCircle className="w-8 h-8 text-amber-600 mx-auto" />
-              <h3 className="text-base font-bold text-slate-900">No Active Accounts Provisioned</h3>
-              <p className="text-xs text-slate-600 max-w-md mx-auto">
+            <div className="bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/60 rounded-2xl p-6 text-center space-y-3">
+              <AlertCircle className="w-8 h-8 text-amber-600 dark:text-amber-400 mx-auto" />
+              <h3 className="text-base font-bold text-slate-900 dark:text-white">No Active Accounts Provisioned</h3>
+              <p className="text-xs text-slate-600 dark:text-slate-300 max-w-md mx-auto">
                 You do not have any activated accounts. Please submit a new account application to initiate compliance review.
               </p>
               <button
                 onClick={() => setActiveTab('APPLY')}
-                className="px-5 py-2 rounded-xl bg-[#0a192f] text-white text-xs font-bold"
+                className="px-5 py-2 rounded-xl bg-[#0a192f] dark:bg-[#112a4a] text-white text-xs font-bold cursor-pointer"
               >
                 Apply for an Account &rarr;
               </button>
@@ -270,52 +270,52 @@ export const AccountDetailPage: React.FC = () => {
           {currentAccount && (
             <>
               {/* Account Overview Header Card */}
-              <div className="bg-white rounded-2xl p-6 sm:p-8 border border-slate-200 shadow-sm">
+              <div className="bg-white dark:bg-[#0a192f] rounded-2xl p-6 sm:p-8 border border-slate-200 dark:border-[#1e3656] shadow-sm transition-colors">
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
                   <div className="lg:col-span-7 space-y-3">
                     <div className="flex items-center gap-3 flex-wrap">
-                      <h2 className="text-2xl font-bold font-serif text-slate-900">{currentAccount.name}</h2>
+                      <h2 className="text-2xl font-bold font-serif text-slate-900 dark:text-white">{currentAccount.name}</h2>
                       <StatusBadge status={currentAccount.status} />
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 text-xs text-slate-600">
-                      <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-1">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 text-xs text-slate-600 dark:text-slate-300">
+                      <div className="p-3 bg-slate-50 dark:bg-slate-900/60 rounded-xl border border-slate-200 dark:border-slate-800 space-y-1">
                         <div className="flex justify-between items-center text-slate-400 uppercase text-[10px] font-bold">
                           <span>Full Account Number</span>
                           <button
                             onClick={() => copyToClipboard(currentAccount.accountNumberFull, 'Account Number')}
-                            className="text-[#8c6d37] hover:text-[#6e5325]"
+                            className="text-[#8c6d37] dark:text-[#c5a880] hover:text-[#6e5325] cursor-pointer"
                             title="Copy Account Number"
                           >
                             <Copy className="w-3.5 h-3.5" />
                           </button>
                         </div>
-                        <div className="font-mono font-bold text-slate-900 text-sm">{currentAccount.accountNumberFull}</div>
+                        <div className="font-mono font-bold text-slate-900 dark:text-white text-sm">{currentAccount.accountNumberFull}</div>
                       </div>
 
-                      <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-1">
+                      <div className="p-3 bg-slate-50 dark:bg-slate-900/60 rounded-xl border border-slate-200 dark:border-slate-800 space-y-1">
                         <div className="flex justify-between items-center text-slate-400 uppercase text-[10px] font-bold">
                           <span>{currentAccount.iban ? 'International IBAN & BIC' : 'Routing & Transit'}</span>
                           <button
                             onClick={() => copyToClipboard(currentAccount.iban || currentAccount.routingNumber || '', 'Identifier')}
-                            className="text-[#8c6d37] hover:text-[#6e5325]"
+                            className="text-[#8c6d37] dark:text-[#c5a880] hover:text-[#6e5325] cursor-pointer"
                             title="Copy Identifier"
                           >
                             <Copy className="w-3.5 h-3.5" />
                           </button>
                         </div>
-                        <div className="font-mono font-bold text-slate-900 text-sm truncate">
+                        <div className="font-mono font-bold text-slate-900 dark:text-white text-sm truncate">
                           {currentAccount.iban ? `${currentAccount.iban}` : currentAccount.routingNumber}
                         </div>
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-4 text-xs text-slate-500 font-mono pt-1 flex-wrap">
-                      <span>SWIFT BIC: <strong className="text-slate-800">{currentAccount.swiftBic}</strong></span>
+                    <div className="flex items-center gap-4 text-xs text-slate-500 dark:text-slate-400 font-mono pt-1 flex-wrap">
+                      <span>SWIFT BIC: <strong className="text-slate-800 dark:text-slate-200">{currentAccount.swiftBic}</strong></span>
                       {currentAccount.sortCode && (
                         <>
                           <span>•</span>
-                          <span>Sort Code: <strong className="text-slate-800">{currentAccount.sortCode}</strong></span>
+                          <span>Sort Code: <strong className="text-slate-800 dark:text-slate-200">{currentAccount.sortCode}</strong></span>
                         </>
                       )}
                       <span>•</span>
@@ -323,7 +323,7 @@ export const AccountDetailPage: React.FC = () => {
                       {currentAccount.interestRateAPY && (
                         <>
                           <span>•</span>
-                          <span className="text-emerald-700 font-bold font-sans">
+                          <span className="text-emerald-700 dark:text-emerald-400 font-bold font-sans">
                             {currentAccount.interestRateAPY}% Annual Yield
                           </span>
                         </>
@@ -332,7 +332,7 @@ export const AccountDetailPage: React.FC = () => {
                   </div>
 
                   {/* Right Balances & Quick Transfer */}
-                  <div className="lg:col-span-5 bg-[#0a192f] text-white p-6 rounded-2xl space-y-4">
+                  <div className="lg:col-span-5 bg-[#0a192f] dark:bg-[#071322] text-white p-6 rounded-2xl space-y-4 border border-slate-800 dark:border-[#1e3656]">
                     <div className="flex justify-between items-start">
                       <div>
                         <span className="text-xs text-slate-400 uppercase tracking-wider block">Available Balance</span>
@@ -355,13 +355,13 @@ export const AccountDetailPage: React.FC = () => {
                     <div className="flex gap-2 pt-2">
                       <button
                         onClick={() => setCurrentView('DASHBOARD_TRANSFERS')}
-                        className="flex-1 py-2.5 rounded-lg bg-[#c5a880] hover:bg-[#d4af37] text-slate-950 font-bold text-xs uppercase tracking-wider transition-colors text-center"
+                        className="flex-1 py-2.5 rounded-lg bg-[#c5a880] hover:bg-[#d4af37] text-slate-950 font-bold text-xs uppercase tracking-wider transition-colors text-center cursor-pointer"
                       >
                         Transfer Funds
                       </button>
                       <button
                         onClick={() => handleExport('CSV')}
-                        className="px-3 py-2.5 rounded-lg border border-slate-700 hover:bg-slate-800 text-xs text-slate-300 transition-colors flex items-center justify-center gap-1.5"
+                        className="px-3 py-2.5 rounded-lg border border-slate-700 hover:bg-slate-800 text-xs text-slate-300 transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
                         title="Download CSV"
                       >
                         <FileSpreadsheet className="w-4 h-4" />
@@ -369,7 +369,7 @@ export const AccountDetailPage: React.FC = () => {
                       </button>
                       <button
                         onClick={() => handleExport('PDF')}
-                        className="px-3 py-2.5 rounded-lg border border-slate-700 hover:bg-slate-800 text-xs text-slate-300 transition-colors flex items-center justify-center gap-1.5"
+                        className="px-3 py-2.5 rounded-lg border border-slate-700 hover:bg-slate-800 text-xs text-slate-300 transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
                         title="Download PDF Statement"
                       >
                         <Download className="w-4 h-4" />
@@ -381,8 +381,8 @@ export const AccountDetailPage: React.FC = () => {
               </div>
 
               {/* Transaction History & Filter Bar */}
-              <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-                <div className="p-4 sm:p-5 border-b border-slate-200 flex flex-col sm:flex-row gap-4 items-center justify-between">
+              <div className="bg-white dark:bg-[#0a192f] rounded-2xl border border-slate-200 dark:border-[#1e3656] shadow-sm overflow-hidden transition-colors">
+                <div className="p-4 sm:p-5 border-b border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row gap-4 items-center justify-between">
                   <div className="relative w-full sm:w-80">
                     <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
                     <input
@@ -390,7 +390,7 @@ export const AccountDetailPage: React.FC = () => {
                       placeholder="Search description, reference #, merchant"
                       value={search}
                       onChange={(e) => setSearch(e.target.value)}
-                      className="w-full pl-10 pr-4 py-2 text-xs bg-slate-50 border border-slate-300 rounded-lg text-slate-900 focus:outline-none focus:border-[#8c6d37]"
+                      className="w-full pl-10 pr-4 py-2 text-xs bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-900 dark:text-slate-100 focus:outline-none focus:border-[#c5a880]"
                     />
                   </div>
 
@@ -399,10 +399,10 @@ export const AccountDetailPage: React.FC = () => {
                       <button
                         key={cat}
                         onClick={() => setSelectedCategory(cat)}
-                        className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-colors ${
+                        className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-colors cursor-pointer ${
                           selectedCategory === cat
-                            ? 'bg-[#0a192f] text-white'
-                            : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                            ? 'bg-[#0a192f] dark:bg-[#112a4a] text-white border border-transparent dark:border-[#c5a880]/30'
+                            : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'
                         }`}
                       >
                         {cat}
@@ -414,7 +414,7 @@ export const AccountDetailPage: React.FC = () => {
                 {/* Ledger Table */}
                 <div className="overflow-x-auto">
                   <table className="w-full text-left text-xs">
-                    <thead className="bg-slate-50 text-slate-500 font-serif uppercase tracking-wider text-[10px] border-b border-slate-200">
+                    <thead className="bg-slate-50 dark:bg-slate-900/80 text-slate-500 dark:text-slate-400 font-serif uppercase tracking-wider text-[10px] border-b border-slate-200 dark:border-slate-800">
                       <tr>
                         <th className="py-3.5 px-4 font-bold">Posting Date</th>
                         <th className="py-3.5 px-4 font-bold">Description &amp; Payee</th>
@@ -425,7 +425,7 @@ export const AccountDetailPage: React.FC = () => {
                         <th className="py-3.5 px-4 font-bold text-center">Status</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-100 font-sans">
+                    <tbody className="divide-y divide-slate-100 dark:divide-slate-800 font-sans">
                       {filteredTransactions.length === 0 ? (
                         <tr>
                           <td colSpan={7} className="py-8 text-center text-slate-400">
@@ -437,9 +437,9 @@ export const AccountDetailPage: React.FC = () => {
                           <tr
                             key={tx.id}
                             onClick={() => setSelectedTx(tx)}
-                            className="hover:bg-slate-50 transition-colors cursor-pointer"
+                            className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors cursor-pointer"
                           >
-                            <td className="py-3.5 px-4 font-mono text-slate-600 whitespace-nowrap">
+                            <td className="py-3.5 px-4 font-mono text-slate-600 dark:text-slate-400 whitespace-nowrap">
                               {new Date(tx.effectiveTimestamp).toLocaleDateString('en-US', {
                                 year: 'numeric',
                                 month: 'short',
@@ -447,11 +447,11 @@ export const AccountDetailPage: React.FC = () => {
                               })}
                             </td>
                             <td className="py-3.5 px-4">
-                              <div className="font-bold text-slate-900">{tx.description}</div>
-                              <div className="text-[11px] text-slate-500">{tx.counterparty}</div>
+                              <div className="font-bold text-slate-900 dark:text-white">{tx.description}</div>
+                              <div className="text-[11px] text-slate-500 dark:text-slate-400">{tx.counterparty}</div>
                             </td>
-                            <td className="py-3.5 px-4 text-slate-600 whitespace-nowrap">{tx.category}</td>
-                            <td className="py-3.5 px-4 font-mono text-slate-500 text-[11px] whitespace-nowrap">
+                            <td className="py-3.5 px-4 text-slate-600 dark:text-slate-300 whitespace-nowrap">{tx.category}</td>
+                            <td className="py-3.5 px-4 font-mono text-slate-500 dark:text-slate-400 text-[11px] whitespace-nowrap">
                               {tx.referenceNumber}
                             </td>
                             <td className="py-3.5 px-4 text-right whitespace-nowrap">
@@ -460,10 +460,10 @@ export const AccountDetailPage: React.FC = () => {
                                 currency={tx.currency}
                                 showSign={true}
                                 size="sm"
-                                className={tx.direction === 'CREDIT' ? 'text-emerald-700' : 'text-slate-900'}
+                                className={tx.direction === 'CREDIT' ? 'text-emerald-700 dark:text-emerald-400' : 'text-slate-900 dark:text-white'}
                               />
                             </td>
-                            <td className="py-3.5 px-4 text-right font-mono font-bold text-slate-700 whitespace-nowrap">
+                            <td className="py-3.5 px-4 text-right font-mono font-bold text-slate-700 dark:text-slate-300 whitespace-nowrap">
                               {tx.currency === 'EUR' ? '€' : tx.currency === 'GBP' ? '£' : '$'}
                               {(tx.balanceAfterMinor / 100).toLocaleString('en-US', { minimumFractionDigits: 2 })}
                             </td>
@@ -489,54 +489,54 @@ export const AccountDetailPage: React.FC = () => {
         <div className="space-y-6">
           {submittedRef ? (
             /* Confirmation State */
-            <div className="bg-white rounded-2xl p-8 sm:p-12 border border-slate-200 shadow-xl max-w-3xl mx-auto space-y-6 text-center">
-              <div className="w-16 h-16 rounded-full bg-emerald-50 text-emerald-600 border-2 border-emerald-500/30 flex items-center justify-center mx-auto">
+            <div className="bg-white dark:bg-[#0a192f] rounded-2xl p-8 sm:p-12 border border-slate-200 dark:border-[#1e3656] shadow-xl max-w-3xl mx-auto space-y-6 text-center transition-colors">
+              <div className="w-16 h-16 rounded-full bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 border-2 border-emerald-500/30 flex items-center justify-center mx-auto">
                 <CheckCircle2 className="w-10 h-10" />
               </div>
 
               <div className="space-y-2">
-                <span className="text-xs uppercase tracking-widest text-[#8c6d37] font-bold">
+                <span className="text-xs uppercase tracking-widest text-[#8c6d37] dark:text-[#c5a880] font-bold">
                   Compliance Dossier Transmitted
                 </span>
-                <h2 className="text-2xl sm:text-3xl font-bold font-serif text-slate-900">
+                <h2 className="text-2xl sm:text-3xl font-bold font-serif text-slate-900 dark:text-white">
                   Application Under Administrative Review
                 </h2>
-                <p className="text-sm text-slate-600 max-w-lg mx-auto">
+                <p className="text-sm text-slate-600 dark:text-slate-300 max-w-lg mx-auto">
                   Your international account application has been submitted to the First Atlantic Institutional Compliance &amp; Onboarding Desk.
                 </p>
               </div>
 
               {/* Summary Card */}
-              <div className="p-5 rounded-xl bg-slate-50 border border-slate-200 text-left font-mono space-y-3 text-xs max-w-md mx-auto">
+              <div className="p-5 rounded-xl bg-slate-50 dark:bg-slate-900/70 border border-slate-200 dark:border-slate-800 text-left font-mono space-y-3 text-xs max-w-md mx-auto">
                 <div className="flex justify-between items-center">
-                  <span className="text-slate-500">Official Tracking Ref:</span>
-                  <span className="font-bold text-slate-950 text-sm">{submittedRef}</span>
+                  <span className="text-slate-500 dark:text-slate-400">Official Tracking Ref:</span>
+                  <span className="font-bold text-slate-950 dark:text-white text-sm">{submittedRef}</span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-slate-500">Applicant Legal Name:</span>
-                  <span className="font-semibold text-slate-800">{appForm.firstName} {appForm.lastName}</span>
+                  <span className="text-slate-500 dark:text-slate-400">Applicant Legal Name:</span>
+                  <span className="font-semibold text-slate-800 dark:text-slate-200">{appForm.firstName} {appForm.lastName}</span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-slate-500">Booking Jurisdiction:</span>
-                  <span className="font-semibold text-[#8c6d37]">
+                  <span className="text-slate-500 dark:text-slate-400">Booking Jurisdiction:</span>
+                  <span className="font-semibold text-[#8c6d37] dark:text-[#c5a880]">
                     {appForm.bookingRegion === 'EU' ? '🇪🇺 European Central Bank (Frankfurt Hub)' : appForm.bookingRegion === 'UK' ? '🇬🇧 London Mayfair (PRA Hub)' : '🇺🇸 New York (Fedwire Hub)'}
                   </span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-slate-500">Approval Workflow:</span>
-                  <span className="px-2 py-0.5 rounded bg-amber-100 text-amber-800 font-bold font-sans text-[11px]">
+                  <span className="text-slate-500 dark:text-slate-400">Approval Workflow:</span>
+                  <span className="px-2 py-0.5 rounded bg-amber-100 dark:bg-amber-950/80 text-amber-800 dark:text-amber-300 font-bold font-sans text-[11px] border border-amber-300 dark:border-amber-800">
                     MANUAL ADMIN APPROVAL REQUIRED
                   </span>
                 </div>
               </div>
 
               {/* Regulatory Notice */}
-              <div className="p-4 rounded-xl bg-blue-50 border border-blue-200 text-blue-900 text-xs text-left space-y-1.5">
+              <div className="p-4 rounded-xl bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-900/60 text-blue-900 dark:text-blue-300 text-xs text-left space-y-1.5">
                 <div className="flex items-center gap-2 font-bold">
-                  <ShieldCheck className="w-4 h-4 text-blue-600" />
+                  <ShieldCheck className="w-4 h-4 text-blue-600 dark:text-blue-400" />
                   <span>Regulatory Onboarding Mandate</span>
                 </div>
-                <p className="text-slate-700 leading-relaxed text-[11px]">
+                <p className="text-slate-700 dark:text-slate-300 leading-relaxed text-[11px]">
                   Under ECB Article 12 AML/CFT regulations, all new account dossiers require formal review and verification by authorized bank administrators before live IBAN generation and account activation.
                 </p>
               </div>
@@ -547,7 +547,7 @@ export const AccountDetailPage: React.FC = () => {
                     setActiveTab('LEDGER');
                     setSubmittedRef(null);
                   }}
-                  className="px-6 py-2.5 rounded-xl bg-[#0a192f] hover:bg-[#153459] text-white text-xs font-bold uppercase tracking-wider transition-colors"
+                  className="px-6 py-2.5 rounded-xl bg-[#0a192f] dark:bg-[#112a4a] hover:bg-[#153459] text-white text-xs font-bold uppercase tracking-wider transition-colors cursor-pointer border border-[#c5a880]/30"
                 >
                   Return to Account Overview
                 </button>
@@ -556,7 +556,7 @@ export const AccountDetailPage: React.FC = () => {
                     setSubmittedRef(null);
                     setAppForm(prev => ({ ...prev, firstName: '', lastName: '', streetAddress: '', taxId: '' }));
                   }}
-                  className="px-6 py-2.5 rounded-xl border border-slate-300 hover:bg-slate-50 text-slate-700 text-xs font-bold uppercase tracking-wider transition-colors"
+                  className="px-6 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs font-bold uppercase tracking-wider transition-colors cursor-pointer"
                 >
                   Submit Another Application
                 </button>
@@ -564,38 +564,38 @@ export const AccountDetailPage: React.FC = () => {
             </div>
           ) : (
             /* Real Professional Account Application Form */
-            <form onSubmit={handleApplicationSubmit} className="bg-white rounded-2xl p-6 sm:p-10 border border-slate-200 shadow-md space-y-8 max-w-4xl mx-auto">
+            <form onSubmit={handleApplicationSubmit} className="bg-white dark:bg-[#0a192f] rounded-2xl p-6 sm:p-10 border border-slate-200 dark:border-[#1e3656] shadow-md space-y-8 max-w-4xl mx-auto transition-colors">
               {/* Form Banner */}
-              <div className="border-b border-slate-200 pb-6 space-y-2">
-                <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-[#8c6d37]">
-                  <ShieldCheck className="w-4 h-4 text-[#8c6d37]" />
+              <div className="border-b border-slate-200 dark:border-slate-800 pb-6 space-y-2">
+                <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-[#8c6d37] dark:text-[#c5a880]">
+                  <ShieldCheck className="w-4 h-4 text-[#8c6d37] dark:text-[#c5a880]" />
                   <span>Institutional Compliance &amp; KYC Gateway</span>
                 </div>
-                <h2 className="text-2xl font-bold font-serif text-slate-900">
+                <h2 className="text-2xl font-bold font-serif text-slate-900 dark:text-white">
                   International Bank Account Application
                 </h2>
-                <p className="text-xs text-slate-600 leading-relaxed">
+                <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
                   Apply for private, high-yield, or commercial bank accounts operating across the European Union (SEPA), United Kingdom, and international financial centers. All applications are reviewed by authorized compliance administrators.
                 </p>
               </div>
 
               {formError && (
-                <div className="p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs flex items-start gap-2.5">
-                  <AlertCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
+                <div className="p-4 rounded-xl bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-900/60 text-rose-800 dark:text-rose-300 text-xs flex items-start gap-2.5">
+                  <AlertCircle className="w-4 h-4 text-rose-600 dark:text-rose-400 shrink-0 mt-0.5" />
                   <span>{formError}</span>
                 </div>
               )}
 
               {/* Section 1: Account Product & Jurisdiction */}
               <div className="space-y-4">
-                <h3 className="text-sm font-bold uppercase tracking-wider text-slate-800 font-serif flex items-center gap-2">
-                  <Landmark className="w-4 h-4 text-[#8c6d37]" />
+                <h3 className="text-sm font-bold uppercase tracking-wider text-slate-800 dark:text-slate-200 font-serif flex items-center gap-2">
+                  <Landmark className="w-4 h-4 text-[#8c6d37] dark:text-[#c5a880]" />
                   <span>1. Account Specification &amp; Jurisdiction</span>
                 </h3>
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div>
-                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
                       Booking Jurisdiction *
                     </label>
                     <select
@@ -608,7 +608,7 @@ export const AccountDetailPage: React.FC = () => {
                           currency: newReg === 'EU' ? 'EUR' : newReg === 'UK' ? 'GBP' : 'USD'
                         }));
                       }}
-                      className="w-full px-3.5 py-2.5 text-xs bg-slate-50 border border-slate-300 rounded-xl text-slate-900 font-medium focus:bg-white focus:outline-none focus:border-[#8c6d37]"
+                      className="w-full px-3.5 py-2.5 text-xs bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100 font-medium focus:bg-white dark:focus:bg-slate-900 focus:outline-none focus:border-[#c5a880]"
                     >
                       <option value="EU">🇪🇺 European Union (Frankfurt ECB)</option>
                       <option value="UK">🇬🇧 United Kingdom (London Mayfair)</option>
@@ -617,13 +617,13 @@ export const AccountDetailPage: React.FC = () => {
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
                       Account Type *
                     </label>
                     <select
                       value={appForm.accountType}
                       onChange={(e) => setAppForm(prev => ({ ...prev, accountType: e.target.value }))}
-                      className="w-full px-3.5 py-2.5 text-xs bg-slate-50 border border-slate-300 rounded-xl text-slate-900 font-medium focus:bg-white focus:outline-none focus:border-[#8c6d37]"
+                      className="w-full px-3.5 py-2.5 text-xs bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100 font-medium focus:bg-white dark:focus:bg-slate-900 focus:outline-none focus:border-[#c5a880]"
                     >
                       <option value="CHECKING_PREMIER">Premier Private Checking (SEPA / Wire)</option>
                       <option value="SAVINGS_HIGH_YIELD">Apex High-Yield Reserve (5.15% APY)</option>
@@ -633,13 +633,13 @@ export const AccountDetailPage: React.FC = () => {
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
                       Base Currency *
                     </label>
                     <select
                       value={appForm.currency}
                       onChange={(e) => setAppForm(prev => ({ ...prev, currency: e.target.value }))}
-                      className="w-full px-3.5 py-2.5 text-xs bg-slate-50 border border-slate-300 rounded-xl text-slate-900 font-medium focus:bg-white focus:outline-none focus:border-[#8c6d37]"
+                      className="w-full px-3.5 py-2.5 text-xs bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100 font-medium focus:bg-white dark:focus:bg-slate-900 focus:outline-none focus:border-[#c5a880]"
                     >
                       <option value="EUR">EUR (€) - Eurozone SEPA</option>
                       <option value="GBP">GBP (£) - British Pound</option>
@@ -651,7 +651,7 @@ export const AccountDetailPage: React.FC = () => {
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
                   <div>
-                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
                       Planned Initial Deposit (Base Currency)
                     </label>
                     <input
@@ -660,17 +660,17 @@ export const AccountDetailPage: React.FC = () => {
                       step="500"
                       value={appForm.initialDepositAmount}
                       onChange={(e) => setAppForm(prev => ({ ...prev, initialDepositAmount: e.target.value }))}
-                      className="w-full px-3.5 py-2.5 text-xs bg-slate-50 border border-slate-300 rounded-xl text-slate-900 focus:bg-white focus:outline-none focus:border-[#8c6d37]"
+                      className="w-full px-3.5 py-2.5 text-xs bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100 focus:bg-white dark:focus:bg-slate-900 focus:outline-none focus:border-[#c5a880]"
                     />
                   </div>
 
                   <div className="flex items-center pt-6">
-                    <label className="flex items-center gap-2.5 text-xs text-slate-700 cursor-pointer">
+                    <label className="flex items-center gap-2.5 text-xs text-slate-700 dark:text-slate-300 cursor-pointer">
                       <input
                         type="checkbox"
                         checked={appForm.requestDebitCard}
                         onChange={(e) => setAppForm(prev => ({ ...prev, requestDebitCard: e.target.checked }))}
-                        className="rounded border-slate-300 text-[#0a192f] focus:ring-[#8c6d37] w-4 h-4"
+                        className="rounded border-slate-300 text-[#0a192f] focus:ring-[#8c6d37] w-4 h-4 cursor-pointer"
                       />
                       <span className="font-semibold">Issue Contactless Visa Infinite / MasterCard Debit Card</span>
                     </label>
@@ -679,15 +679,15 @@ export const AccountDetailPage: React.FC = () => {
               </div>
 
               {/* Section 2: Applicant Identity & Contact */}
-              <div className="space-y-4 pt-4 border-t border-slate-200">
-                <h3 className="text-sm font-bold uppercase tracking-wider text-slate-800 font-serif flex items-center gap-2">
-                  <UserCheck className="w-4 h-4 text-[#8c6d37]" />
+              <div className="space-y-4 pt-4 border-t border-slate-200 dark:border-slate-800">
+                <h3 className="text-sm font-bold uppercase tracking-wider text-slate-800 dark:text-slate-200 font-serif flex items-center gap-2">
+                  <UserCheck className="w-4 h-4 text-[#8c6d37] dark:text-[#c5a880]" />
                   <span>2. Legal Identity &amp; Contact Details</span>
                 </h3>
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div>
-                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
                       First Name *
                     </label>
                     <input
@@ -696,12 +696,12 @@ export const AccountDetailPage: React.FC = () => {
                       placeholder="e.g. Henrik"
                       value={appForm.firstName}
                       onChange={(e) => setAppForm(prev => ({ ...prev, firstName: e.target.value }))}
-                      className="w-full px-3.5 py-2.5 text-xs bg-slate-50 border border-slate-300 rounded-xl text-slate-900 focus:bg-white focus:outline-none focus:border-[#8c6d37]"
+                      className="w-full px-3.5 py-2.5 text-xs bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100 focus:bg-white dark:focus:bg-slate-900 focus:outline-none focus:border-[#c5a880]"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
                       Middle Name (Optional)
                     </label>
                     <input
@@ -709,12 +709,12 @@ export const AccountDetailPage: React.FC = () => {
                       placeholder="e.g. Christian"
                       value={appForm.middleName}
                       onChange={(e) => setAppForm(prev => ({ ...prev, middleName: e.target.value }))}
-                      className="w-full px-3.5 py-2.5 text-xs bg-slate-50 border border-slate-300 rounded-xl text-slate-900 focus:bg-white focus:outline-none focus:border-[#8c6d37]"
+                      className="w-full px-3.5 py-2.5 text-xs bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100 focus:bg-white dark:focus:bg-slate-900 focus:outline-none focus:border-[#c5a880]"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
                       Last Name *
                     </label>
                     <input
@@ -723,14 +723,14 @@ export const AccountDetailPage: React.FC = () => {
                       placeholder="e.g. Weber"
                       value={appForm.lastName}
                       onChange={(e) => setAppForm(prev => ({ ...prev, lastName: e.target.value }))}
-                      className="w-full px-3.5 py-2.5 text-xs bg-slate-50 border border-slate-300 rounded-xl text-slate-900 focus:bg-white focus:outline-none focus:border-[#8c6d37]"
+                      className="w-full px-3.5 py-2.5 text-xs bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100 focus:bg-white dark:focus:bg-slate-900 focus:outline-none focus:border-[#c5a880]"
                     />
                   </div>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div>
-                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
                       Date of Birth *
                     </label>
                     <input
@@ -738,12 +738,12 @@ export const AccountDetailPage: React.FC = () => {
                       required
                       value={appForm.dateOfBirth}
                       onChange={(e) => setAppForm(prev => ({ ...prev, dateOfBirth: e.target.value }))}
-                      className="w-full px-3.5 py-2.5 text-xs bg-slate-50 border border-slate-300 rounded-xl text-slate-900 focus:bg-white focus:outline-none focus:border-[#8c6d37]"
+                      className="w-full px-3.5 py-2.5 text-xs bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100 focus:bg-white dark:focus:bg-slate-900 focus:outline-none focus:border-[#c5a880]"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
                       Email Address *
                     </label>
                     <input
@@ -752,19 +752,19 @@ export const AccountDetailPage: React.FC = () => {
                       placeholder="h.weber@enterprise.eu"
                       value={appForm.email}
                       onChange={(e) => setAppForm(prev => ({ ...prev, email: e.target.value }))}
-                      className="w-full px-3.5 py-2.5 text-xs bg-slate-50 border border-slate-300 rounded-xl text-slate-900 focus:bg-white focus:outline-none focus:border-[#8c6d37]"
+                      className="w-full px-3.5 py-2.5 text-xs bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100 focus:bg-white dark:focus:bg-slate-900 focus:outline-none focus:border-[#c5a880]"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
                       Phone Number *
                     </label>
                     <div className="flex gap-2">
                       <select
                         value={appForm.countryCode}
                         onChange={(e) => setAppForm(prev => ({ ...prev, countryCode: e.target.value }))}
-                        className="w-24 px-2 py-2.5 text-xs bg-slate-50 border border-slate-300 rounded-xl text-slate-900"
+                        className="w-24 px-2 py-2.5 text-xs bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100"
                       >
                         <option value="+49">🇩🇪 +49</option>
                         <option value="+44">🇬🇧 +44</option>
@@ -781,7 +781,7 @@ export const AccountDetailPage: React.FC = () => {
                         placeholder="171 8920194"
                         value={appForm.phone}
                         onChange={(e) => setAppForm(prev => ({ ...prev, phone: e.target.value }))}
-                        className="flex-1 px-3.5 py-2.5 text-xs bg-slate-50 border border-slate-300 rounded-xl text-slate-900 focus:bg-white focus:outline-none focus:border-[#8c6d37]"
+                        className="flex-1 px-3.5 py-2.5 text-xs bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100 focus:bg-white dark:focus:bg-slate-900 focus:outline-none focus:border-[#c5a880]"
                       />
                     </div>
                   </div>
@@ -789,15 +789,15 @@ export const AccountDetailPage: React.FC = () => {
               </div>
 
               {/* Section 3: Residential Address & Tax Compliance */}
-              <div className="space-y-4 pt-4 border-t border-slate-200">
-                <h3 className="text-sm font-bold uppercase tracking-wider text-slate-800 font-serif flex items-center gap-2">
-                  <Globe2 className="w-4 h-4 text-[#8c6d37]" />
+              <div className="space-y-4 pt-4 border-t border-slate-200 dark:border-slate-800">
+                <h3 className="text-sm font-bold uppercase tracking-wider text-slate-800 dark:text-slate-200 font-serif flex items-center gap-2">
+                  <Globe2 className="w-4 h-4 text-[#8c6d37] dark:text-[#c5a880]" />
                   <span>3. Residential Address &amp; Tax Compliance</span>
                 </h3>
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div className="sm:col-span-2">
-                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
                       Street Address *
                     </label>
                     <input
@@ -806,12 +806,12 @@ export const AccountDetailPage: React.FC = () => {
                       placeholder="e.g. Taunusanlage 8"
                       value={appForm.streetAddress}
                       onChange={(e) => setAppForm(prev => ({ ...prev, streetAddress: e.target.value }))}
-                      className="w-full px-3.5 py-2.5 text-xs bg-slate-50 border border-slate-300 rounded-xl text-slate-900 focus:bg-white focus:outline-none focus:border-[#8c6d37]"
+                      className="w-full px-3.5 py-2.5 text-xs bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100 focus:bg-white dark:focus:bg-slate-900 focus:outline-none focus:border-[#c5a880]"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
                       Suite / Floor (Optional)
                     </label>
                     <input
@@ -819,14 +819,14 @@ export const AccountDetailPage: React.FC = () => {
                       placeholder="Etage 14"
                       value={appForm.apartment}
                       onChange={(e) => setAppForm(prev => ({ ...prev, apartment: e.target.value }))}
-                      className="w-full px-3.5 py-2.5 text-xs bg-slate-50 border border-slate-300 rounded-xl text-slate-900 focus:bg-white focus:outline-none focus:border-[#8c6d37]"
+                      className="w-full px-3.5 py-2.5 text-xs bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100 focus:bg-white dark:focus:bg-slate-900 focus:outline-none focus:border-[#c5a880]"
                     />
                   </div>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div>
-                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
                       City *
                     </label>
                     <input
@@ -835,12 +835,12 @@ export const AccountDetailPage: React.FC = () => {
                       placeholder="Frankfurt am Main"
                       value={appForm.city}
                       onChange={(e) => setAppForm(prev => ({ ...prev, city: e.target.value }))}
-                      className="w-full px-3.5 py-2.5 text-xs bg-slate-50 border border-slate-300 rounded-xl text-slate-900 focus:bg-white focus:outline-none focus:border-[#8c6d37]"
+                      className="w-full px-3.5 py-2.5 text-xs bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100 focus:bg-white dark:focus:bg-slate-900 focus:outline-none focus:border-[#c5a880]"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
                       Postal Code *
                     </label>
                     <input
@@ -849,18 +849,18 @@ export const AccountDetailPage: React.FC = () => {
                       placeholder="60329"
                       value={appForm.postalCode}
                       onChange={(e) => setAppForm(prev => ({ ...prev, postalCode: e.target.value }))}
-                      className="w-full px-3.5 py-2.5 text-xs bg-slate-50 border border-slate-300 rounded-xl text-slate-900 focus:bg-white focus:outline-none focus:border-[#8c6d37]"
+                      className="w-full px-3.5 py-2.5 text-xs bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100 focus:bg-white dark:focus:bg-slate-900 focus:outline-none focus:border-[#c5a880]"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
                       Country of Residence *
                     </label>
                     <select
                       value={appForm.countryOfResidence}
                       onChange={(e) => setAppForm(prev => ({ ...prev, countryOfResidence: e.target.value }))}
-                      className="w-full px-3.5 py-2.5 text-xs bg-slate-50 border border-slate-300 rounded-xl text-slate-900 font-medium focus:bg-white focus:outline-none focus:border-[#8c6d37]"
+                      className="w-full px-3.5 py-2.5 text-xs bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100 font-medium focus:bg-white dark:focus:bg-slate-900 focus:outline-none focus:border-[#c5a880]"
                     >
                       <option value="Germany">Germany</option>
                       <option value="United Kingdom">United Kingdom</option>
@@ -876,7 +876,7 @@ export const AccountDetailPage: React.FC = () => {
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
                   <div>
-                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
                       Tax Identification Number (TIN / Steuernummer / SSN) *
                     </label>
                     <input
@@ -885,18 +885,18 @@ export const AccountDetailPage: React.FC = () => {
                       placeholder="e.g. DE 48 920 184 928"
                       value={appForm.taxId}
                       onChange={(e) => setAppForm(prev => ({ ...prev, taxId: e.target.value }))}
-                      className="w-full px-3.5 py-2.5 text-xs bg-slate-50 border border-slate-300 rounded-xl text-slate-900 font-mono focus:bg-white focus:outline-none focus:border-[#8c6d37]"
+                      className="w-full px-3.5 py-2.5 text-xs bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100 font-mono focus:bg-white dark:focus:bg-slate-900 focus:outline-none focus:border-[#c5a880]"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
                       Primary Citizenship / Nationality *
                     </label>
                     <select
                       value={appForm.nationality}
                       onChange={(e) => setAppForm(prev => ({ ...prev, nationality: e.target.value }))}
-                      className="w-full px-3.5 py-2.5 text-xs bg-slate-50 border border-slate-300 rounded-xl text-slate-900 font-medium focus:bg-white focus:outline-none focus:border-[#8c6d37]"
+                      className="w-full px-3.5 py-2.5 text-xs bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100 font-medium focus:bg-white dark:focus:bg-slate-900 focus:outline-none focus:border-[#c5a880]"
                     >
                       <option value="Germany">German Citizen</option>
                       <option value="United Kingdom">British Citizen</option>
@@ -910,21 +910,21 @@ export const AccountDetailPage: React.FC = () => {
               </div>
 
               {/* Section 4: Employment & Wealth Verification */}
-              <div className="space-y-4 pt-4 border-t border-slate-200">
-                <h3 className="text-sm font-bold uppercase tracking-wider text-slate-800 font-serif flex items-center gap-2">
-                  <Briefcase className="w-4 h-4 text-[#8c6d37]" />
+              <div className="space-y-4 pt-4 border-t border-slate-200 dark:border-slate-800">
+                <h3 className="text-sm font-bold uppercase tracking-wider text-slate-800 dark:text-slate-200 font-serif flex items-center gap-2">
+                  <Briefcase className="w-4 h-4 text-[#8c6d37] dark:text-[#c5a880]" />
                   <span>4. Employment &amp; Source of Wealth</span>
                 </h3>
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div>
-                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
                       Employment Status *
                     </label>
                     <select
                       value={appForm.employmentStatus}
                       onChange={(e) => setAppForm(prev => ({ ...prev, employmentStatus: e.target.value }))}
-                      className="w-full px-3.5 py-2.5 text-xs bg-slate-50 border border-slate-300 rounded-xl text-slate-900 font-medium focus:bg-white focus:outline-none focus:border-[#8c6d37]"
+                      className="w-full px-3.5 py-2.5 text-xs bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100 font-medium focus:bg-white dark:focus:bg-slate-900 focus:outline-none focus:border-[#c5a880]"
                     >
                       <option value="EXECUTIVE">Corporate Officer / Executive</option>
                       <option value="EMPLOYED">Professional / Employed</option>
@@ -934,7 +934,7 @@ export const AccountDetailPage: React.FC = () => {
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
                       Employer / Firm Name
                     </label>
                     <input
@@ -942,18 +942,18 @@ export const AccountDetailPage: React.FC = () => {
                       placeholder="e.g. Frankfurt Financial Partners"
                       value={appForm.employerName}
                       onChange={(e) => setAppForm(prev => ({ ...prev, employerName: e.target.value }))}
-                      className="w-full px-3.5 py-2.5 text-xs bg-slate-50 border border-slate-300 rounded-xl text-slate-900 focus:bg-white focus:outline-none focus:border-[#8c6d37]"
+                      className="w-full px-3.5 py-2.5 text-xs bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100 focus:bg-white dark:focus:bg-slate-900 focus:outline-none focus:border-[#c5a880]"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
                       Source of Funds / Wealth *
                     </label>
                     <select
                       value={appForm.sourceOfFunds}
                       onChange={(e) => setAppForm(prev => ({ ...prev, sourceOfFunds: e.target.value }))}
-                      className="w-full px-3.5 py-2.5 text-xs bg-slate-50 border border-slate-300 rounded-xl text-slate-900 font-medium focus:bg-white focus:outline-none focus:border-[#8c6d37]"
+                      className="w-full px-3.5 py-2.5 text-xs bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100 font-medium focus:bg-white dark:focus:bg-slate-900 focus:outline-none focus:border-[#c5a880]"
                     >
                       <option value="SALARY_AND_BONUS">Executive Salary &amp; Bonus</option>
                       <option value="BUSINESS_PROCEEDS">Commercial Operating Profits</option>
@@ -966,43 +966,43 @@ export const AccountDetailPage: React.FC = () => {
               </div>
 
               {/* Section 5: Regulatory Compliance & Manual Admin Approval Disclosures */}
-              <div className="space-y-4 pt-4 border-t border-slate-200">
-                <h3 className="text-sm font-bold uppercase tracking-wider text-slate-800 font-serif flex items-center gap-2">
-                  <ShieldCheck className="w-4 h-4 text-emerald-600" />
+              <div className="space-y-4 pt-4 border-t border-slate-200 dark:border-slate-800">
+                <h3 className="text-sm font-bold uppercase tracking-wider text-slate-800 dark:text-slate-200 font-serif flex items-center gap-2">
+                  <ShieldCheck className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                   <span>5. Regulatory Attestation &amp; Administrative Approval Mandate</span>
                 </h3>
 
-                <div className="p-4 rounded-xl bg-amber-50/80 border border-amber-200/80 text-xs text-amber-900 space-y-2">
-                  <div className="flex items-center gap-2 font-bold text-amber-950">
-                    <Clock className="w-4 h-4 text-amber-700" />
+                <div className="p-4 rounded-xl bg-amber-50/80 dark:bg-amber-950/40 border border-amber-200/80 dark:border-amber-900/60 text-xs text-amber-900 dark:text-amber-300 space-y-2">
+                  <div className="flex items-center gap-2 font-bold text-amber-950 dark:text-amber-200">
+                    <Clock className="w-4 h-4 text-amber-700 dark:text-amber-400" />
                     <span>Mandatory Administrative Approval Notice</span>
                   </div>
-                  <p className="text-slate-700 leading-relaxed text-[11px]">
+                  <p className="text-slate-700 dark:text-slate-300 leading-relaxed text-[11px]">
                     In strict accordance with international banking laws, European Central Bank regulations, and FATCA/CRS frameworks, submitting this form enters your dossier into the <strong>Administrative Compliance Review Queue</strong>. No automated or unverified accounts are created. Authorized compliance officers will perform identity verification, PEP/sanctions checks, and manual approval before account credentials, IBANs, and cards are issued.
                   </p>
                 </div>
 
                 <div className="space-y-3 pt-2">
-                  <label className="flex items-start gap-3 text-xs text-slate-700 cursor-pointer">
+                  <label className="flex items-start gap-3 text-xs text-slate-700 dark:text-slate-300 cursor-pointer">
                     <input
                       type="checkbox"
                       required
                       checked={appForm.termsAccepted}
                       onChange={(e) => setAppForm(prev => ({ ...prev, termsAccepted: e.target.checked }))}
-                      className="rounded border-slate-300 text-[#0a192f] focus:ring-[#8c6d37] w-4 h-4 mt-0.5"
+                      className="rounded border-slate-300 text-[#0a192f] focus:ring-[#8c6d37] w-4 h-4 mt-0.5 cursor-pointer"
                     />
                     <span>
                       I certify that all information provided is true and accurate. I acknowledge that this application requires manual administrative approval by First Atlantic Bank compliance personnel.
                     </span>
                   </label>
 
-                  <label className="flex items-start gap-3 text-xs text-slate-700 cursor-pointer">
+                  <label className="flex items-start gap-3 text-xs text-slate-700 dark:text-slate-300 cursor-pointer">
                     <input
                       type="checkbox"
                       required
                       checked={appForm.fatcaAccepted}
                       onChange={(e) => setAppForm(prev => ({ ...prev, fatcaAccepted: e.target.checked }))}
-                      className="rounded border-slate-300 text-[#0a192f] focus:ring-[#8c6d37] w-4 h-4 mt-0.5"
+                      className="rounded border-slate-300 text-[#0a192f] focus:ring-[#8c6d37] w-4 h-4 mt-0.5 cursor-pointer"
                     />
                     <span>
                       I consent to electronic FATCA/CRS tax residency disclosure, European Bank Secrecy standards, and anti-money laundering due diligence checks.
@@ -1012,11 +1012,11 @@ export const AccountDetailPage: React.FC = () => {
               </div>
 
               {/* Submit Actions */}
-              <div className="pt-6 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div className="pt-6 border-t border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-4">
                 <button
                   type="button"
                   onClick={() => setActiveTab('LEDGER')}
-                  className="text-xs text-slate-500 hover:text-slate-800 font-semibold"
+                  className="text-xs text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white font-semibold cursor-pointer"
                 >
                   &larr; Cancel and return to accounts
                 </button>
@@ -1024,7 +1024,7 @@ export const AccountDetailPage: React.FC = () => {
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="w-full sm:w-auto px-8 py-3.5 rounded-xl bg-[#0a192f] hover:bg-[#143154] text-white font-bold text-xs uppercase tracking-widest shadow-lg flex items-center justify-center gap-2 transition-all"
+                  className="w-full sm:w-auto px-8 py-3.5 rounded-xl bg-[#0a192f] dark:bg-[#112a4a] hover:bg-[#143154] text-white font-bold text-xs uppercase tracking-widest shadow-lg flex items-center justify-center gap-2 transition-all cursor-pointer border border-[#c5a880]/30"
                 >
                   {isSubmitting ? (
                     <span>Routing to Compliance Desk...</span>

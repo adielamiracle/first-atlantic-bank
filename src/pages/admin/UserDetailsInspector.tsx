@@ -32,6 +32,7 @@ import {
 import { CurrencyDisplay } from '../../components/common/CurrencyDisplay';
 import { StatusBadge } from '../../components/common/StatusBadge';
 import { DirectFundsManager } from './DirectFundsManager';
+import { formatAddress } from '../../types';
 
 export const UserDetailsInspector: React.FC = () => {
   const {
@@ -115,7 +116,7 @@ export const UserDetailsInspector: React.FC = () => {
     setEditLastName(u.lastName);
     setEditEmail(u.email);
     setEditPhone(u.phone || '');
-    setEditAddress(u.address || '');
+    setEditAddress(typeof u.address === 'string' ? u.address : formatAddress(u.address));
     setEditKycTier(u.kycTier || 3);
     setIsEditingProfile(true);
   };
@@ -213,7 +214,7 @@ export const UserDetailsInspector: React.FC = () => {
                           : 'bg-slate-100 text-[#0a192f]'
                       }`}
                     >
-                      {u.first_name[0]}{u.last_name[0]}
+                      {u.first_name?.charAt(0) || ''}{u.last_name?.charAt(0) || ''}
                     </div>
                     <div className="min-w-0">
                       <div className="text-xs font-bold truncate">
@@ -260,7 +261,7 @@ export const UserDetailsInspector: React.FC = () => {
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100">
                   <div className="flex items-center gap-3">
                     <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#0a192f] to-[#153459] text-[#d4af37] flex items-center justify-center font-bold text-lg font-serif shadow-sm">
-                      {userDetails.user.firstName[0]}{userDetails.user.lastName[0]}
+                      {userDetails.user.firstName?.charAt(0) || ''}{userDetails.user.lastName?.charAt(0) || ''}
                     </div>
                     <div>
                       <div className="flex items-center gap-2">
@@ -360,7 +361,7 @@ export const UserDetailsInspector: React.FC = () => {
                         Verified Residential Address
                       </span>
                       <div className="text-xs text-slate-800 mt-0.5">
-                        {userDetails.user.address || '740 Park Avenue, Apt 14B, New York, NY 10021'}
+                        {formatAddress(userDetails.user.address) || '740 Park Avenue, Apt 14B, New York, NY 10021'}
                       </div>
                     </div>
 

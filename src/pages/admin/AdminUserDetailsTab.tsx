@@ -29,7 +29,7 @@ import {
   Calendar,
   Key
 } from 'lucide-react';
-import { UserProfile, BankAccount, BankCard, LedgerEntry, AuditLog } from '../../types';
+import { UserProfile, BankAccount, BankCard, LedgerEntry, AuditLog, formatAddress } from '../../types';
 
 export const AdminUserDetailsTab: React.FC = () => {
   const { fetchUserBackendDetails, updateUserProfile, toggleUserAccess, setUserApprovalStatus, showToast, setCurrentView } = useBank();
@@ -69,7 +69,7 @@ export const AdminUserDetailsTab: React.FC = () => {
         const data = await res.json();
         setUsersList(data.users || []);
         if (data.users?.length > 0 && !selectedUserId) {
-          setSelectedUserId(data.users[0].id);
+          setSelectedUserId(data.users[0]?.id || '');
         }
       }
     } catch (err) {
@@ -90,7 +90,7 @@ export const AdminUserDetailsTab: React.FC = () => {
         setEditLastName(data.user.lastName || '');
         setEditEmail(data.user.email || '');
         setEditPhone(data.user.phone || '');
-        setEditAddress(data.user.address || '');
+        setEditAddress(typeof data.user.address === 'string' ? data.user.address : formatAddress(data.user.address));
         setEditRole(data.user.role || 'CUSTOMER');
         setEditStatus(data.user.approval_status || 'APPROVED');
       }
@@ -216,7 +216,7 @@ export const AdminUserDetailsTab: React.FC = () => {
                       <div className="text-[11px] text-slate-400 truncate mt-0.5">{u.email}</div>
                       <div className="flex items-center justify-between text-[10px] text-slate-500 font-mono mt-1">
                         <span>Role: {u.role}</span>
-                        <span>ID: {u.id.slice(0, 8)}...</span>
+                        <span>ID: {u.id ? u.id.slice(0, 8) : 'USR'}...</span>
                       </div>
                     </button>
                   );
@@ -244,8 +244,8 @@ export const AdminUserDetailsTab: React.FC = () => {
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-slate-800">
                   <div className="flex items-center gap-3.5">
                     <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#c5a880] to-[#8c6b3e] text-slate-950 font-bold text-lg flex items-center justify-center font-serif shadow-lg">
-                      {backendData.user.firstName?.[0]}
-                      {backendData.user.lastName?.[0]}
+                      {backendData.user.firstName?.charAt(0) || ''}
+                      {backendData.user.lastName?.charAt(0) || ''}
                     </div>
                     <div>
                       <h3 className="text-lg font-serif font-bold text-white flex items-center gap-2">
@@ -427,7 +427,7 @@ export const AdminUserDetailsTab: React.FC = () => {
                         <MapPin className="w-3.5 h-3.5 text-[#c5a880]" />
                         <span>Jurisdiction / Address</span>
                       </div>
-                      <div className="font-semibold text-white truncate">{backendData.user.address || 'Frankfurt, Germany'}</div>
+                      <div className="font-semibold text-white truncate">{formatAddress(backendData.user.address) || 'Frankfurt, Germany'}</div>
                     </div>
 
                     <div className="bg-slate-950 p-3.5 rounded-xl border border-slate-800">

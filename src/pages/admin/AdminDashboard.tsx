@@ -36,7 +36,7 @@ import { TreasuryReceivingAccountsTab } from './TreasuryReceivingAccountsTab';
 import { AccountActivationTab } from './AccountActivationTab';
 import { AdminNotificationsTab } from './AdminNotificationsTab';
 import { EnrollmentTrendWidget } from './EnrollmentTrendWidget';
-import { AccountApplication } from '../../types';
+import { AccountApplication, formatAddress } from '../../types';
 
 export const AdminDashboard: React.FC = () => {
   const {
@@ -494,9 +494,9 @@ export const AdminDashboard: React.FC = () => {
               <div className="divide-y divide-slate-100 max-h-[600px] overflow-y-auto">
                 {auditLogs
                   .filter(l =>
-                    l.action.toLowerCase().includes(auditSearch.toLowerCase()) ||
-                    l.details.toLowerCase().includes(auditSearch.toLowerCase()) ||
-                    l.adminId.toLowerCase().includes(auditSearch.toLowerCase())
+                    (l.action || '').toLowerCase().includes(auditSearch.toLowerCase()) ||
+                    (l.details || '').toLowerCase().includes(auditSearch.toLowerCase()) ||
+                    (l.actorEmail || l.actorUsername || l.actorId || (l as any).adminId || '').toLowerCase().includes(auditSearch.toLowerCase())
                   )
                   .map(log => (
                     <div key={log.id} className="py-3 text-xs flex items-start gap-3">
@@ -507,12 +507,12 @@ export const AdminDashboard: React.FC = () => {
                         <div className="flex items-center justify-between gap-2">
                           <span className="font-bold text-slate-900 font-mono">{log.action}</span>
                           <span className="text-[10px] text-slate-400 font-mono">
-                            {new Date(log.timestamp).toLocaleTimeString()} • {new Date(log.timestamp).toLocaleDateString()}
+                            {log.timestamp ? `${new Date(log.timestamp).toLocaleTimeString()} • ${new Date(log.timestamp).toLocaleDateString()}` : 'Recent'}
                           </span>
                         </div>
                         <p className="text-slate-600 text-[11px] mt-0.5">{log.details}</p>
                         <div className="text-[10px] text-slate-400 font-mono mt-1">
-                          Actor: {log.adminId} • IP: {log.ipAddress} • Checksum: {log.checksum.slice(0, 16)}...
+                          Actor: {log.actorEmail || log.actorUsername || log.actorId || (log as any).adminId || 'System'} • IP: {log.ipAddress || '127.0.0.1'} • Hash: {(log.signatureHash || (log as any).checksumHash || (log as any).checksum || log.id || '').slice(0, 16)}...
                         </div>
                       </div>
                     </div>
@@ -573,7 +573,7 @@ export const AdminDashboard: React.FC = () => {
                 <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/60 col-span-2">
                   <span className="text-[10px] text-slate-400 font-bold uppercase block">Residential Address</span>
                   <div className="text-slate-800 mt-0.5">
-                    {selectedAppDossier.address}, {selectedAppDossier.city}, {selectedAppDossier.statePostal} {selectedAppDossier.country}
+                    {formatAddress(selectedAppDossier.address) || `${selectedAppDossier.city || ''}, ${selectedAppDossier.country || ''}`}
                   </div>
                 </div>
               </div>

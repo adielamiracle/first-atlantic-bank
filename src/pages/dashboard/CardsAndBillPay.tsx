@@ -74,20 +74,20 @@ export const BillPayPage: React.FC = () => {
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
-      <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm space-y-2">
-        <h1 className="text-xl font-bold font-serif text-slate-900">
+      <div className="bg-white dark:bg-[#0a192f] rounded-2xl p-6 border border-slate-200 dark:border-[#1e3656] shadow-sm space-y-2 transition-colors">
+        <h1 className="text-xl font-bold font-serif text-slate-900 dark:text-white">
           Electronic Bill Pay &amp; Remittance
         </h1>
-        <p className="text-xs text-slate-500">
+        <p className="text-xs text-slate-500 dark:text-slate-400">
           Direct electronic settlement to verified corporate utilities, tax authorities, and credit issuers.
         </p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Left Column: Vendor Directory */}
-        <div className="lg:col-span-5 bg-white rounded-2xl p-5 border border-slate-200 shadow-sm space-y-4">
+        <div className="lg:col-span-5 bg-white dark:bg-[#0a192f] rounded-2xl p-5 border border-slate-200 dark:border-[#1e3656] shadow-sm space-y-4 transition-colors">
           <div className="space-y-2">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700 font-serif">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 font-serif">
               Select Payee / Biller
             </h3>
             <div className="relative">
@@ -97,7 +97,7 @@ export const BillPayPage: React.FC = () => {
                 placeholder="Search utility, biller code..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="w-full pl-8 pr-3 py-1.5 text-xs bg-slate-50 border border-slate-300 rounded-lg text-slate-900 focus:outline-none focus:border-[#8c6d37]"
+                className="w-full pl-8 pr-3 py-1.5 text-xs bg-slate-50 dark:bg-slate-900/60 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-900 dark:text-slate-100 focus:outline-none focus:border-[#c5a880]"
               />
             </div>
           </div>
@@ -109,14 +109,14 @@ export const BillPayPage: React.FC = () => {
                 onClick={() => setSelectedVendorId(vendor.id)}
                 className={`p-3 rounded-xl border transition-all cursor-pointer flex items-center gap-3 ${
                   selectedVendorId === vendor.id
-                    ? 'bg-[#0a192f] text-white border-[#0a192f] shadow-xs'
-                    : 'bg-slate-50 hover:bg-slate-100 text-slate-800 border-slate-200'
+                    ? 'bg-[#0a192f] dark:bg-[#112a4a] text-white border-[#c5a880]/60 shadow-xs'
+                    : 'bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-800 dark:text-slate-200 border-slate-200 dark:border-slate-700/60'
                 }`}
               >
                 <div className="text-xl p-1 bg-white/10 rounded-lg shrink-0">{vendor.logo}</div>
                 <div className="min-w-0">
-                  <h4 className="text-xs font-bold truncate">{vendor.name}</h4>
-                  <p className={`text-[10px] font-mono ${selectedVendorId === vendor.id ? 'text-slate-300' : 'text-slate-500'}`}>
+                  <h4 className="text-xs font-bold truncate text-slate-900 dark:text-white">{vendor.name}</h4>
+                  <p className={`text-[10px] font-mono ${selectedVendorId === vendor.id ? 'text-slate-300' : 'text-slate-500 dark:text-slate-400'}`}>
                     Code: {vendor.billerCode}
                   </p>
                 </div>
@@ -126,28 +126,28 @@ export const BillPayPage: React.FC = () => {
         </div>
 
         {/* Right Column: Payment Form */}
-        <div className="lg:col-span-7 bg-white rounded-2xl p-6 sm:p-7 border border-slate-200 shadow-sm space-y-5">
-          <div className="pb-3 border-b border-slate-100 flex items-center justify-between">
+        <div className="lg:col-span-7 bg-white dark:bg-[#0a192f] rounded-2xl p-6 sm:p-7 border border-slate-200 dark:border-[#1e3656] shadow-sm space-y-5 transition-colors">
+          <div className="pb-3 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
             <div>
-              <span className="text-[10px] uppercase font-bold text-[#8c6d37] tracking-wider">
+              <span className="text-[10px] uppercase font-bold text-[#8c6d37] dark:text-[#c5a880] tracking-wider">
                 Selected Payee
               </span>
-              <h3 className="text-base font-bold text-slate-900">{selectedVendor?.name}</h3>
+              <h3 className="text-base font-bold text-slate-900 dark:text-white">{selectedVendor?.name}</h3>
             </div>
-            <span className="text-xs font-mono px-2 py-0.5 rounded bg-slate-100 text-slate-600">
+            <span className="text-xs font-mono px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
               {selectedVendor?.billerCode}
             </span>
           </div>
 
           <form onSubmit={handlePay} className="space-y-4">
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1">
                 Pay From Account
               </label>
               <select
                 value={sourceAccountId}
                 onChange={(e) => setSourceAccountId(e.target.value)}
-                className="w-full px-3.5 py-2.5 text-xs bg-slate-50 border border-slate-300 rounded-xl text-slate-900 font-medium focus:bg-white focus:outline-none focus:border-[#8c6d37]"
+                className="w-full px-3.5 py-2.5 text-xs bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100 font-medium focus:bg-white dark:focus:bg-slate-900 focus:outline-none focus:border-[#c5a880]"
               >
                 {accounts.map((acc) => (
                   <option key={acc.id} value={acc.id}>
@@ -158,7 +158,7 @@ export const BillPayPage: React.FC = () => {
             </div>
 
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1">
                 Your Account Number with Biller
               </label>
               <input
@@ -167,12 +167,12 @@ export const BillPayPage: React.FC = () => {
                 value={accountNumberWithVendor}
                 onChange={(e) => setAccountNumberWithVendor(e.target.value)}
                 placeholder="e.g. 8820-194-001"
-                className="w-full px-3.5 py-2.5 text-xs bg-slate-50 border border-slate-300 rounded-xl text-slate-900 font-mono focus:bg-white focus:outline-none focus:border-[#8c6d37]"
+                className="w-full px-3.5 py-2.5 text-xs bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100 font-mono focus:bg-white dark:focus:bg-slate-900 focus:outline-none focus:border-[#c5a880]"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1">
                 Payment Amount ($)
               </label>
               <div className="relative">
@@ -184,13 +184,13 @@ export const BillPayPage: React.FC = () => {
                   value={amountStr}
                   onChange={(e) => setAmountStr(e.target.value)}
                   placeholder="0.00"
-                  className="w-full pl-8 pr-4 py-2.5 text-base font-mono font-bold bg-slate-50 border border-slate-300 rounded-xl text-slate-900 focus:bg-white focus:outline-none focus:border-[#8c6d37]"
+                  className="w-full pl-8 pr-4 py-2.5 text-base font-mono font-bold bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100 focus:bg-white dark:focus:bg-slate-900 focus:outline-none focus:border-[#c5a880]"
                 />
               </div>
             </div>
 
-            <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-600 flex items-start gap-2.5">
-              <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+            <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 text-xs text-slate-600 dark:text-slate-300 flex items-start gap-2.5">
+              <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
               <span>
                 Standard automated clearing applies. Payments submitted before 5:00 PM EST credit the same business cycle.
               </span>
@@ -199,7 +199,7 @@ export const BillPayPage: React.FC = () => {
             <button
               type="submit"
               disabled={isProcessing}
-              className="w-full py-3.5 rounded-xl bg-[#0a192f] hover:bg-[#132d52] text-white font-bold text-xs uppercase tracking-widest transition-all shadow-md flex items-center justify-center gap-2"
+              className="w-full py-3.5 rounded-xl bg-[#0a192f] dark:bg-[#112a4a] hover:bg-[#132d52] text-white font-bold text-xs uppercase tracking-widest transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer border border-[#c5a880]/30"
             >
               <Lock className="w-3.5 h-3.5 text-[#d4af37]" />
               <span>{isProcessing ? 'Transmitting Payment...' : 'Authorize Bill Payment'}</span>
@@ -221,7 +221,7 @@ export const CardsPage: React.FC = () => {
   const selectedCard = cards.find((c) => c.id === selectedCardId) || cards[0];
 
   if (!selectedCard) {
-    return <div className="p-8 text-center text-slate-500">No payment cards on file.</div>;
+    return <div className="p-8 text-center text-slate-500 dark:text-slate-400">No payment cards on file.</div>;
   }
 
   const isFrozen = selectedCard.status === 'FROZEN';
@@ -233,12 +233,12 @@ export const CardsPage: React.FC = () => {
 
   return (
     <div className="max-w-5xl mx-auto space-y-6">
-      <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="bg-white dark:bg-[#0a192f] rounded-2xl p-6 border border-slate-200 dark:border-[#1e3656] shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-colors">
         <div>
-          <h1 className="text-xl font-bold font-serif text-slate-900">
+          <h1 className="text-xl font-bold font-serif text-slate-900 dark:text-white">
             Card Management &amp; Spend Controls
           </h1>
-          <p className="text-xs text-slate-500">
+          <p className="text-xs text-slate-500 dark:text-slate-400">
             Manage your physical and virtual Visa Signature and Infinite credit cards.
           </p>
         </div>
@@ -251,13 +251,13 @@ export const CardsPage: React.FC = () => {
                 setSelectedCardId(c.id);
                 setFlipped(false);
               }}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
                 selectedCardId === c.id
-                  ? 'bg-[#0a192f] text-white shadow-xs'
-                  : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                  ? 'bg-[#0a192f] dark:bg-[#112a4a] text-white shadow-xs border border-[#c5a880]/50'
+                  : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
               }`}
             >
-              {c.cardType === 'CREDIT_ATLANTIC_INFINITE' ? 'Infinite Credit' : 'Debit Signature'} (•••• {c.cardNumberMasked.slice(-4)})
+              {c.cardType === 'CREDIT_ATLANTIC_INFINITE' ? 'Infinite Credit' : 'Debit Signature'} (•••• {c.cardNumberMasked ? c.cardNumberMasked.slice(-4) : '••••'})
             </button>
           ))}
         </div>
@@ -301,7 +301,7 @@ export const CardsPage: React.FC = () => {
                       {selectedCard.cardNumberMasked}
                     </div>
                     <div className="flex items-center gap-4 text-[10px] font-mono text-slate-400">
-                      <span>EXP: {String(selectedCard.expiryMonth).padStart(2, '0')}/{String(selectedCard.expiryYear).slice(-2)}</span>
+                      <span>EXP: {String(selectedCard.expiryMonth || '12').padStart(2, '0')}/{String(selectedCard.expiryYear || '28').slice(-2)}</span>
                       <span>CVV: •••</span>
                     </div>
                   </div>
@@ -338,7 +338,7 @@ export const CardsPage: React.FC = () => {
             </div>
           </div>
 
-          <div className="text-center text-xs text-slate-500">
+          <div className="text-center text-xs text-slate-500 dark:text-slate-400">
             Click card to flip and reveal security details
           </div>
 
@@ -346,7 +346,7 @@ export const CardsPage: React.FC = () => {
           <div className="grid grid-cols-2 gap-3">
             <button
               onClick={() => toggleCardFreeze(selectedCard.id)}
-              className={`py-3 rounded-xl font-bold text-xs uppercase tracking-wider transition-colors flex items-center justify-center gap-2 shadow-xs ${
+              className={`py-3 rounded-xl font-bold text-xs uppercase tracking-wider transition-colors flex items-center justify-center gap-2 shadow-xs cursor-pointer ${
                 isFrozen
                   ? 'bg-emerald-600 hover:bg-emerald-700 text-white'
                   : 'bg-rose-600 hover:bg-rose-700 text-white'
@@ -358,7 +358,7 @@ export const CardsPage: React.FC = () => {
 
             <button
               onClick={() => setShowPinModal(true)}
-              className="py-3 rounded-xl border border-slate-300 hover:bg-slate-50 font-semibold text-xs text-slate-700 transition-colors"
+              className="py-3 rounded-xl border border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 font-semibold text-xs text-slate-700 dark:text-slate-200 transition-colors cursor-pointer"
             >
               Change Card PIN
             </button>
@@ -366,58 +366,58 @@ export const CardsPage: React.FC = () => {
         </div>
 
         {/* Right Column: Card Rules & Limits */}
-        <div className="lg:col-span-7 bg-white rounded-2xl p-6 sm:p-7 border border-slate-200 shadow-sm space-y-6">
-          <h3 className="text-sm font-bold uppercase tracking-wider text-slate-800 font-serif">
+        <div className="lg:col-span-7 bg-white dark:bg-[#0a192f] rounded-2xl p-6 sm:p-7 border border-slate-200 dark:border-[#1e3656] shadow-sm space-y-6 transition-colors">
+          <h3 className="text-sm font-bold uppercase tracking-wider text-slate-800 dark:text-slate-200 font-serif">
             Security &amp; Usage Controls
           </h3>
 
           {/* Toggle Switches */}
-          <div className="space-y-4 divide-y divide-slate-100">
+          <div className="space-y-4 divide-y divide-slate-100 dark:divide-slate-800">
             <div className="pt-2 flex items-center justify-between">
               <div>
-                <h4 className="text-xs font-bold text-slate-900">Contactless NFC Payments</h4>
-                <p className="text-[11px] text-slate-500">Allow tap-to-pay on Apple Pay, Google Wallet &amp; POS terminals</p>
+                <h4 className="text-xs font-bold text-slate-900 dark:text-white">Contactless NFC Payments</h4>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400">Allow tap-to-pay on Apple Pay, Google Wallet &amp; POS terminals</p>
               </div>
               <input
                 type="checkbox"
                 checked={selectedCard.contactlessEnabled}
                 onChange={(e) => updateCardControls(selectedCard.id, { contactlessEnabled: e.target.checked })}
-                className="w-5 h-5 rounded text-[#0a192f] focus:ring-[#8c6d37]"
+                className="w-5 h-5 rounded text-[#0a192f] focus:ring-[#8c6d37] cursor-pointer"
               />
             </div>
 
             <div className="pt-4 flex items-center justify-between">
               <div>
-                <h4 className="text-xs font-bold text-slate-900">Online &amp; E-Commerce Transactions</h4>
-                <p className="text-[11px] text-slate-500">Allow web card authorizations with 3D-Secure 2.0 verification</p>
+                <h4 className="text-xs font-bold text-slate-900 dark:text-white">Online &amp; E-Commerce Transactions</h4>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400">Allow web card authorizations with 3D-Secure 2.0 verification</p>
               </div>
               <input
                 type="checkbox"
                 checked={selectedCard.onlineTransactionsEnabled}
                 onChange={(e) => updateCardControls(selectedCard.id, { onlineTransactionsEnabled: e.target.checked })}
-                className="w-5 h-5 rounded text-[#0a192f] focus:ring-[#8c6d37]"
+                className="w-5 h-5 rounded text-[#0a192f] focus:ring-[#8c6d37] cursor-pointer"
               />
             </div>
 
             <div className="pt-4 flex items-center justify-between">
               <div>
-                <h4 className="text-xs font-bold text-slate-900">International Cross-Border Spending</h4>
-                <p className="text-[11px] text-slate-500">Zero foreign transaction fee settlement across 140+ countries</p>
+                <h4 className="text-xs font-bold text-slate-900 dark:text-white">International Cross-Border Spending</h4>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400">Zero foreign transaction fee settlement across 140+ countries</p>
               </div>
               <input
                 type="checkbox"
                 checked={selectedCard.internationalSpendEnabled}
                 onChange={(e) => updateCardControls(selectedCard.id, { internationalSpendEnabled: e.target.checked })}
-                className="w-5 h-5 rounded text-[#0a192f] focus:ring-[#8c6d37]"
+                className="w-5 h-5 rounded text-[#0a192f] focus:ring-[#8c6d37] cursor-pointer"
               />
             </div>
           </div>
 
           {/* Limit Slider */}
           <div className="pt-2 space-y-2">
-            <div className="flex justify-between text-xs font-bold text-slate-800 font-mono">
+            <div className="flex justify-between text-xs font-bold text-slate-800 dark:text-slate-200 font-mono">
               <span>Daily Spending Limit:</span>
-              <span className="text-[#8c6d37]">${(selectedCard.dailySpendLimitMinor / 100).toLocaleString()} USD</span>
+              <span className="text-[#8c6d37] dark:text-[#c5a880]">${(selectedCard.dailySpendLimitMinor / 100).toLocaleString()} USD</span>
             </div>
             <input
               type="range"
@@ -426,7 +426,7 @@ export const CardsPage: React.FC = () => {
               step="1000"
               value={selectedCard.dailySpendLimitMinor / 100}
               onChange={handleUpdateLimit}
-              className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-[#8c6d37]"
+              className="w-full h-2 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-[#c5a880]"
             />
             <div className="flex justify-between text-[10px] text-slate-400 font-mono">
               <span>$1,000</span>
@@ -439,10 +439,10 @@ export const CardsPage: React.FC = () => {
 
       {/* PIN Change Modal */}
       {showPinModal && (
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-sm w-full p-6 shadow-2xl border border-slate-200 space-y-4">
-            <h3 className="text-base font-bold text-slate-900 font-serif">Set New 4-Digit Card PIN</h3>
-            <p className="text-xs text-slate-500">
+        <div className="fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-[#0a192f] rounded-2xl max-w-sm w-full p-6 shadow-2xl border border-slate-200 dark:border-[#1e3656] space-y-4">
+            <h3 className="text-base font-bold text-slate-900 dark:text-white font-serif">Set New 4-Digit Card PIN</h3>
+            <p className="text-xs text-slate-500 dark:text-slate-400">
               PIN updates synchronize with EMV chips upon your next chip-and-PIN authorization.
             </p>
             <input
@@ -451,12 +451,12 @@ export const CardsPage: React.FC = () => {
               value={pinInput}
               onChange={(e) => setPinInput(e.target.value.replace(/\D/g, ''))}
               placeholder="••••"
-              className="w-full text-center text-2xl font-mono tracking-[0.5em] py-2 bg-slate-50 border border-slate-300 rounded-xl"
+              className="w-full text-center text-2xl font-mono tracking-[0.5em] py-2 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:border-[#c5a880]"
             />
             <div className="flex gap-2">
               <button
                 onClick={() => setShowPinModal(false)}
-                className="flex-1 py-2 rounded-xl border border-slate-300 text-xs font-semibold text-slate-700"
+                className="flex-1 py-2 rounded-xl border border-slate-300 dark:border-slate-700 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer"
               >
                 Cancel
               </button>
@@ -469,7 +469,7 @@ export const CardsPage: React.FC = () => {
                   }
                 }}
                 disabled={pinInput.length !== 4}
-                className="flex-1 py-2 rounded-xl bg-[#0a192f] text-white font-bold text-xs uppercase"
+                className="flex-1 py-2 rounded-xl bg-[#0a192f] dark:bg-[#112a4a] text-white font-bold text-xs uppercase cursor-pointer border border-[#c5a880]/30"
               >
                 Save PIN
               </button>

@@ -1,69 +1,39 @@
 import React, { useState } from 'react';
 import { InstitutionalCrest } from '../common/InstitutionalCrest';
 import { useBank, AppView } from '../../context/BankContext';
-import { Lock, Menu, X, ChevronRight, Globe, Shield, PhoneCall, Building2 } from 'lucide-react';
+import { Lock, Menu, X, Globe, Building2, Sun, Moon } from 'lucide-react';
 
 export const PublicNavbar: React.FC = () => {
-  const { currentView, setCurrentView, region, setRegion } = useBank();
+  const { currentView, setCurrentView, region, setRegion, darkMode, toggleDarkMode } = useBank();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const navItems: { label: string; view: AppView }[] = [
-    { label: 'Personal', view: 'PUBLIC_PERSONAL' },
-    { label: 'Business', view: 'PUBLIC_BUSINESS' },
-    { label: 'Wealth & Private', view: 'PUBLIC_WEALTH' },
-    { label: 'International', view: 'PUBLIC_INTERNATIONAL' },
-    { label: 'Locations', view: 'PUBLIC_LOCATIONS' },
-    { label: 'Security', view: 'PUBLIC_SECURITY' }
+    { label: 'Private Banking', view: 'PUBLIC_PERSONAL' },
+    { label: 'Corporate Treasury', view: 'PUBLIC_BUSINESS' },
+    { label: 'Wealth Management', view: 'PUBLIC_WEALTH' },
+    { label: 'International Markets', view: 'PUBLIC_INTERNATIONAL' },
+    { label: 'Global Offices', view: 'PUBLIC_LOCATIONS' },
+    { label: 'Security & Custody', view: 'PUBLIC_SECURITY' }
   ];
 
   return (
-    <nav className="bg-[#0a192f] border-b border-slate-800 text-white sticky top-7 z-30 shadow-lg">
-      {/* Top micro institutional bar */}
-      <div className="border-b border-slate-800/80 px-4 sm:px-8 py-1 text-[11px] text-slate-400 flex justify-between items-center max-w-7xl mx-auto font-sans">
-        <div className="flex items-center gap-4">
-          <span className="flex items-center gap-1 text-[#c5a880]">
-            <Shield className="w-3 h-3" />
-            <span>EU Guarantee €100k • FSCS £85k • FDIC $250k Protected</span>
-          </span>
-          <span className="hidden md:inline text-slate-600">•</span>
-          <span className="hidden md:inline">24/7 Concierge: +49 69 9000 8800</span>
-          <span className="hidden lg:inline text-slate-600">•</span>
-          <a href="mailto:support@firstatlanticbank.com" className="hidden lg:inline hover:text-[#c5a880] transition-colors">
-            support@firstatlanticbank.com
-          </a>
-        </div>
-        <div className="flex items-center gap-3">
-          <a href="mailto:contact@firstatlanticbank.com" className="hover:text-white transition-colors flex items-center gap-1 text-[11px]">
-            <span>contact@firstatlanticbank.com</span>
-          </a>
-          <span className="text-slate-600">|</span>
-          <button
-            onClick={() => setCurrentView('PUBLIC_LOCATIONS')}
-            className="hover:text-white transition-colors flex items-center gap-1"
-          >
-            <Building2 className="w-3 h-3 text-[#c5a880]" />
-            <span className="hidden sm:inline">Frankfurt • Zurich • London • New York</span>
-            <span className="sm:hidden">Branches</span>
-          </button>
-        </div>
-      </div>
-
+    <nav className="bg-[#071322]/95 backdrop-blur-md border-b border-slate-800 text-white sticky top-0 z-30 shadow-md">
       {/* Main Bar */}
       <div className="max-w-7xl mx-auto px-4 sm:px-8 py-3.5 flex items-center justify-between">
         <button
           onClick={() => setCurrentView('PUBLIC_HOME')}
-          className="text-left focus:outline-none"
+          className="text-left focus:outline-none cursor-pointer"
         >
           <InstitutionalCrest size="md" variant="gold" />
         </button>
 
         {/* Desktop Nav Links */}
-        <div className="hidden lg:flex items-center gap-7 text-sm font-medium text-slate-300">
+        <div className="hidden lg:flex items-center gap-6 text-sm font-medium text-slate-300">
           {navItems.map((item) => (
             <button
               key={item.view}
               onClick={() => setCurrentView(item.view)}
-              className={`hover:text-white transition-colors py-1 relative ${
+              className={`hover:text-white transition-colors py-1 relative cursor-pointer ${
                 currentView === item.view ? 'text-[#e5ca95] font-semibold' : ''
               }`}
             >
@@ -77,15 +47,39 @@ export const PublicNavbar: React.FC = () => {
 
         {/* Actions */}
         <div className="hidden sm:flex items-center gap-3">
+          {/* Subtle Region Selector */}
+          <div className="flex items-center rounded-lg p-0.5 bg-slate-900 border border-slate-800 text-[11px]">
+            {(['EU', 'UK', 'US'] as const).map((r) => (
+              <button
+                key={r}
+                onClick={() => setRegion(r)}
+                className={`px-2 py-1 rounded text-[10px] font-bold transition-colors cursor-pointer ${
+                  region === r ? 'bg-[#c5a880] text-slate-950' : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                {r}
+              </button>
+            ))}
+          </div>
+
+          <button
+            onClick={toggleDarkMode}
+            title={darkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
+            aria-label="Toggle Dark Mode"
+            className="p-2 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer border border-slate-700/60"
+          >
+            {darkMode ? <Sun className="w-4 h-4 text-[#e5ca95]" /> : <Moon className="w-4 h-4 text-slate-300" />}
+          </button>
+
           <button
             onClick={() => setCurrentView('AUTH_ENROLL')}
-            className="px-4 py-2 text-xs font-semibold uppercase tracking-wider text-[#e5ca95] hover:text-white border border-[#c5a880]/50 hover:border-[#c5a880] rounded-lg transition-all"
+            className="px-3.5 py-2 text-xs font-bold uppercase tracking-wider text-[#e5ca95] hover:text-white border border-[#c5a880]/40 hover:border-[#c5a880] rounded-lg transition-all cursor-pointer"
           >
             Open Account
           </button>
           <button
             onClick={() => setCurrentView('AUTH_LOGIN')}
-            className="px-5 py-2 text-xs font-semibold uppercase tracking-wider bg-gradient-to-r from-[#c5a880] to-[#b39366] text-slate-950 hover:brightness-105 rounded-lg shadow-md flex items-center gap-1.5 transition-all font-sans font-bold"
+            className="px-4.5 py-2 text-xs font-bold uppercase tracking-wider bg-gradient-to-r from-[#c5a880] to-[#b39366] text-slate-950 hover:brightness-105 rounded-lg shadow-md flex items-center gap-1.5 transition-all font-sans cursor-pointer"
           >
             <Lock className="w-3.5 h-3.5" />
             <span>Sign In</span>
@@ -95,7 +89,7 @@ export const PublicNavbar: React.FC = () => {
         {/* Mobile Menu Toggle */}
         <button
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          className="lg:hidden text-slate-300 hover:text-white p-1.5"
+          className="lg:hidden text-slate-300 hover:text-white p-1.5 cursor-pointer"
           aria-label="Toggle Navigation"
         >
           {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
@@ -105,7 +99,7 @@ export const PublicNavbar: React.FC = () => {
       {/* Mobile Drawer */}
       {mobileMenuOpen && (
         <div className="lg:hidden border-t border-slate-800 bg-[#071322] px-6 py-5 space-y-4">
-          <div className="flex flex-col space-y-3">
+          <div className="flex flex-col space-y-2">
             {navItems.map((item) => (
               <button
                 key={item.view}
@@ -113,7 +107,7 @@ export const PublicNavbar: React.FC = () => {
                   setCurrentView(item.view);
                   setMobileMenuOpen(false);
                 }}
-                className={`text-left text-sm py-2 px-3 rounded-lg ${
+                className={`text-left text-sm py-2 px-3 rounded-lg cursor-pointer ${
                   currentView === item.view ? 'bg-slate-800 text-[#e5ca95] font-semibold' : 'text-slate-300'
                 }`}
               >
@@ -128,7 +122,7 @@ export const PublicNavbar: React.FC = () => {
                 setCurrentView('AUTH_LOGIN');
                 setMobileMenuOpen(false);
               }}
-              className="w-full py-2.5 text-center text-sm font-bold bg-[#c5a880] text-slate-950 rounded-lg flex items-center justify-center gap-2"
+              className="w-full py-2.5 text-center text-sm font-bold bg-[#c5a880] text-slate-950 rounded-lg flex items-center justify-center gap-2 cursor-pointer"
             >
               <Lock className="w-4 h-4" />
               Sign In to First Atlantic
@@ -138,7 +132,7 @@ export const PublicNavbar: React.FC = () => {
                 setCurrentView('AUTH_ENROLL');
                 setMobileMenuOpen(false);
               }}
-              className="w-full py-2.5 text-center text-sm font-semibold border border-slate-700 text-slate-300 rounded-lg"
+              className="w-full py-2.5 text-center text-sm font-semibold border border-slate-700 text-slate-300 rounded-lg cursor-pointer"
             >
               Open an Account
             </button>

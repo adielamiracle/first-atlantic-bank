@@ -17,7 +17,8 @@ import {
   UserApprovalStatus,
   AdminNotification,
   EmailDispatchLog,
-  BankReceivingAccount
+  BankReceivingAccount,
+  BiometricSecurityState
 } from '../types';
 
 export type AppView = 
@@ -31,6 +32,7 @@ export type AppView =
   | 'AUTH_LOGIN'
   | 'AUTH_ENROLL'
   | 'AUTH_FORGOT'
+  | 'AUTH_ADMIN_LOGIN'
   | 'DASHBOARD_OVERVIEW'
   | 'DASHBOARD_ACCOUNT_DETAIL'
   | 'DASHBOARD_TRANSFERS'
@@ -178,6 +180,23 @@ interface BankContextType {
   ) => Promise<{ success: boolean; error?: string; availableDate?: string }>;
   toggleCardFreeze: (cardId: string) => Promise<void>;
   updateCardControls: (cardId: string, controls: any) => Promise<void>;
+
+  // Auth helper
+  isAuthenticated: boolean;
+
+  // Dark Mode Theme
+  darkMode: boolean;
+  toggleDarkMode: () => void;
+  setDarkMode: (enabled: boolean) => void;
+
+  // Biometric Security & Hardware Enclave
+  biometricState: BiometricSecurityState;
+  toggleBiometrics: (forceEnable?: boolean) => Promise<{ success: boolean; message?: string }>;
+  updateBiometricSettings: (settings: Partial<BiometricSecurityState>) => void;
+  isBiometricModalOpen: boolean;
+  biometricModalConfig: any;
+  openBiometricPrompt: (config?: { mode?: 'ENROLL' | 'VERIFY'; title?: string; subtitle?: string; onComplete?: (success: boolean) => void }) => void;
+  closeBiometricPrompt: () => void;
 }
 
 const BankContext = createContext<BankContextType | undefined>(undefined);
@@ -217,6 +236,121 @@ export const BankProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [isLoading, setIsLoading] = useState(false);
   const [isInitialSplash, setIsInitialSplash] = useState(false);
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
+
+  // Dark Mode Theme Setup & Persistence
+  const [darkMode, setDarkModeState] = useState<boolean>(() => {
+    try {
+      const saved = localStorage.getItem('fab_dark_mode');
+      if (saved !== null) {
+        return saved === 'true';
+      }
+      return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+    } catch {
+      return false;
+    }
+  });
+
+  const setDarkMode = (enabled: boolean) => {
+    setDarkModeState(enabled);
+    try {
+      localStorage.setItem('fab_dark_mode', String(enabled));
+    } catch {}
+  };
+
+  const toggleDarkMode = () => {
+    setDarkMode(!darkMode);
+  };
+
+  useEffect(() => {
+    if (darkMode) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, [darkMode]);
+
+  // Biometric Security & Hardware Enclave State
+  const [biometricState, setBiometricState] = useState<BiometricSecurityState>(() => {
+    try {
+      const saved = localStorage.getItem('fab_biometric_settings');
+      if (saved) {
+        return JSON.parse(saved);
+      }
+    } catch {}
+    return {
+      enabled: false,
+      type: 'FACE_ID',
+      credentialId: undefined,
+      enrolledAt: undefined,
+      lastUsedAt: undefined,
+      requireForLogin: true,
+      requireForWires: true,
+      requireForCardUnfreeze: true,
+      hardwareEnclaveVerified: true,
+      deviceName: typeof navigator !== 'undefined' && navigator.userAgent.includes('Mac') 
+        ? 'Apple Touch ID / Face ID Secure Enclave' 
+        : 'Hardware TPM 2.0 WebAuthn Authenticator'
+    };
+  });
+
+  const updateBiometricSettings = (updates: Partial<BiometricSecurityState>) => {
+    setBiometricState(prev => {
+      const next = { ...prev, ...updates };
+      try {
+        localStorage.setItem('fab_biometric_settings', JSON.stringify(next));
+      } catch {}
+      return next;
+    });
+  };
+
+  const [isBiometricModalOpen, setIsBiometricModalOpen] = useState(false);
+  const [biometricModalConfig, setBiometricModalConfig] = useState<any>({
+    mode: 'VERIFY',
+    title: '',
+    subtitle: '',
+    onComplete: null
+  });
+
+  const openBiometricPrompt = (config?: { mode?: 'ENROLL' | 'VERIFY'; title?: string; subtitle?: string; onComplete?: (success: boolean) => void }) => {
+    setBiometricModalConfig(config || { mode: 'VERIFY' });
+    setIsBiometricModalOpen(true);
+  };
+
+  const closeBiometricPrompt = () => {
+    setIsBiometricModalOpen(false);
+  };
+
+  const toggleBiometrics = async (forceEnable?: boolean): Promise<{ success: boolean; message?: string }> => {
+    const targetState = forceEnable !== undefined ? forceEnable : !biometricState.enabled;
+    if (targetState) {
+      return new Promise((resolve) => {
+        openBiometricPrompt({
+          mode: 'ENROLL',
+          title: 'Register Biometric Hardware Key',
+          subtitle: 'Scan your biometric sensor to securely bind your hardware enclave to First Atlantic Bank & Trust.',
+          onComplete: (success) => {
+            if (success) {
+              const now = new Date().toISOString();
+              updateBiometricSettings({
+                enabled: true,
+                enrolledAt: now,
+                lastUsedAt: now,
+                credentialId: `fido2_key_${Math.random().toString(36).substring(2, 10)}`
+              });
+              showToast('SUCCESS', 'Biometric Security Enrolled', 'Hardware biometric enclave bound to your account.');
+              resolve({ success: true, message: 'Biometric security activated.' });
+            } else {
+              resolve({ success: false, message: 'Biometric registration cancelled.' });
+            }
+          }
+        });
+      });
+    } else {
+      updateBiometricSettings({ enabled: false, credentialId: undefined });
+      showToast('INFO', 'Biometrics Disabled', 'Fallback authentication active with master password & SMS TOTP.');
+      return { success: true, message: 'Biometrics disabled.' };
+    }
+  };
 
   const showToast = (type: ToastMessage['type'], title: string, message: string) => {
     const id = `toast_${Date.now()}_${Math.random().toString().slice(-4)}`;
@@ -747,11 +881,13 @@ export const BankProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
         // Fetch ledger entries for primary account
         if (accData.accounts && accData.accounts.length > 0) {
-          const firstAccId = selectedAccountId || accData.accounts[0].id;
-          const txRes = await fetch(`/api/accounts/${firstAccId}/transactions?limit=25`, { headers });
-          if (txRes.ok) {
-            const txData = await txRes.json();
-            setRecentTransactions(txData.transactions || []);
+          const firstAccId = selectedAccountId || accData.accounts[0]?.id;
+          if (firstAccId) {
+            const txRes = await fetch(`/api/accounts/${firstAccId}/transactions?limit=25`, { headers });
+            if (txRes.ok) {
+              const txData = await txRes.json();
+              setRecentTransactions(txData.transactions || []);
+            }
           }
         }
       }
@@ -1269,7 +1405,18 @@ export const BankProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         executeBillPay,
         submitDeposit,
         toggleCardFreeze,
-        updateCardControls
+        updateCardControls,
+        isAuthenticated: !!currentUser && currentRole === 'CUSTOMER',
+        darkMode,
+        toggleDarkMode,
+        setDarkMode,
+        biometricState,
+        toggleBiometrics,
+        updateBiometricSettings,
+        isBiometricModalOpen,
+        biometricModalConfig,
+        openBiometricPrompt,
+        closeBiometricPrompt
       }}
     >
       {children}

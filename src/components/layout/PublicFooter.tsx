@@ -65,6 +65,18 @@ export const PublicFooter: React.FC = () => {
               <li><button onClick={() => setCurrentView('PUBLIC_SECURITY')} className="hover:text-white transition-colors">Security Architecture</button></li>
               <li><button onClick={() => setCurrentView('PUBLIC_LOCATIONS')} className="hover:text-white transition-colors">Executive Branches</button></li>
               <li><button onClick={() => setCurrentView('PUBLIC_SECURITY')} className="hover:text-white transition-colors">Compliance &amp; Disclosures</button></li>
+              <li className="pt-1">
+                <button
+                  onClick={() => {
+                    window.location.hash = 'admin';
+                    setCurrentView('AUTH_ADMIN_LOGIN');
+                  }}
+                  className="text-slate-500 hover:text-[#c5a880] transition-colors flex items-center gap-1 text-[11px]"
+                >
+                  <Lock className="w-3 h-3" />
+                  <span>Institutional Staff Portal</span>
+                </button>
+              </li>
             </ul>
           </div>
         </div>

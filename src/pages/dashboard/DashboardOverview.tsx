@@ -20,7 +20,10 @@ import {
   Lock,
   ExternalLink,
   Search,
-  Download
+  Download,
+  Fingerprint,
+  Moon,
+  Sun
 } from 'lucide-react';
 import { BankAccount, LedgerEntry } from '../../types';
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
@@ -34,7 +37,10 @@ export const DashboardOverview: React.FC = () => {
     setCurrentView,
     setSelectedAccountId,
     region,
-    rates
+    rates,
+    darkMode,
+    toggleDarkMode,
+    biometricState
   } = useBank();
 
   const [maskBalances, setMaskBalances] = useState(false);
@@ -57,7 +63,7 @@ export const DashboardOverview: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Top Welcome & Net Liquidity Card */}
-      <div className="bg-[#0a192f] text-white rounded-2xl p-6 sm:p-8 border border-slate-800 shadow-xl relative overflow-hidden">
+      <div className="bg-[#0a192f] text-white rounded-2xl p-6 sm:p-8 border border-slate-800 dark:border-[#1e3656] shadow-xl relative overflow-hidden transition-colors">
         <div className="absolute right-0 top-0 w-80 h-80 bg-radial from-[#1e4470]/30 to-transparent blur-3xl pointer-events-none" />
 
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
@@ -70,15 +76,25 @@ export const DashboardOverview: React.FC = () => {
             <h1 className="text-2xl sm:text-3xl font-bold font-serif text-white">
               Good {new Date().getHours() < 12 ? 'morning' : new Date().getHours() < 18 ? 'afternoon' : 'evening'}, {currentUser?.firstName || 'Client'}
             </h1>
-            <p className="text-xs text-slate-300">
-              Relationship Tier: <span className="text-[#e5ca95] font-semibold">{currentUser?.kycTier.replace(/_/g, ' ') || 'Private Wealth'}</span> • Client ID: <span className="font-mono">{currentUser?.username || 'jsterling'}</span>
-            </p>
+            <div className="flex flex-wrap items-center gap-3 text-xs text-slate-300">
+              <span>Relationship Tier: <span className="text-[#e5ca95] font-semibold">{currentUser?.kycTier ? String(currentUser.kycTier).replace(/_/g, ' ') : 'Private Wealth'}</span></span>
+              <span>•</span>
+              <span>Client ID: <span className="font-mono">{currentUser?.username || 'jsterling'}</span></span>
+              {biometricState.enabled && (
+                <>
+                  <span>•</span>
+                  <span className="inline-flex items-center gap-1 text-emerald-400 font-medium">
+                    <Fingerprint className="w-3.5 h-3.5" /> Hardware Biometric Active
+                  </span>
+                </>
+              )}
+            </div>
           </div>
 
           <div className="flex items-center gap-3">
             <button
               onClick={() => setMaskBalances(!maskBalances)}
-              className="p-2.5 rounded-xl bg-[#112d50] hover:bg-[#183c6b] text-slate-300 hover:text-white border border-slate-700 text-xs flex items-center gap-2 transition-colors"
+              className="p-2.5 rounded-xl bg-[#112d50] hover:bg-[#183c6b] text-slate-300 hover:text-white border border-slate-700 text-xs flex items-center gap-2 transition-colors cursor-pointer"
               title="Toggle Privacy Mask"
             >
               {maskBalances ? <EyeOff className="w-4 h-4 text-[#c5a880]" /> : <Eye className="w-4 h-4 text-[#c5a880]" />}
@@ -87,7 +103,7 @@ export const DashboardOverview: React.FC = () => {
 
             <button
               onClick={() => setCurrentView('DASHBOARD_TRANSFERS')}
-              className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#c5a880] to-[#b39366] text-slate-950 font-bold text-xs uppercase tracking-wider shadow-md hover:brightness-105 transition-all flex items-center gap-2"
+              className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#c5a880] to-[#b39366] text-slate-950 font-bold text-xs uppercase tracking-wider shadow-md hover:brightness-105 transition-all flex items-center gap-2 cursor-pointer font-sans"
             >
               <ArrowUpRight className="w-4 h-4" />
               <span>Transfer / Wire</span>
@@ -179,62 +195,62 @@ export const DashboardOverview: React.FC = () => {
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3">
         <button
           onClick={() => setCurrentView('DASHBOARD_TRANSFERS')}
-          className="p-4 rounded-xl bg-white hover:bg-slate-50 border border-slate-200 shadow-2xs flex flex-col items-center text-center gap-2 transition-colors group"
+          className="p-4 rounded-xl bg-white dark:bg-[#0a192f] hover:bg-slate-50 dark:hover:bg-[#112a4a] border border-slate-200 dark:border-[#1e3656] shadow-2xs flex flex-col items-center text-center gap-2 transition-colors group cursor-pointer"
         >
-          <div className="w-10 h-10 rounded-xl bg-[#0a192f] text-[#d4af37] flex items-center justify-center group-hover:scale-105 transition-transform">
+          <div className="w-10 h-10 rounded-xl bg-[#0a192f] dark:bg-[#112a4a] text-[#d4af37] flex items-center justify-center group-hover:scale-105 transition-transform border border-[#c5a880]/30">
             <ArrowLeftRight className="w-5 h-5" />
           </div>
-          <span className="text-xs font-bold text-slate-800">Transfer &amp; Wire</span>
+          <span className="text-xs font-bold text-slate-800 dark:text-slate-200">Transfer &amp; Wire</span>
         </button>
 
         <button
           onClick={() => setCurrentView('DASHBOARD_BILLPAY')}
-          className="p-4 rounded-xl bg-white hover:bg-slate-50 border border-slate-200 shadow-2xs flex flex-col items-center text-center gap-2 transition-colors group"
+          className="p-4 rounded-xl bg-white dark:bg-[#0a192f] hover:bg-slate-50 dark:hover:bg-[#112a4a] border border-slate-200 dark:border-[#1e3656] shadow-2xs flex flex-col items-center text-center gap-2 transition-colors group cursor-pointer"
         >
-          <div className="w-10 h-10 rounded-xl bg-[#0a192f] text-[#d4af37] flex items-center justify-center group-hover:scale-105 transition-transform">
+          <div className="w-10 h-10 rounded-xl bg-[#0a192f] dark:bg-[#112a4a] text-[#d4af37] flex items-center justify-center group-hover:scale-105 transition-transform border border-[#c5a880]/30">
             <Receipt className="w-5 h-5" />
           </div>
-          <span className="text-xs font-bold text-slate-800">Pay Bills</span>
+          <span className="text-xs font-bold text-slate-800 dark:text-slate-200">Pay Bills</span>
         </button>
 
         <button
           onClick={() => setCurrentView('DASHBOARD_DEPOSIT')}
-          className="p-4 rounded-xl bg-white hover:bg-slate-50 border border-slate-200 shadow-2xs flex flex-col items-center text-center gap-2 transition-colors group"
+          className="p-4 rounded-xl bg-white dark:bg-[#0a192f] hover:bg-slate-50 dark:hover:bg-[#112a4a] border border-slate-200 dark:border-[#1e3656] shadow-2xs flex flex-col items-center text-center gap-2 transition-colors group cursor-pointer"
         >
-          <div className="w-10 h-10 rounded-xl bg-[#0a192f] text-[#d4af37] flex items-center justify-center group-hover:scale-105 transition-transform">
+          <div className="w-10 h-10 rounded-xl bg-[#0a192f] dark:bg-[#112a4a] text-[#d4af37] flex items-center justify-center group-hover:scale-105 transition-transform border border-[#c5a880]/30">
             <Camera className="w-5 h-5" />
           </div>
-          <span className="text-xs font-bold text-slate-800">Deposit Check</span>
+          <span className="text-xs font-bold text-slate-800 dark:text-slate-200">Deposit Check</span>
         </button>
 
         <button
           onClick={() => setCurrentView('DASHBOARD_CARDS')}
-          className="p-4 rounded-xl bg-white hover:bg-slate-50 border border-slate-200 shadow-2xs flex flex-col items-center text-center gap-2 transition-colors group"
+          className="p-4 rounded-xl bg-white dark:bg-[#0a192f] hover:bg-slate-50 dark:hover:bg-[#112a4a] border border-slate-200 dark:border-[#1e3656] shadow-2xs flex flex-col items-center text-center gap-2 transition-colors group cursor-pointer"
         >
-          <div className="w-10 h-10 rounded-xl bg-[#0a192f] text-[#d4af37] flex items-center justify-center group-hover:scale-105 transition-transform">
+          <div className="w-10 h-10 rounded-xl bg-[#0a192f] dark:bg-[#112a4a] text-[#d4af37] flex items-center justify-center group-hover:scale-105 transition-transform border border-[#c5a880]/30">
             <CreditCard className="w-5 h-5" />
           </div>
-          <span className="text-xs font-bold text-slate-800">Card Controls</span>
+          <span className="text-xs font-bold text-slate-800 dark:text-slate-200">Card Controls</span>
         </button>
 
         <button
           onClick={() => setCurrentView('DASHBOARD_STATEMENTS')}
-          className="p-4 rounded-xl bg-white hover:bg-slate-50 border border-slate-200 shadow-2xs flex flex-col items-center text-center gap-2 transition-colors group"
+          className="p-4 rounded-xl bg-white dark:bg-[#0a192f] hover:bg-slate-50 dark:hover:bg-[#112a4a] border border-slate-200 dark:border-[#1e3656] shadow-2xs flex flex-col items-center text-center gap-2 transition-colors group cursor-pointer"
         >
-          <div className="w-10 h-10 rounded-xl bg-[#0a192f] text-[#d4af37] flex items-center justify-center group-hover:scale-105 transition-transform">
+          <div className="w-10 h-10 rounded-xl bg-[#0a192f] dark:bg-[#112a4a] text-[#d4af37] flex items-center justify-center group-hover:scale-105 transition-transform border border-[#c5a880]/30">
             <FileText className="w-5 h-5" />
           </div>
-          <span className="text-xs font-bold text-slate-800">Statements</span>
+          <span className="text-xs font-bold text-slate-800 dark:text-slate-200">Statements</span>
         </button>
 
         <button
           onClick={() => setCurrentView('DASHBOARD_SECURITY')}
-          className="p-4 rounded-xl bg-white hover:bg-slate-50 border border-slate-200 shadow-2xs flex flex-col items-center text-center gap-2 transition-colors group"
+          className="p-4 rounded-xl bg-white dark:bg-[#0a192f] hover:bg-slate-50 dark:hover:bg-[#112a4a] border border-slate-200 dark:border-[#1e3656] shadow-2xs flex flex-col items-center text-center gap-2 transition-colors group cursor-pointer"
         >
-          <div className="w-10 h-10 rounded-xl bg-[#0a192f] text-[#d4af37] flex items-center justify-center group-hover:scale-105 transition-transform">
+          <div className="w-10 h-10 rounded-xl bg-[#0a192f] dark:bg-[#112a4a] text-[#d4af37] flex items-center justify-center group-hover:scale-105 transition-transform border border-[#c5a880]/30">
             <ShieldCheck className="w-5 h-5" />
           </div>
-          <span className="text-xs font-bold text-slate-800">Security Score</span>
+          <span className="text-xs font-bold text-slate-800 dark:text-slate-200">Security Score</span>
         </button>
       </div>
 
@@ -243,12 +259,12 @@ export const DashboardOverview: React.FC = () => {
         {/* Left Column: Account Cards List */}
         <div className="lg:col-span-7 space-y-4">
           <div className="flex items-center justify-between">
-            <h2 className="text-sm font-bold uppercase tracking-wider text-slate-800 font-serif">
+            <h2 className="text-sm font-bold uppercase tracking-wider text-slate-800 dark:text-slate-200 font-serif">
               Deposit &amp; Credit Accounts
             </h2>
             <button
               onClick={() => setCurrentView('DASHBOARD_ACCOUNT_DETAIL')}
-              className="text-xs font-semibold text-[#8c6d37] hover:underline flex items-center gap-1"
+              className="text-xs font-semibold text-[#8c6d37] dark:text-[#c5a880] hover:underline flex items-center gap-1 cursor-pointer"
             >
               <span>View All Accounts &amp; Routing</span>
               <ChevronRight className="w-3.5 h-3.5" />
@@ -263,23 +279,23 @@ export const DashboardOverview: React.FC = () => {
                   setSelectedAccountId(acc.id);
                   setCurrentView('DASHBOARD_ACCOUNT_DETAIL');
                 }}
-                className="bg-white rounded-2xl p-5 border border-slate-200 hover:border-[#c5a880]/70 shadow-2xs hover:shadow-md transition-all cursor-pointer flex flex-col sm:flex-row sm:items-center justify-between gap-4 group"
+                className="bg-white dark:bg-[#0a192f] rounded-2xl p-5 border border-slate-200 dark:border-[#1e3656] hover:border-[#c5a880]/70 dark:hover:border-[#c5a880] shadow-2xs hover:shadow-md transition-all cursor-pointer flex flex-col sm:flex-row sm:items-center justify-between gap-4 group"
               >
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
-                    <span className="text-sm font-bold text-slate-900 group-hover:text-[#8c6d37] transition-colors">
+                    <span className="text-sm font-bold text-slate-900 dark:text-white group-hover:text-[#8c6d37] dark:group-hover:text-[#c5a880] transition-colors">
                       {acc.name}
                     </span>
                     <StatusBadge status={acc.status} size="sm" />
                   </div>
-                  <div className="flex items-center gap-3 text-xs text-slate-500 font-mono">
+                  <div className="flex items-center gap-3 text-xs text-slate-500 dark:text-slate-400 font-mono">
                     <span>{acc.accountNumber}</span>
                     <span>•</span>
                     <span>{acc.routingNumber ? `ABA: ${acc.routingNumber}` : `Sort: ${acc.sortCode}`}</span>
                     {acc.interestRateAPY && (
                       <>
                         <span>•</span>
-                        <span className="text-emerald-700 font-bold font-sans">{acc.interestRateAPY}% APY</span>
+                        <span className="text-emerald-700 dark:text-emerald-400 font-bold font-sans">{acc.interestRateAPY}% APY</span>
                       </>
                     )}
                   </div>
@@ -294,11 +310,11 @@ export const DashboardOverview: React.FC = () => {
                       amountMinor={acc.availableBalanceMinor}
                       currency={acc.currency}
                       size="lg"
-                      className="text-slate-900"
+                      className="text-slate-900 dark:text-white"
                     />
                   )}
                   {acc.pendingHoldMinor > 0 && !maskBalances && (
-                    <div className="text-[10px] text-amber-700 font-mono">
+                    <div className="text-[10px] text-amber-700 dark:text-amber-400 font-mono">
                       Hold: ${(acc.pendingHoldMinor / 100).toFixed(2)}
                     </div>
                   )}
@@ -308,15 +324,15 @@ export const DashboardOverview: React.FC = () => {
           </div>
 
           {/* Portfolio Performance Chart */}
-          <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-2xs space-y-3">
+          <div className="bg-white dark:bg-[#0a192f] rounded-2xl p-6 border border-slate-200 dark:border-[#1e3656] shadow-2xs space-y-3 transition-colors">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700 font-serif">
+                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 font-serif">
                   6-Month Portfolio Liquidity Growth
                 </h3>
-                <p className="text-[11px] text-slate-500">Verified double-entry cash flow trajectory</p>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400">Verified double-entry cash flow trajectory</p>
               </div>
-              <span className="text-xs font-bold text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-md">
+              <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 px-2.5 py-1 rounded-md border border-emerald-200 dark:border-emerald-800">
                 +27.0% YTD
               </span>
             </div>
@@ -330,20 +346,26 @@ export const DashboardOverview: React.FC = () => {
                       <stop offset="95%" stopColor="#c5a880" stopOpacity={0.0} />
                     </linearGradient>
                   </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                  <XAxis dataKey="month" stroke="#94a3b8" fontSize={11} />
+                  <CartesianGrid strokeDasharray="3 3" stroke={darkMode ? '#1e3656' : '#f1f5f9'} />
+                  <XAxis dataKey="month" stroke={darkMode ? '#64748b' : '#94a3b8'} fontSize={11} />
                   <YAxis
-                    stroke="#94a3b8"
+                    stroke={darkMode ? '#64748b' : '#94a3b8'}
                     fontSize={11}
                     tickFormatter={(v) => `$${(v / 1000).toFixed(0)}k`}
                   />
                   <Tooltip
+                    contentStyle={{
+                      backgroundColor: darkMode ? '#0a192f' : '#ffffff',
+                      borderColor: darkMode ? '#1e3656' : '#e2e8f0',
+                      color: darkMode ? '#ffffff' : '#0f172a',
+                      borderRadius: '0.75rem'
+                    }}
                     formatter={(value: any) => [`$${Number(value).toLocaleString()}`, 'Portfolio']}
                   />
                   <Area
                     type="monotone"
                     dataKey="balance"
-                    stroke="#8c6d37"
+                    stroke="#c5a880"
                     strokeWidth={2.5}
                     fillOpacity={1}
                     fill="url(#liquidityGrad)"
@@ -357,30 +379,30 @@ export const DashboardOverview: React.FC = () => {
         {/* Right Column: Recent Authoritative Ledger */}
         <div className="lg:col-span-5 space-y-4">
           <div className="flex items-center justify-between">
-            <h2 className="text-sm font-bold uppercase tracking-wider text-slate-800 font-serif">
+            <h2 className="text-sm font-bold uppercase tracking-wider text-slate-800 dark:text-slate-200 font-serif">
               Recent Activity &amp; Ledger
             </h2>
             <button
               onClick={() => setCurrentView('DASHBOARD_ACCOUNT_DETAIL')}
-              className="text-xs font-semibold text-[#8c6d37] hover:underline"
+              className="text-xs font-semibold text-[#8c6d37] dark:text-[#c5a880] hover:underline cursor-pointer"
             >
               Full Ledger &rarr;
             </button>
           </div>
 
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-2xs divide-y divide-slate-100 overflow-hidden">
-            {recentTransactions.slice(0, 6).map((tx) => (
+          <div className="bg-white dark:bg-[#0a192f] rounded-2xl border border-slate-200 dark:border-[#1e3656] shadow-2xs divide-y divide-slate-100 dark:divide-slate-800 overflow-hidden transition-colors">
+            {(recentTransactions || []).slice(0, 6).map((tx) => (
               <div
                 key={tx.id}
                 onClick={() => setSelectedTx(tx)}
-                className="p-3.5 hover:bg-slate-50 transition-colors cursor-pointer flex items-center justify-between gap-3"
+                className="p-3.5 hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors cursor-pointer flex items-center justify-between gap-3"
               >
                 <div className="flex items-center gap-3 min-w-0">
                   <div
                     className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${
                       tx.direction === 'CREDIT'
-                        ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                        : 'bg-slate-100 text-slate-700 border border-slate-200'
+                        ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800'
+                        : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700'
                     }`}
                   >
                     {tx.direction === 'CREDIT' ? (
@@ -390,10 +412,10 @@ export const DashboardOverview: React.FC = () => {
                     )}
                   </div>
                   <div className="min-w-0">
-                    <p className="text-xs font-bold text-slate-900 truncate">
+                    <p className="text-xs font-bold text-slate-900 dark:text-white truncate">
                       {tx.description}
                     </p>
-                    <div className="flex items-center gap-2 text-[10px] text-slate-500 font-mono">
+                    <div className="flex items-center gap-2 text-[10px] text-slate-500 dark:text-slate-400 font-mono">
                       <span>{new Date(tx.effectiveTimestamp).toLocaleDateString()}</span>
                       <span>•</span>
                       <span>{tx.category}</span>
@@ -407,7 +429,7 @@ export const DashboardOverview: React.FC = () => {
                     currency={tx.currency}
                     showSign={true}
                     size="sm"
-                    className={tx.direction === 'CREDIT' ? 'text-emerald-700' : 'text-slate-900'}
+                    className={tx.direction === 'CREDIT' ? 'text-emerald-700 dark:text-emerald-400' : 'text-slate-900 dark:text-white'}
                   />
                   <div className="mt-0.5">
                     <StatusBadge status={tx.status} size="sm" />
@@ -418,7 +440,7 @@ export const DashboardOverview: React.FC = () => {
           </div>
 
           {/* Security Summary Card */}
-          <div className="bg-gradient-to-br from-[#0a192f] to-[#112d50] text-white rounded-2xl p-5 border border-slate-800 space-y-3">
+          <div className="bg-gradient-to-br from-[#0a192f] to-[#112d50] text-white rounded-2xl p-5 border border-slate-800 dark:border-[#1e3656] space-y-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <ShieldCheck className="w-5 h-5 text-[#d4af37]" />
@@ -426,16 +448,18 @@ export const DashboardOverview: React.FC = () => {
                   Security &amp; Device Integrity
                 </h4>
               </div>
-              <span className="text-[11px] font-mono text-emerald-400 font-semibold">SCORE: 94/100</span>
+              <span className="text-[11px] font-mono text-emerald-400 font-semibold">
+                SCORE: {biometricState.enabled ? '98/100' : '88/100'}
+              </span>
             </div>
 
             <p className="text-xs text-slate-300 leading-relaxed">
-              Your session is secured by Hardware TOTP and encrypted TLS 1.3. No suspicious travel anomalies detected.
+              Your session is secured by Hardware TOTP and encrypted TLS 1.3. {biometricState.enabled ? 'Hardware biometric key is securely enrolled and active.' : 'Enable mobile biometrics in profile settings to reach 98/100 security rating.'}
             </p>
 
             <button
               onClick={() => setCurrentView('DASHBOARD_SECURITY')}
-              className="w-full py-2 bg-slate-800/80 hover:bg-slate-700 text-xs font-semibold text-slate-200 rounded-lg transition-colors text-center"
+              className="w-full py-2 bg-slate-800/80 hover:bg-slate-700 text-xs font-semibold text-slate-200 rounded-lg transition-colors text-center cursor-pointer border border-slate-700"
             >
               Open Security Center &rarr;
             </button>
@@ -445,62 +469,62 @@ export const DashboardOverview: React.FC = () => {
 
       {/* Transaction Detail Modal / Drawer */}
       {selectedTx && (
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-lg w-full p-6 sm:p-7 shadow-2xl border border-slate-200 space-y-5 animate-in fade-in zoom-in-95 duration-200">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-[#0a192f] rounded-2xl max-w-lg w-full p-6 sm:p-7 shadow-2xl border border-slate-200 dark:border-[#1e3656] space-y-5 animate-in fade-in zoom-in-95 duration-200 text-slate-900 dark:text-slate-100">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
               <div>
-                <span className="text-[10px] uppercase font-bold tracking-widest text-[#8c6d37]">
+                <span className="text-[10px] uppercase font-bold tracking-widest text-[#8c6d37] dark:text-[#c5a880]">
                   Authoritative Ledger Record
                 </span>
-                <h3 className="text-base font-bold text-slate-900 font-serif">
+                <h3 className="text-base font-bold text-slate-900 dark:text-white font-serif">
                   Transaction Receipt &amp; Proof
                 </h3>
               </div>
               <button
                 onClick={() => setSelectedTx(null)}
-                className="text-slate-400 hover:text-slate-700 text-xl font-bold p-1"
+                className="text-slate-400 hover:text-slate-700 dark:hover:text-white text-xl font-bold p-1 cursor-pointer"
               >
                 &times;
               </button>
             </div>
 
             <div className="text-center py-2 space-y-1">
-              <div className="text-xs text-slate-500 font-medium">Transaction Amount</div>
+              <div className="text-xs text-slate-500 dark:text-slate-400 font-medium">Transaction Amount</div>
               <CurrencyDisplay
                 amountMinor={selectedTx.amountMinor}
                 currency={selectedTx.currency}
                 showSign={true}
                 size="2xl"
-                className={selectedTx.direction === 'CREDIT' ? 'text-emerald-700' : 'text-slate-900'}
+                className={selectedTx.direction === 'CREDIT' ? 'text-emerald-700 dark:text-emerald-400' : 'text-slate-900 dark:text-white'}
               />
               <div className="pt-1">
                 <StatusBadge status={selectedTx.status} />
               </div>
             </div>
 
-            <div className="bg-slate-50 rounded-xl p-4 border border-slate-200 space-y-2.5 text-xs text-slate-700 font-mono">
+            <div className="bg-slate-50 dark:bg-slate-900/70 rounded-xl p-4 border border-slate-200 dark:border-slate-800 space-y-2.5 text-xs text-slate-700 dark:text-slate-300 font-mono">
               <div className="flex justify-between">
-                <span className="text-slate-500 font-sans">Reference Number:</span>
-                <span className="font-bold">{selectedTx.referenceNumber}</span>
+                <span className="text-slate-500 dark:text-slate-400 font-sans">Reference Number:</span>
+                <span className="font-bold text-[#c5a880]">{selectedTx.referenceNumber}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-slate-500 font-sans">Description:</span>
-                <span className="font-sans font-medium text-slate-900">{selectedTx.description}</span>
+                <span className="text-slate-500 dark:text-slate-400 font-sans">Description:</span>
+                <span className="font-sans font-medium text-slate-900 dark:text-white">{selectedTx.description}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-slate-500 font-sans">Counterparty:</span>
-                <span className="font-sans font-medium text-slate-900">{selectedTx.counterparty}</span>
+                <span className="text-slate-500 dark:text-slate-400 font-sans">Counterparty:</span>
+                <span className="font-sans font-medium text-slate-900 dark:text-white">{selectedTx.counterparty}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-slate-500 font-sans">Channel / Rail:</span>
+                <span className="text-slate-500 dark:text-slate-400 font-sans">Channel / Rail:</span>
                 <span className="font-bold">{selectedTx.channel}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-slate-500 font-sans">Effective Date:</span>
+                <span className="text-slate-500 dark:text-slate-400 font-sans">Effective Date:</span>
                 <span>{new Date(selectedTx.effectiveTimestamp).toLocaleString()}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-slate-500 font-sans">Balance After Entry:</span>
+                <span className="text-slate-500 dark:text-slate-400 font-sans">Balance After Entry:</span>
                 <span className="font-bold">${(selectedTx.balanceAfterMinor / 100).toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
               </div>
             </div>
@@ -510,14 +534,14 @@ export const DashboardOverview: React.FC = () => {
                 onClick={() => {
                   window.print();
                 }}
-                className="flex-1 py-2.5 rounded-xl border border-slate-300 text-slate-700 font-semibold text-xs flex items-center justify-center gap-1.5 hover:bg-slate-50"
+                className="flex-1 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 font-semibold text-xs flex items-center justify-center gap-1.5 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer"
               >
                 <Download className="w-3.5 h-3.5" />
                 <span>Export Proof (PDF)</span>
               </button>
               <button
                 onClick={() => setSelectedTx(null)}
-                className="flex-1 py-2.5 rounded-xl bg-[#0a192f] text-white font-bold text-xs uppercase tracking-wider hover:bg-[#132d52]"
+                className="flex-1 py-2.5 rounded-xl bg-[#0a192f] dark:bg-[#112a4a] text-white font-bold text-xs uppercase tracking-wider hover:bg-[#132d52] cursor-pointer border border-[#c5a880]/30"
               >
                 Close
               </button>

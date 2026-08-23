@@ -25,69 +25,19 @@ import {
 import { BankRegion } from '../../types';
 
 export const LoginPage: React.FC = () => {
-  const { login, setCurrentView, showToast, switchToAdmin } = useBank();
+  const { login, setCurrentView, showToast } = useBank();
 
-  const [authMode, setAuthMode] = useState<'CLIENT' | 'ADMIN'>('CLIENT');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [rememberDevice, setRememberDevice] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
-  const [copiedKey, setCopiedKey] = useState<string | null>(null);
   const [applicationNotice, setApplicationNotice] = useState<{
     referenceNumber?: string;
     status?: string;
     submittedAt?: string;
     message?: string;
   } | null>(null);
-
-  // Quick helper to fill Admin credentials
-  const fillAdminCredentials = () => {
-    setAuthMode('ADMIN');
-    setUsername('admin@firstatlanticbank.com');
-    setPassword('AdminMaster2026!');
-    setErrorMessage('');
-  };
-
-  // Quick helper to fill Demo Client
-  const fillClientCredentials = (type: 'sterling' | 'montgomery') => {
-    setAuthMode('CLIENT');
-    if (type === 'sterling') {
-      setUsername('jsterling');
-      setPassword('PremierClient2026!');
-    } else {
-      setUsername('emontgomery');
-      setPassword('MayfairLondon2026!');
-    }
-    setErrorMessage('');
-  };
-
-  // Direct 1-Click Instant Admin Test Run
-  const handleInstantAdminTestRun = async () => {
-    setIsLoading(true);
-    setErrorMessage('');
-    try {
-      const res = await fetch('/api/auth/admin-login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          usernameOrEmail: 'admin@firstatlanticbank.com',
-          password: 'AdminMaster2026!'
-        })
-      });
-      const data = await res.json();
-      if (res.ok && data.isAdmin) {
-        showToast('SUCCESS', 'Admin Session Verified', 'Authenticated as Alexandra Vance (Chief Risk Officer & Master Admin).');
-        switchToAdmin();
-      } else {
-        setErrorMessage(data.error || 'Failed to authenticate administrator session.');
-      }
-    } catch (err: any) {
-      setErrorMessage(err.message || 'Connection error to core admin server.');
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   // MFA Challenge State
   const [mfaChallenge, setMfaChallenge] = useState<{
@@ -127,12 +77,6 @@ export const LoginPage: React.FC = () => {
           return;
         }
         setErrorMessage(data.message || data.error || 'Authentication failed. Please verify your credentials.');
-        return;
-      }
-
-      if (data.isAdmin) {
-        showToast('SUCCESS', 'Master Administrator Authenticated', `Welcome, ${data.adminUser?.name || 'Alexandra Vance'}.`);
-        switchToAdmin();
         return;
       }
 
@@ -186,92 +130,33 @@ export const LoginPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-[85vh] bg-[#f8fafc] flex flex-col justify-center items-center py-10 px-4 sm:px-6">
-      <div className="w-full max-w-lg space-y-5">
+    <div className="min-h-[85vh] bg-[#f8fafc] flex flex-col justify-center items-center py-12 px-4 sm:px-6">
+      <div className="w-full max-w-md space-y-6">
         {/* Institutional Branding Header */}
-        <div className="text-center space-y-1.5">
+        <div className="text-center space-y-2">
           <div className="inline-block">
             <InstitutionalCrest size="lg" variant="light" />
           </div>
           <p className="text-xs uppercase tracking-widest text-[#8c6d37] font-semibold pt-1 font-sans">
-            Global Private &amp; Institutional Banking Gateway
+            Secure Client Online Banking
           </p>
         </div>
 
-        {/* Segmented Gateway Portal Switcher */}
-        <div className="bg-slate-200/90 p-1 rounded-xl flex items-center gap-1 shadow-inner border border-slate-300">
-          <button
-            type="button"
-            onClick={() => {
-              setAuthMode('CLIENT');
-              setErrorMessage('');
-              if (username === 'admin@firstatlanticbank.com') {
-                setUsername('');
-                setPassword('');
-              }
-            }}
-            className={`flex-1 py-2 px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer ${
-              authMode === 'CLIENT'
-                ? 'bg-white text-[#0a192f] shadow-sm'
-                : 'text-slate-600 hover:text-slate-900'
-            }`}
-          >
-            <User className="w-3.5 h-3.5 text-[#8c6d37]" />
-            <span>Private Client Portal</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => {
-              fillAdminCredentials();
-            }}
-            className={`flex-1 py-2 px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer ${
-              authMode === 'ADMIN'
-                ? 'bg-[#0a192f] text-[#d4af37] shadow-sm'
-                : 'text-slate-600 hover:text-slate-900'
-            }`}
-          >
-            <ShieldCheck className="w-3.5 h-3.5 text-[#d4af37]" />
-            <span>Master Admin &amp; Compliance</span>
-          </button>
-        </div>
-
         {/* Main Sign In Container */}
-        <div
-          className={`rounded-2xl p-6 sm:p-8 border shadow-xl transition-all space-y-5 ${
-            authMode === 'ADMIN'
-              ? 'bg-[#071526] border-[#1e4573] text-slate-100'
-              : 'bg-white border-slate-200 text-slate-900'
-          }`}
-        >
-          {/* Header Banner */}
-          {authMode === 'ADMIN' ? (
-            <div className="p-3.5 rounded-xl bg-[#0c223c] border border-[#c5a880]/30 space-y-1.5 font-sans">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2 text-[#d4af37] font-bold text-xs">
-                  <ShieldCheck className="w-4 h-4 text-emerald-400" />
-                  <span>MASTER ADMINISTRATOR GATEWAY</span>
-                </div>
-                <span className="text-[10px] uppercase font-mono px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-bold">
-                  SUPER ADMIN
-                </span>
-              </div>
-              <p className="text-[11px] text-slate-300 leading-relaxed">
-                Executive back-office suite for onboarding compliance, KYC approvals, automated alerts, clearing settlement, and double-entry general ledger.
+        <div className="bg-white rounded-2xl p-6 sm:p-8 border border-slate-200 shadow-xl space-y-5 text-slate-900">
+          <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+            <div>
+              <h2 className="text-lg font-bold font-serif text-slate-900">
+                Client Sign In
+              </h2>
+              <p className="text-xs text-slate-500">
+                Access your multi-currency accounts and treasury services.
               </p>
             </div>
-          ) : (
-            <div className="flex items-center justify-between pb-1 border-b border-slate-100">
-              <div>
-                <h2 className="text-base font-bold font-serif text-slate-900">
-                  Client Account Sign In
-                </h2>
-                <p className="text-xs text-slate-500">
-                  Access your multi-currency accounts, wires, and private banking.
-                </p>
-              </div>
+            <div className="p-2 rounded-lg bg-slate-100 text-slate-700">
+              <Lock className="w-4 h-4 text-[#8c6d37]" />
             </div>
-          )}
+          </div>
 
           {errorMessage && (
             <div className="p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs flex items-start gap-2.5">
@@ -302,65 +187,39 @@ export const LoginPage: React.FC = () => {
             /* Standard Login Form */
             <form onSubmit={handleInitialSubmit} className="space-y-4">
               <div>
-                <label
-                  className={`block text-xs font-bold uppercase tracking-wider mb-1.5 font-sans ${
-                    authMode === 'ADMIN' ? 'text-slate-300' : 'text-slate-700'
-                  }`}
-                >
-                  {authMode === 'ADMIN' ? 'Administrator Identifier or Email' : 'Username or Client ID'}
+                <label className="block text-xs font-bold uppercase tracking-wider mb-1.5 font-sans text-slate-700">
+                  Username or Client ID
                 </label>
                 <div className="relative">
-                  <div
-                    className={`absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none ${
-                      authMode === 'ADMIN' ? 'text-[#d4af37]' : 'text-slate-400'
-                    }`}
-                  >
-                    {authMode === 'ADMIN' ? <Shield className="w-4 h-4" /> : <User className="w-4 h-4" />}
+                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                    <User className="w-4 h-4" />
                   </div>
                   <input
                     type="text"
                     required
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
-                    placeholder={
-                      authMode === 'ADMIN'
-                        ? 'admin@firstatlanticbank.com'
-                        : 'Enter your FAB username or Client ID'
-                    }
-                    className={`w-full pl-10 pr-3.5 py-2.5 text-sm rounded-lg font-sans transition-all focus:outline-none ${
-                      authMode === 'ADMIN'
-                        ? 'bg-[#0a1f38] border border-[#1e4573] text-slate-100 placeholder-slate-500 focus:border-[#d4af37] focus:ring-1 focus:ring-[#d4af37]'
-                        : 'bg-slate-50 border border-slate-300 text-slate-900 placeholder-slate-400 focus:bg-white focus:border-[#8c6d37] focus:ring-1 focus:ring-[#8c6d37]'
-                    }`}
+                    placeholder="Enter your Username or Client ID"
+                    className="w-full pl-10 pr-3.5 py-2.5 text-sm rounded-lg font-sans transition-all focus:outline-none bg-slate-50 border border-slate-300 text-slate-900 placeholder-slate-400 focus:bg-white focus:border-[#8c6d37] focus:ring-1 focus:ring-[#8c6d37]"
                   />
                 </div>
               </div>
 
               <div>
                 <div className="flex justify-between items-center mb-1.5">
-                  <label
-                    className={`block text-xs font-bold uppercase tracking-wider font-sans ${
-                      authMode === 'ADMIN' ? 'text-slate-300' : 'text-slate-700'
-                    }`}
-                  >
-                    {authMode === 'ADMIN' ? 'Master Security Key / Password' : 'Password'}
+                  <label className="block text-xs font-bold uppercase tracking-wider font-sans text-slate-700">
+                    Password
                   </label>
-                  {authMode === 'CLIENT' && (
-                    <button
-                      type="button"
-                      onClick={() => showToast('INFO', 'Password Recovery', 'Security recovery instructions dispatched to your registered email.')}
-                      className="text-[11px] text-[#8c6d37] hover:underline"
-                    >
-                      Forgot password?
-                    </button>
-                  )}
+                  <button
+                    type="button"
+                    onClick={() => showToast('INFO', 'Password Assistance', 'Please contact your Private Banker or Concierge desk.')}
+                    className="text-[11px] text-[#8c6d37] hover:underline cursor-pointer"
+                  >
+                    Forgot password?
+                  </button>
                 </div>
                 <div className="relative">
-                  <div
-                    className={`absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none ${
-                      authMode === 'ADMIN' ? 'text-[#d4af37]' : 'text-slate-400'
-                    }`}
-                  >
+                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
                     <KeyRound className="w-4 h-4" />
                   </div>
                   <input
@@ -369,21 +228,13 @@ export const LoginPage: React.FC = () => {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="••••••••••••"
-                    className={`w-full pl-10 pr-3.5 py-2.5 text-sm rounded-lg font-sans transition-all focus:outline-none ${
-                      authMode === 'ADMIN'
-                        ? 'bg-[#0a1f38] border border-[#1e4573] text-slate-100 placeholder-slate-500 focus:border-[#d4af37] focus:ring-1 focus:ring-[#d4af37]'
-                        : 'bg-slate-50 border border-slate-300 text-slate-900 placeholder-slate-400 focus:bg-white focus:border-[#8c6d37] focus:ring-1 focus:ring-[#8c6d37]'
-                    }`}
+                    className="w-full pl-10 pr-3.5 py-2.5 text-sm rounded-lg font-sans transition-all focus:outline-none bg-slate-50 border border-slate-300 text-slate-900 placeholder-slate-400 focus:bg-white focus:border-[#8c6d37] focus:ring-1 focus:ring-[#8c6d37]"
                   />
                 </div>
               </div>
 
               <div className="flex items-center justify-between pt-0.5">
-                <label
-                  className={`flex items-center gap-2 text-xs cursor-pointer ${
-                    authMode === 'ADMIN' ? 'text-slate-400' : 'text-slate-600'
-                  }`}
-                >
+                <label className="flex items-center gap-2 text-xs cursor-pointer text-slate-600">
                   <input
                     type="checkbox"
                     checked={rememberDevice}
@@ -392,30 +243,21 @@ export const LoginPage: React.FC = () => {
                   />
                   <span>Remember secure terminal</span>
                 </label>
-                <span className="text-[11px] font-mono text-emerald-400 flex items-center gap-1">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                  FAB Core v4.9
+                <span className="text-[11px] font-mono text-emerald-600 flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                  256-Bit Encrypted
                 </span>
               </div>
 
-              {/* Submit Buttons */}
-              <div className="space-y-2 pt-1">
+              {/* Submit Button */}
+              <div className="pt-2">
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className={`w-full py-3 rounded-xl font-bold text-xs uppercase tracking-widest transition-all shadow-md flex items-center justify-center gap-2 font-sans cursor-pointer ${
-                    authMode === 'ADMIN'
-                      ? 'bg-gradient-to-r from-[#d4af37] to-[#b8952b] text-slate-950 hover:brightness-110'
-                      : 'bg-[#0a192f] hover:bg-[#132d52] text-white'
-                  }`}
+                  className="w-full py-3 rounded-xl font-bold text-xs uppercase tracking-widest transition-all shadow-md flex items-center justify-center gap-2 font-sans cursor-pointer bg-[#0a192f] hover:bg-[#132d52] text-white"
                 >
                   {isLoading ? (
-                    <RefreshCw className="w-4 h-4 animate-spin text-slate-900" />
-                  ) : authMode === 'ADMIN' ? (
-                    <>
-                      <ShieldCheck className="w-4 h-4 text-slate-950" />
-                      <span>Sign In to Master Admin Suite</span>
-                    </>
+                    <RefreshCw className="w-4 h-4 animate-spin text-[#c5a880]" />
                   ) : (
                     <>
                       <Lock className="w-3.5 h-3.5 text-[#d4af37]" />
@@ -423,18 +265,6 @@ export const LoginPage: React.FC = () => {
                     </>
                   )}
                 </button>
-
-                {/* Instant 1-Click Test Run Button for Admin */}
-                {authMode === 'ADMIN' && (
-                  <button
-                    type="button"
-                    disabled={isLoading}
-                    onClick={handleInstantAdminTestRun}
-                    className="w-full py-2.5 rounded-xl bg-slate-800/90 hover:bg-slate-800 text-slate-200 border border-slate-700 text-xs font-semibold flex items-center justify-center gap-2 transition cursor-pointer"
-                  >
-                    <span>⚡ 1-Click Instant Test Run (Alexandra Vance)</span>
-                  </button>
-                )}
               </div>
             </form>
           ) : (
@@ -500,118 +330,26 @@ export const LoginPage: React.FC = () => {
             </div>
           )}
 
-          {/* Test Credentials Sandbox Callout */}
-          <div
-            className={`p-3.5 rounded-xl text-xs space-y-2 border ${
-              authMode === 'ADMIN'
-                ? 'bg-[#091b30] border-[#1e4573] text-slate-300'
-                : 'bg-slate-50 border-slate-200 text-slate-700'
-            }`}
-          >
-            <div className="flex items-center justify-between">
-              <span className="font-bold uppercase tracking-wider text-[10px] text-[#8c6d37] font-sans flex items-center gap-1">
-                <KeyRound className="w-3 h-3" />
-                {authMode === 'ADMIN' ? 'Master Admin Test Credentials' : 'Quick Demo Client Personas'}
-              </span>
-              <span className="text-[10px] text-slate-400 font-mono">Sandbox Enabled</span>
-            </div>
-
-            {authMode === 'ADMIN' ? (
-              <div className="space-y-1.5 font-mono text-[11px]">
-                <div className="flex items-center justify-between bg-[#061322] p-2 rounded border border-slate-800">
-                  <span className="text-slate-400">Admin Email:</span>
-                  <span className="text-amber-300 font-bold select-all">admin@firstatlanticbank.com</span>
-                </div>
-                <div className="flex items-center justify-between bg-[#061322] p-2 rounded border border-slate-800">
-                  <span className="text-slate-400">Master Password:</span>
-                  <span className="text-amber-300 font-bold select-all">AdminMaster2026!</span>
-                </div>
-                <div className="flex items-center justify-between bg-[#061322] p-2 rounded border border-slate-800">
-                  <span className="text-slate-400">Authority Role:</span>
-                  <span className="text-emerald-400 font-semibold">Alexandra Vance (CRO &amp; Super Admin)</span>
-                </div>
-                <div className="pt-1 flex gap-2">
-                  <button
-                    type="button"
-                    onClick={fillAdminCredentials}
-                    className="flex-1 py-1.5 px-2 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 text-[10px] font-sans font-bold border border-slate-700 cursor-pointer"
-                  >
-                    Autofill Credentials
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleInstantAdminTestRun}
-                    className="flex-1 py-1.5 px-2 rounded bg-[#d4af37]/20 hover:bg-[#d4af37]/30 text-[#d4af37] text-[10px] font-sans font-bold border border-[#d4af37]/40 cursor-pointer"
-                  >
-                    Direct Test Run
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <div className="flex flex-wrap gap-2 pt-1 font-sans">
-                <button
-                  type="button"
-                  onClick={() => fillClientCredentials('sterling')}
-                  className="px-2.5 py-1.5 rounded-lg bg-white border border-slate-300 hover:border-[#8c6d37] text-[11px] font-medium text-slate-800 flex items-center gap-1.5 cursor-pointer shadow-xs"
-                >
-                  <span className="w-2 h-2 rounded-full bg-blue-500" />
-                  <span>Jonathan Sterling (US / Global)</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => fillClientCredentials('montgomery')}
-                  className="px-2.5 py-1.5 rounded-lg bg-white border border-slate-300 hover:border-[#8c6d37] text-[11px] font-medium text-slate-800 flex items-center gap-1.5 cursor-pointer shadow-xs"
-                >
-                  <span className="w-2 h-2 rounded-full bg-purple-500" />
-                  <span>Evelyn Montgomery (UK Private)</span>
-                </button>
-              </div>
-            )}
-          </div>
-
           {/* Footer Inside Card */}
-          <div
-            className={`pt-3 border-t flex items-center justify-between text-xs ${
-              authMode === 'ADMIN' ? 'border-slate-800 text-slate-400' : 'border-slate-100 text-slate-500'
-            }`}
-          >
-            {authMode === 'ADMIN' ? (
-              <>
-                <span>Looking for client online banking?</span>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setAuthMode('CLIENT');
-                    setUsername('');
-                    setPassword('');
-                  }}
-                  className="font-bold text-[#d4af37] hover:underline cursor-pointer"
-                >
-                  Client Portal &rarr;
-                </button>
-              </>
-            ) : (
-              <>
-                <span>Need a new international account?</span>
-                <button
-                  type="button"
-                  onClick={() => setCurrentView('AUTH_ENROLL')}
-                  className="font-bold text-[#8c6d37] hover:underline cursor-pointer"
-                >
-                  Open Account &rarr;
-                </button>
-              </>
-            )}
+          <div className="pt-4 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
+            <span>Need a new account?</span>
+            <button
+              type="button"
+              onClick={() => setCurrentView('AUTH_ENROLL')}
+              className="font-bold text-[#8c6d37] hover:underline cursor-pointer"
+            >
+              Open an Account &rarr;
+            </button>
           </div>
         </div>
 
         {/* Security & System Info */}
         <div className="flex items-center justify-between text-xs text-slate-500 px-2 font-mono">
           <span className="flex items-center gap-1">
-            <Shield className="w-3.5 h-3.5 text-[#8c6d37]" /> TLS 1.3 256-Bit SSL Encryption
+            <Shield className="w-3.5 h-3.5 text-[#8c6d37]" /> TLS 1.3 256-Bit SSL Protection
           </span>
           <span className="text-slate-400">
-            Protected Institutional Gateway
+            Institutional Banking Gateway
           </span>
         </div>
       </div>

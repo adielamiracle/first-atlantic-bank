@@ -224,7 +224,8 @@ export const EnrollmentTrendWidget: React.FC<EnrollmentTrendWidgetProps> = ({
   const CustomChartTooltip = ({ active, payload, label }: any) => {
     if (!active || !payload || !payload.length) return null;
 
-    const data = payload[0].payload;
+    const data = payload?.[0]?.payload;
+    if (!data) return null;
 
     return (
       <div className="bg-[#050e1a]/95 border border-[#d4af37]/40 rounded-xl p-3.5 shadow-2xl backdrop-blur-md text-xs font-sans min-w-[200px] z-50">

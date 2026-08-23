@@ -1,3 +1,5 @@
+import fs from 'fs';
+import path from 'path';
 import {
   BankAccount,
   BankCard,
@@ -15,7 +17,9 @@ import {
   AccountApplication,
   UserApprovalStatus,
   AccountActivationRequest,
-  BankReceivingAccount
+  BankReceivingAccount,
+  TransactionStatus,
+  TransactionDirection
 } from '../types';
 import { doubleEntryLedger, JournalLine } from './ledger/DoubleEntryLedger';
 import { adminNotificationService } from './notifications';
@@ -56,8 +60,83 @@ export class BankDatabase {
   userPasswords: Map<string, string> = new Map(); // demo hashed simulation
   activeSessions: Map<string, { userId: string; token: string; device: string; ip: string; loginTime: string }> = new Map();
 
+  private dbFilePath = path.join(process.cwd(), 'data', 'bank_database.json');
+  private saveTimeout: any = null;
+
   constructor() {
+    this.initDatabase();
+  }
+
+  initDatabase() {
+    try {
+      const dataDir = path.join(process.cwd(), 'data');
+      if (!fs.existsSync(dataDir)) {
+        fs.mkdirSync(dataDir, { recursive: true });
+      }
+      if (fs.existsSync(this.dbFilePath)) {
+        const raw = fs.readFileSync(this.dbFilePath, 'utf-8');
+        const data = JSON.parse(raw);
+        if (data && data.users && data.accounts) {
+          this.hydrateFromJSON(data);
+          return;
+        }
+      }
+    } catch (e) {
+      console.warn('Could not load existing database file, seeding defaults:', e);
+    }
     this.seedInitialData();
+    this.saveToDisk();
+  }
+
+  saveToDisk() {
+    if (this.saveTimeout) {
+      clearTimeout(this.saveTimeout);
+    }
+    this.saveTimeout = setTimeout(() => {
+      try {
+        const dataDir = path.join(process.cwd(), 'data');
+        if (!fs.existsSync(dataDir)) {
+          fs.mkdirSync(dataDir, { recursive: true });
+        }
+        const serialized = {
+          users: Array.from(this.users.entries()),
+          accounts: Array.from(this.accounts.entries()),
+          cards: Array.from(this.cards.entries()),
+          ledger: this.ledger,
+          auditLogs: this.auditLogs,
+          adjustments: this.adjustments,
+          activationRequests: this.activationRequests,
+          riskEvents: this.riskEvents,
+          supportCases: this.supportCases,
+          mobileDeposits: this.mobileDeposits,
+          adminUsers: Array.from(this.adminUsers.entries()),
+          applications: Array.from(this.applications.entries()),
+          receivingAccounts: Array.from(this.receivingAccounts.entries()),
+          userPasswords: Array.from(this.userPasswords.entries()),
+          savedAt: new Date().toISOString()
+        };
+        fs.writeFileSync(this.dbFilePath, JSON.stringify(serialized, null, 2), 'utf-8');
+      } catch (e) {
+        console.error('Failed to persist database to disk:', e);
+      }
+    }, 100);
+  }
+
+  hydrateFromJSON(data: any) {
+    if (data.users) this.users = new Map(data.users);
+    if (data.accounts) this.accounts = new Map(data.accounts);
+    if (data.cards) this.cards = new Map(data.cards);
+    if (data.ledger) this.ledger = data.ledger;
+    if (data.auditLogs) this.auditLogs = data.auditLogs;
+    if (data.adjustments) this.adjustments = data.adjustments;
+    if (data.activationRequests) this.activationRequests = data.activationRequests;
+    if (data.riskEvents) this.riskEvents = data.riskEvents;
+    if (data.supportCases) this.supportCases = data.supportCases;
+    if (data.mobileDeposits) this.mobileDeposits = data.mobileDeposits;
+    if (data.adminUsers) this.adminUsers = new Map(data.adminUsers);
+    if (data.applications) this.applications = new Map(data.applications);
+    if (data.receivingAccounts) this.receivingAccounts = new Map(data.receivingAccounts);
+    if (data.userPasswords) this.userPasswords = new Map(data.userPasswords);
   }
 
   seedInitialData() {
@@ -1906,6 +1985,7 @@ export class BankDatabase {
     };
 
     this.ledger.unshift(ledgerItem);
+    this.saveToDisk();
 
     return { success: true, depositId, availableDate: availDate };
   }
@@ -2131,6 +2211,7 @@ export class BankDatabase {
       signatureHash: this.computeHash(`${entry.actorId}_${entry.action}_${Date.now()}`)
     };
     this.auditLogs.unshift(log);
+    this.saveToDisk();
   }
 
   private computeHash(input: string): string {

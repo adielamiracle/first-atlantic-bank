@@ -434,22 +434,56 @@ export interface AdminNotification {
 
 export interface BankReceivingAccount {
   id: string;
-  label: string;
+  label?: string;
   bankName: string;
-  beneficiaryName: string;
-  accountNumberOrIban: string;
+  beneficiaryName?: string;
+  accountName?: string;
+  accountNumberOrIban?: string;
+  accountNumber?: string;
   routingNumber?: string;
   sortCode?: string;
+  iban?: string;
   swiftBic: string;
   currency: CurrencyCode;
-  region: BankRegion;
+  region?: BankRegion;
   bankAddress: string;
   intermediaryBankName?: string;
   intermediarySwiftBic?: string;
   specialInstructions?: string;
-  isDefault: boolean;
+  instructions?: string;
+  isDefault?: boolean;
   status: 'ACTIVE' | 'INACTIVE';
-  updatedAt: string;
+  updatedAt?: string;
+}
+
+export function formatAddress(address: any): string {
+  if (!address) return '';
+  if (typeof address === 'string') return address;
+  if (typeof address === 'object') {
+    const parts = [
+      address.line1 || address.street || address.addressLine1,
+      address.line2 || address.addressLine2,
+      address.city,
+      address.stateOrCounty || address.stateOrProvince || address.state || address.statePostal,
+      address.postalCode || address.zip || address.zipCode,
+      address.country
+    ].filter(Boolean);
+    return parts.length > 0 ? parts.join(', ') : '';
+  }
+  return String(address);
+}
+
+export interface BiometricSecurityState {
+  enabled: boolean;
+  type: 'FACE_ID' | 'TOUCH_ID' | 'FINGERPRINT' | 'WINDOWS_HELLO' | 'WEBAUTHN';
+  credentialId?: string;
+  enrolledAt?: string;
+  lastUsedAt?: string;
+  requireForLogin: boolean;
+  requireForWires: boolean;
+  requireForCardUnfreeze: boolean;
+  hardwareEnclaveVerified: boolean;
+  deviceName: string;
 }
 
 

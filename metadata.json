@@ -1,6 +1,6 @@
 {
-  "name": "First Atlantic Bank",
-  "description": "Premier full digital banking platform for US & UK operations with server-side double-entry ledger, multi-currency accounts, transfers, payments, cards, statements, fraud risk engine, and institutional administration suite.",
+  "name": "First Atlantic Bank & Trust",
+  "description": "Premier full digital banking platform for US, UK & European operations with server-side double-entry ledger, multi-currency accounts, transfers, payments, cards, statements, fraud risk engine, and institutional administration suite.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

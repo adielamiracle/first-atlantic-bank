@@ -73,7 +73,7 @@ export const AccountActivationTab: React.FC = () => {
         setAllUsersList(data.users || []);
         if (data.users && data.users.length > 0 && !proposeUserId) {
           const pending = data.users.find((u: any) => u.approval_status === 'PENDING');
-          setProposeUserId(pending ? pending.id : data.users[0].id);
+          setProposeUserId(pending ? pending.id : data.users[0]?.id || '');
         }
       }
     } catch (err) {
