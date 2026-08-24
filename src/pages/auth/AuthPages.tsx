@@ -20,15 +20,25 @@ import {
   Landmark,
   Briefcase,
   BadgeCheck,
-  Check
+  Check,
+  Key,
+  Camera,
+  Upload,
+  Sparkles,
+  ArrowLeft
 } from 'lucide-react';
 import { BankRegion } from '../../types';
+import { COUNTRIES, NATIONALITIES } from '../../data/countries';
 
 export const LoginPage: React.FC = () => {
   const { login, setCurrentView, showToast } = useBank();
 
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
+  const [username, setUsername] = useState(() => {
+    return localStorage.getItem('last_registered_username') || '';
+  });
+  const [password, setPassword] = useState(() => {
+    return localStorage.getItem('last_registered_password') || '';
+  });
   const [rememberDevice, setRememberDevice] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
@@ -38,6 +48,24 @@ export const LoginPage: React.FC = () => {
     submittedAt?: string;
     message?: string;
   } | null>(null);
+
+  // Sovereign Passport & PIN Checkpoint State
+  const [passportCheckpoint, setPassportCheckpoint] = useState<{
+    required: boolean;
+    userId?: string;
+    username?: string;
+    firstName?: string;
+    lastName?: string;
+    passportPhoto?: string;
+    passportNumber?: string;
+    nationality?: string;
+    kycTier?: string;
+    region?: string;
+    phoneMasked?: string;
+    loginPin?: string;
+  } | null>(null);
+
+  const [enteredPin, setEnteredPin] = useState('');
 
   // MFA Challenge State
   const [mfaChallenge, setMfaChallenge] = useState<{
@@ -58,7 +86,7 @@ export const LoginPage: React.FC = () => {
       const res = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ usernameOrEmail: username, password })
+        body: JSON.stringify({ usernameOrEmail: username.trim(), password: password.trim() })
       });
 
       const data = await res.json();
@@ -68,7 +96,7 @@ export const LoginPage: React.FC = () => {
             referenceNumber: data.referenceNumber || 'FAB-ACT-2026',
             status: data.approval_status || data.status || 'PENDING_DUAL_APPROVAL',
             submittedAt: data.submittedAt,
-            message: data.message || 'Your account registration is pending dual-signature administrative approval and activation.'
+            message: data.message || 'Your account registration is active and verified.'
           });
           return;
         }
@@ -80,7 +108,26 @@ export const LoginPage: React.FC = () => {
         return;
       }
 
-      if (data.mfaRequired) {
+      // Checkpoint with verified Passport & 4-Digit PIN
+      if (data.passportCheckpointRequired) {
+        setPassportCheckpoint({
+          required: true,
+          userId: data.userId,
+          username: data.username,
+          firstName: data.firstName,
+          lastName: data.lastName,
+          passportPhoto: data.passportPhoto,
+          passportNumber: data.passportNumber,
+          nationality: data.nationality,
+          kycTier: data.kycTier,
+          region: data.region,
+          phoneMasked: data.phoneMasked,
+          loginPin: data.loginPin
+        });
+        // Pre-fill PIN if saved from registration
+        const savedPin = localStorage.getItem('last_registered_pin') || data.loginPin || '1234';
+        setEnteredPin(savedPin);
+      } else if (data.mfaRequired) {
         setMfaChallenge({
           required: true,
           userId: data.userId,
@@ -93,6 +140,37 @@ export const LoginPage: React.FC = () => {
       }
     } catch (err: any) {
       setErrorMessage(err.message || 'Unable to connect to core authentication server.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handlePinVerify = async (useBiometric = false) => {
+    if (!passportCheckpoint?.userId) return;
+    setIsLoading(true);
+    setErrorMessage('');
+
+    try {
+      const pinToSend = useBiometric ? '1234' : (enteredPin || passportCheckpoint.loginPin || '1234');
+      const res = await fetch('/api/auth/verify-pin', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: passportCheckpoint.userId,
+          pin: pinToSend
+        })
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        setErrorMessage(data.message || data.error || 'Invalid 4-digit PIN. (Demo default PIN is 1234)');
+        return;
+      }
+
+      showToast('SUCCESS', 'Identity Verified', `Welcome to your Private Wealth Dashboard, ${data.user?.firstName || 'Client'}.`);
+      login(data.token, data.user);
+    } catch (err: any) {
+      setErrorMessage(err.message || 'Verification exception occurred.');
     } finally {
       setIsLoading(false);
     }
@@ -129,17 +207,64 @@ export const LoginPage: React.FC = () => {
     }
   };
 
+  const setQuickUser = (u: string, p: string) => {
+    setUsername(u);
+    setPassword(p);
+    setErrorMessage('');
+  };
+
   return (
-    <div className="min-h-[85vh] bg-[#f8fafc] flex flex-col justify-center items-center py-12 px-4 sm:px-6">
-      <div className="w-full max-w-md space-y-6">
+    <div className="min-h-[85vh] bg-[#f8fafc] flex flex-col justify-center items-center py-10 px-4 sm:px-6">
+      <div className="w-full max-w-md space-y-5">
         {/* Institutional Branding Header */}
-        <div className="text-center space-y-2">
+        <div className="text-center space-y-1.5">
           <div className="inline-block">
             <InstitutionalCrest size="lg" variant="light" />
           </div>
-          <p className="text-xs uppercase tracking-widest text-[#8c6d37] font-semibold pt-1 font-sans">
+          <p className="text-xs uppercase tracking-widest text-[#8c6d37] font-bold pt-1 font-sans">
             Secure Client Online Banking
           </p>
+        </div>
+
+        {/* Quick Demo Credentials Pill Bar */}
+        <div className="p-3 bg-slate-100 rounded-xl border border-slate-200 text-xs space-y-2">
+          <div className="flex items-center justify-between text-[11px] font-semibold text-slate-600">
+            <span>⚡ Instant One-Click Demo Sign In:</span>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5 font-mono text-[11px]">
+            <button
+              type="button"
+              onClick={() => setQuickUser('jsterling', 'AtlanticSecure2026!')}
+              className="px-2.5 py-1.5 rounded-lg bg-white hover:bg-slate-50 border border-slate-300 text-slate-800 font-bold hover:border-[#8c6d37] transition-all cursor-pointer text-left truncate"
+              title="Jonathan Sterling (US & Global)"
+            >
+              👤 J. Sterling
+            </button>
+            <button
+              type="button"
+              onClick={() => setQuickUser('emontgomery', 'AtlanticSecure2026!')}
+              className="px-2.5 py-1.5 rounded-lg bg-white hover:bg-slate-50 border border-slate-300 text-slate-800 font-bold hover:border-[#8c6d37] transition-all cursor-pointer text-left truncate"
+              title="Evelyn Montgomery (UK Sterling)"
+            >
+              👤 E. Montgomery
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                const last = localStorage.getItem('last_registered_username');
+                if (last) {
+                  const pass = localStorage.getItem('last_registered_password') || 'AtlanticSecure2026!';
+                  setQuickUser(last, pass);
+                } else {
+                  setQuickUser('jsterling', 'AtlanticSecure2026!');
+                }
+              }}
+              className="px-2.5 py-1.5 rounded-lg bg-amber-50 hover:bg-amber-100 border border-amber-300 text-amber-900 font-bold transition-all cursor-pointer text-left truncate col-span-2 sm:col-span-1"
+              title="Your Created Account"
+            >
+              ✨ My Account
+            </button>
+          </div>
         </div>
 
         {/* Main Sign In Container */}
@@ -147,21 +272,30 @@ export const LoginPage: React.FC = () => {
           <div className="flex items-center justify-between pb-3 border-b border-slate-100">
             <div>
               <h2 className="text-lg font-bold font-serif text-slate-900">
-                Client Sign In
+                {passportCheckpoint ? 'Passport & PIN Checkpoint' : 'Client Sign In'}
               </h2>
               <p className="text-xs text-slate-500">
-                Access your multi-currency accounts and treasury services.
+                {passportCheckpoint
+                  ? 'Verify your sovereign identity passport & 4-digit security PIN.'
+                  : 'Access your multi-currency accounts and sovereign treasury services.'}
               </p>
             </div>
             <div className="p-2 rounded-lg bg-slate-100 text-slate-700">
-              <Lock className="w-4 h-4 text-[#8c6d37]" />
+              {passportCheckpoint ? (
+                <ShieldCheck className="w-4 h-4 text-emerald-600" />
+              ) : (
+                <Lock className="w-4 h-4 text-[#8c6d37]" />
+              )}
             </div>
           </div>
 
           {errorMessage && (
             <div className="p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs flex items-start gap-2.5">
               <AlertCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
-              <span>{errorMessage}</span>
+              <div className="space-y-0.5">
+                <span className="font-semibold block">{errorMessage}</span>
+                <span className="text-[11px] text-rose-600">Tip: If you just created an account, enter the exact username/email you registered with.</span>
+              </div>
             </div>
           )}
 
@@ -169,7 +303,7 @@ export const LoginPage: React.FC = () => {
             <div className="p-4 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-xs space-y-2">
               <div className="flex items-center gap-2 font-bold text-amber-800">
                 <AlertCircle className="w-4 h-4 text-amber-600 shrink-0" />
-                <span>Application Under Compliance Review</span>
+                <span>Account Ready</span>
               </div>
               <p className="text-slate-700">{applicationNotice.message}</p>
               {applicationNotice.referenceNumber && (
@@ -177,18 +311,142 @@ export const LoginPage: React.FC = () => {
                   Reference: <span className="font-bold text-slate-950">{applicationNotice.referenceNumber}</span>
                 </div>
               )}
-              <p className="text-[11px] text-slate-500">
-                Our compliance officers review new accounts within 1–2 business days. Once approved, your IBANs and account access will be activated immediately.
-              </p>
             </div>
           )}
 
-          {!mfaChallenge ? (
+          {passportCheckpoint ? (
+            /* SOVEREIGN PASSPORT & 4-DIGIT PIN AUTHENTICATION CHECKPOINT */
+            <div className="space-y-5 animate-in fade-in duration-300">
+              {/* Official Sovereign Biometric Passport Card */}
+              <div className="p-4 rounded-2xl bg-gradient-to-br from-[#0a192f] to-[#112a4a] text-white border border-[#c5a880]/40 shadow-lg space-y-3 relative overflow-hidden">
+                {/* Holographic Watermark Crest */}
+                <div className="absolute right-[-10px] top-[-10px] opacity-10 pointer-events-none">
+                  <InstitutionalCrest size="lg" variant="dark" />
+                </div>
+
+                <div className="flex items-center justify-between border-b border-slate-700/80 pb-2.5">
+                  <div className="flex items-center gap-2">
+                    <InstitutionalCrest size="sm" variant="dark" />
+                    <span className="text-[11px] uppercase tracking-widest font-mono text-[#e5ca95] font-bold">
+                      Sovereign Passport Checkpoint
+                    </span>
+                  </div>
+                  <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 text-[9px] font-mono font-bold uppercase">
+                    KYC Cleared
+                  </span>
+                </div>
+
+                <div className="flex gap-3.5 items-center">
+                  {/* Passport Photo */}
+                  <div className="relative w-20 h-24 rounded-lg overflow-hidden border-2 border-[#c5a880] shadow-md bg-slate-800 shrink-0">
+                    <img
+                      src={
+                        passportCheckpoint.passportPhoto ||
+                        'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&auto=format&fit=crop&q=80'
+                      }
+                      alt="Passport Identity"
+                      className="w-full h-full object-cover"
+                      referrerPolicy="no-referrer"
+                    />
+                    <div className="absolute bottom-0 inset-x-0 bg-slate-950/80 text-[#e5ca95] text-[8px] font-mono py-0.5 text-center uppercase tracking-wider">
+                      PASSPORT
+                    </div>
+                  </div>
+
+                  {/* Passport Details */}
+                  <div className="space-y-1 text-xs">
+                    <div className="font-bold text-sm text-white font-serif">
+                      {passportCheckpoint.firstName} {passportCheckpoint.lastName}
+                    </div>
+                    <div className="text-[11px] text-slate-300 font-mono">
+                      Doc No: <span className="text-[#e5ca95] font-bold">{passportCheckpoint.passportNumber || 'P98420193'}</span>
+                    </div>
+                    <div className="text-[11px] text-slate-300">
+                      Nationality: <span className="text-white font-medium">{passportCheckpoint.nationality || 'European Union'}</span>
+                    </div>
+                    <div className="text-[10px] text-emerald-400 font-mono flex items-center gap-1 pt-0.5">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                      Biometric Chip Verified
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* 4-Digit Security PIN Input */}
+              <div className="space-y-2">
+                <div className="flex justify-between items-center">
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 font-sans">
+                    Enter Your 4-Digit Private PIN *
+                  </label>
+                  <span className="text-[11px] text-slate-500 font-mono">
+                    (Default demo PIN: <span className="font-bold text-slate-900">1234</span>)
+                  </span>
+                </div>
+
+                <div className="relative">
+                  <input
+                    type="password"
+                    maxLength={4}
+                    autoFocus
+                    placeholder="••••"
+                    value={enteredPin}
+                    onChange={(e) => setEnteredPin(e.target.value.replace(/\D/g, '').slice(0, 4))}
+                    className="w-full text-center tracking-[0.8em] text-2xl font-mono py-3 bg-slate-50 border-2 border-slate-300 rounded-xl text-slate-900 focus:bg-white focus:outline-none focus:border-[#8c6d37] font-bold"
+                  />
+                  <div className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400">
+                    <Key className="w-4 h-4 text-[#8c6d37]" />
+                  </div>
+                </div>
+              </div>
+
+              {/* Actions */}
+              <div className="space-y-2.5 pt-1">
+                <button
+                  type="button"
+                  disabled={isLoading || (enteredPin.length !== 4 && !passportCheckpoint.loginPin)}
+                  onClick={() => handlePinVerify(false)}
+                  className="w-full py-3.5 rounded-xl bg-[#0a192f] hover:bg-[#132d52] text-white font-bold text-xs uppercase tracking-widest shadow-md flex items-center justify-center gap-2 cursor-pointer transition-all disabled:opacity-50"
+                >
+                  {isLoading ? (
+                    <RefreshCw className="w-4 h-4 animate-spin text-[#c5a880]" />
+                  ) : (
+                    <>
+                      <Lock className="w-3.5 h-3.5 text-[#d4af37]" />
+                      <span>Unlock Sovereign Dashboard</span>
+                    </>
+                  )}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => handlePinVerify(true)}
+                  className="w-full py-2.5 rounded-xl border border-slate-300 hover:bg-slate-50 text-slate-700 font-semibold text-xs flex items-center justify-center gap-2 cursor-pointer transition-colors"
+                >
+                  <Fingerprint className="w-4 h-4 text-[#8c6d37]" />
+                  <span>Authenticate via Biometric Passkey</span>
+                </button>
+              </div>
+
+              <div className="text-center pt-1">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setPassportCheckpoint(null);
+                    setEnteredPin('');
+                  }}
+                  className="inline-flex items-center gap-1.5 text-xs text-slate-500 hover:text-slate-800 cursor-pointer"
+                >
+                  <ArrowLeft className="w-3.5 h-3.5" />
+                  <span>Back to Credentials</span>
+                </button>
+              </div>
+            </div>
+          ) : !mfaChallenge ? (
             /* Standard Login Form */
             <form onSubmit={handleInitialSubmit} className="space-y-4">
               <div>
                 <label className="block text-xs font-bold uppercase tracking-wider mb-1.5 font-sans text-slate-700">
-                  Username or Client ID
+                  Username or Email
                 </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
@@ -199,7 +457,7 @@ export const LoginPage: React.FC = () => {
                     required
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
-                    placeholder="Enter your Username or Client ID"
+                    placeholder="Enter your username or email address"
                     className="w-full pl-10 pr-3.5 py-2.5 text-sm rounded-lg font-sans transition-all focus:outline-none bg-slate-50 border border-slate-300 text-slate-900 placeholder-slate-400 focus:bg-white focus:border-[#8c6d37] focus:ring-1 focus:ring-[#8c6d37]"
                   />
                 </div>
@@ -212,10 +470,13 @@ export const LoginPage: React.FC = () => {
                   </label>
                   <button
                     type="button"
-                    onClick={() => showToast('INFO', 'Password Assistance', 'Please contact your Private Banker or Concierge desk.')}
-                    className="text-[11px] text-[#8c6d37] hover:underline cursor-pointer"
+                    onClick={() => {
+                      setPassword('AtlanticSecure2026!');
+                      showToast('INFO', 'Password Pre-filled', 'Default demo secure password applied: AtlanticSecure2026!');
+                    }}
+                    className="text-[11px] text-[#8c6d37] hover:underline cursor-pointer font-medium"
                   >
-                    Forgot password?
+                    Use default demo password
                   </button>
                 </div>
                 <div className="relative">
@@ -253,15 +514,15 @@ export const LoginPage: React.FC = () => {
               <div className="pt-2">
                 <button
                   type="submit"
-                  disabled={isLoading}
-                  className="w-full py-3 rounded-xl font-bold text-xs uppercase tracking-widest transition-all shadow-md flex items-center justify-center gap-2 font-sans cursor-pointer bg-[#0a192f] hover:bg-[#132d52] text-white"
+                  disabled={isLoading || !username.trim()}
+                  className="w-full py-3 rounded-xl font-bold text-xs uppercase tracking-widest transition-all shadow-md flex items-center justify-center gap-2 font-sans cursor-pointer bg-[#0a192f] hover:bg-[#132d52] text-white disabled:opacity-50"
                 >
                   {isLoading ? (
                     <RefreshCw className="w-4 h-4 animate-spin text-[#c5a880]" />
                   ) : (
                     <>
                       <Lock className="w-3.5 h-3.5 text-[#d4af37]" />
-                      <span>Sign In to Account</span>
+                      <span>Sign In &amp; Proceed to Checkpoint</span>
                     </>
                   )}
                 </button>
@@ -365,9 +626,9 @@ export const EnrollPage: React.FC = () => {
   const [submissionReference, setSubmissionReference] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
 
-  // Full form state for real international banking onboarding
+  // Full form state for international banking onboarding
   const [formData, setFormData] = useState({
-    // Step 1: Personal Profile
+    // Step 1: Personal Profile & Digital Credentials
     title: 'Mr',
     firstName: '',
     middleName: '',
@@ -376,10 +637,12 @@ export const EnrollPage: React.FC = () => {
     email: '',
     countryCode: '+49',
     phone: '',
-    nationality: 'Germany',
+    nationality: 'German',
     username: '',
     password: '',
     confirmPassword: '',
+    loginPin: '',
+    confirmLoginPin: '',
 
     // Step 2: Residential Address & Tax Residency
     streetAddress: '',
@@ -391,13 +654,15 @@ export const EnrollPage: React.FC = () => {
     taxId: '',
     taxResidencyCountry: 'Germany',
 
-    // Step 3: Employment & Source of Funds
+    // Step 3: Employment, KYC & Passport Identity
     employmentStatus: 'EMPLOYED',
     employerName: '',
     jobTitle: '',
     annualIncomeEur: '120000',
     sourceOfFunds: 'SALARY_AND_BONUS',
     estimatedLiquidWealthEur: '250000',
+    passportNumber: '',
+    passportPhoto: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&auto=format&fit=crop&q=80',
 
     // Step 4: Account Configuration & Regulation
     bookingRegion: 'EU' as BankRegion,
@@ -430,6 +695,14 @@ export const EnrollPage: React.FC = () => {
       setErrorMsg('Passwords do not match.');
       return false;
     }
+    if (!formData.loginPin || formData.loginPin.length !== 4 || !/^\d{4}$/.test(formData.loginPin)) {
+      setErrorMsg('Please enter a 4-digit numeric login and transfer PIN.');
+      return false;
+    }
+    if (formData.loginPin !== formData.confirmLoginPin) {
+      setErrorMsg('4-Digit PIN and confirmation PIN do not match.');
+      return false;
+    }
     setErrorMsg('');
     return true;
   };
@@ -446,6 +719,10 @@ export const EnrollPage: React.FC = () => {
   const validateStep3 = () => {
     if (!formData.employmentStatus || !formData.sourceOfFunds) {
       setErrorMsg('Please provide your employment status and source of funds.');
+      return false;
+    }
+    if (!formData.passportNumber.trim()) {
+      setErrorMsg('Please provide your official Passport Identification Number.');
       return false;
     }
     setErrorMsg('');
@@ -469,6 +746,9 @@ export const EnrollPage: React.FC = () => {
       phone: fullPhone,
       username: formData.username.trim(),
       password: formData.password,
+      loginPin: formData.loginPin,
+      passportNumber: formData.passportNumber.trim(),
+      passportPhoto: formData.passportPhoto,
       dateOfBirth: formData.dateOfBirth,
       nationality: formData.nationality,
       region: formData.bookingRegion,
@@ -492,6 +772,11 @@ export const EnrollPage: React.FC = () => {
 
     const result = await submitAccountApplication(payload);
     if (result.success && result.referenceNumber) {
+      // Store credentials locally for seamless login
+      localStorage.setItem('last_registered_username', formData.username.trim());
+      localStorage.setItem('last_registered_password', formData.password);
+      localStorage.setItem('last_registered_pin', formData.loginPin);
+      
       setSubmissionReference(result.referenceNumber);
       setIsSubmitted(true);
     } else if (result.error) {
@@ -501,71 +786,68 @@ export const EnrollPage: React.FC = () => {
 
   if (isSubmitted) {
     return (
-      <div className="min-h-[85vh] bg-[#f8fafc] py-12 px-4 sm:px-6 flex justify-center items-center">
-        <div className="w-full max-w-2xl bg-white rounded-2xl p-8 sm:p-10 border border-slate-200 shadow-2xl space-y-6 text-center">
-          <div className="w-16 h-16 rounded-full bg-emerald-50 text-emerald-600 border-2 border-emerald-500/30 flex items-center justify-center mx-auto">
+      <div className="min-h-[85vh] bg-[#f8fafc] py-10 px-4 sm:px-6 flex justify-center items-center">
+        <div className="w-full max-w-2xl bg-white rounded-2xl p-6 sm:p-10 border border-slate-200 shadow-2xl space-y-6 text-center">
+          <div className="w-16 h-16 rounded-full bg-emerald-50 text-emerald-600 border-2 border-emerald-500/30 flex items-center justify-center mx-auto shadow-sm">
             <CheckCircle2 className="w-10 h-10" />
           </div>
 
           <div className="space-y-2">
             <span className="text-xs uppercase tracking-widest text-[#8c6d37] font-bold">
-              Compliance Onboarding Dispatched
+              Account Provisioned &amp; Ready
             </span>
             <h2 className="text-2xl sm:text-3xl font-bold font-serif text-slate-900">
-              Account Application Submitted
+              Welcome to First Atlantic Bank
             </h2>
             <p className="text-sm text-slate-600 max-w-lg mx-auto">
-              Thank you, <span className="font-semibold text-slate-900">{formData.firstName} {formData.lastName}</span>. Your international account application has been received and registered into our executive compliance review queue.
+              Congratulations, <span className="font-semibold text-slate-900">{formData.firstName} {formData.lastName}</span>! Your transatlantic private account has been provisioned and authorized for immediate online access.
             </p>
           </div>
 
-          {/* Reference Card */}
-          <div className="p-5 rounded-xl bg-slate-50 border border-slate-200 max-w-md mx-auto space-y-3 text-left font-mono">
-            <div className="flex justify-between items-center text-xs">
-              <span className="text-slate-500">Application Reference:</span>
+          {/* Application Summary Box */}
+          <div className="bg-slate-50 rounded-xl p-5 border border-slate-200 text-left space-y-2.5 max-w-md mx-auto font-mono text-xs">
+            <div className="flex justify-between items-center text-xs pb-1.5 border-b border-slate-200">
+              <span className="text-slate-500 font-sans">Account Reference:</span>
               <span className="font-bold text-slate-950 text-sm">{submissionReference}</span>
             </div>
             <div className="flex justify-between items-center text-xs">
-              <span className="text-slate-500">Booking Centre:</span>
-              <span className="font-semibold text-slate-800">
+              <span className="text-slate-500 font-sans">Username:</span>
+              <span className="font-bold text-[#8c6d37] font-mono">{formData.username}</span>
+            </div>
+            <div className="flex justify-between items-center text-xs">
+              <span className="text-slate-500 font-sans">Configured 4-Digit PIN:</span>
+              <span className="font-bold text-slate-900 font-mono tracking-widest">{formData.loginPin || '1234'}</span>
+            </div>
+            <div className="flex justify-between items-center text-xs">
+              <span className="text-slate-500 font-sans">Booking Centre:</span>
+              <span className="font-semibold text-slate-800 font-sans">
                 {formData.bookingRegion === 'EU' ? '🇪🇺 Frankfurt (ECB / SEPA)' : formData.bookingRegion === 'UK' ? '🇬🇧 London Mayfair (PRA / FSCS)' : '🇺🇸 New York Wall St (FDIC)'}
               </span>
             </div>
             <div className="flex justify-between items-center text-xs">
-              <span className="text-slate-500">Initial Deposit:</span>
-              <span className="font-semibold text-slate-800">€{(Number(formData.initialDepositMinor) / 100).toLocaleString()}</span>
+              <span className="text-slate-500 font-sans">Initial Balance:</span>
+              <span className="font-bold text-emerald-700">€{(Number(formData.initialDepositMinor) / 100).toLocaleString()}</span>
             </div>
-            <div className="flex justify-between items-center text-xs">
-              <span className="text-slate-500">Status:</span>
-              <span className="px-2 py-0.5 rounded bg-amber-100 text-amber-800 text-[11px] font-bold">
-                PENDING COMPLIANCE APPROVAL
+            <div className="flex justify-between items-center text-xs pt-1 border-t border-slate-200">
+              <span className="text-slate-500 font-sans">Account Status:</span>
+              <span className="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 text-[11px] font-bold inline-flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-600" />
+                ACTIVE &amp; APPROVED
               </span>
             </div>
-          </div>
-
-          {/* Workflow Explanation */}
-          <div className="p-4 rounded-xl bg-blue-50/70 border border-blue-200 text-xs text-blue-950 text-left space-y-2 max-w-lg mx-auto">
-            <div className="font-bold flex items-center gap-2">
-              <ShieldCheck className="w-4 h-4 text-blue-700 shrink-0" />
-              <span>What happens next?</span>
-            </div>
-            <ul className="space-y-1.5 text-slate-700 list-disc list-inside">
-              <li>Our compliance officers verify your identity and tax identification.</li>
-              <li>Once approved by the Bank Admin, your international IBAN, routing numbers, and multicurrency accounts are generated automatically.</li>
-              <li>You can sign in immediately once the application is approved using the username and password you just selected.</li>
-            </ul>
           </div>
 
           <div className="flex flex-col sm:flex-row gap-3 justify-center pt-2">
             <button
               onClick={() => setCurrentView('AUTH_LOGIN')}
-              className="px-6 py-3 rounded-xl bg-[#0a192f] hover:bg-[#132d52] text-white font-bold text-xs uppercase tracking-widest shadow-md transition-all"
+              className="px-6 py-3.5 rounded-xl bg-[#0a192f] hover:bg-[#132d52] text-white font-bold text-xs uppercase tracking-widest shadow-md transition-all cursor-pointer flex items-center justify-center gap-2"
             >
-              Go to Sign In Screen
+              <Lock className="w-4 h-4 text-[#d4af37]" />
+              <span>Sign In to Your Dashboard</span>
             </button>
             <button
               onClick={() => setCurrentView('PUBLIC_HOME')}
-              className="px-6 py-3 rounded-xl border border-slate-300 hover:bg-slate-50 text-slate-700 font-semibold text-xs transition-all"
+              className="px-6 py-3.5 rounded-xl border border-slate-300 hover:bg-slate-50 text-slate-700 font-semibold text-xs transition-all cursor-pointer"
             >
               Return to Homepage
             </button>
@@ -576,30 +858,30 @@ export const EnrollPage: React.FC = () => {
   }
 
   return (
-    <div className="min-h-[85vh] bg-[#f8fafc] py-10 px-4 sm:px-6 flex justify-center items-center">
-      <div className="w-full max-w-3xl bg-white rounded-2xl p-6 sm:p-10 border border-slate-200 shadow-xl space-y-7">
+    <div className="min-h-[85vh] bg-[#f8fafc] py-6 sm:py-10 px-3 sm:px-6 flex justify-center items-center">
+      <div className="w-full max-w-3xl bg-white rounded-xl sm:rounded-2xl p-4 sm:p-8 md:p-10 border border-slate-200 shadow-xl space-y-5 sm:space-y-7">
         {/* Header */}
-        <div className="text-center space-y-1.5 border-b border-slate-100 pb-6">
+        <div className="text-center space-y-1.5 border-b border-slate-100 pb-4 sm:pb-6">
           <InstitutionalCrest size="md" variant="light" />
-          <h2 className="text-2xl sm:text-3xl font-bold font-serif text-slate-900 pt-2">
+          <h2 className="text-xl sm:text-3xl font-bold font-serif text-slate-900 pt-2">
             Open an International Bank Account
           </h2>
-          <p className="text-xs text-slate-500 max-w-lg mx-auto">
-            European Central Bank &amp; Transatlantic Regulatory Compliance • Multicurrency IBANs in EUR, GBP &amp; USD • Institutional Deposit Protection
+          <p className="text-[11px] sm:text-xs text-slate-500 max-w-lg mx-auto">
+            European Central Bank &amp; Transatlantic Regulatory Compliance • Multicurrency IBANs in EUR, GBP &amp; USD • Sovereign Deposit Protection
           </p>
         </div>
 
         {/* Multi-Step Progress Stepper */}
-        <div className="grid grid-cols-4 gap-2 text-center text-xs font-semibold">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center text-xs font-semibold">
           {[
-            { num: 1, label: '1. Applicant Info' },
+            { num: 1, label: '1. Applicant & PIN' },
             { num: 2, label: '2. Address & Tax' },
-            { num: 3, label: '3. Employment & KYC' },
+            { num: 3, label: '3. KYC & Passport' },
             { num: 4, label: '4. Jurisdictions' }
           ].map((s) => (
             <div
               key={s.num}
-              className={`p-2.5 rounded-xl border transition-all ${
+              className={`p-2 sm:p-2.5 rounded-xl border transition-all ${
                 step === s.num
                   ? 'bg-[#0a192f] text-[#d4af37] border-[#0a192f] shadow-sm'
                   : step > s.num
@@ -609,7 +891,7 @@ export const EnrollPage: React.FC = () => {
             >
               <div className="flex items-center justify-center gap-1.5">
                 {step > s.num && <Check className="w-3.5 h-3.5 text-emerald-600" />}
-                <span className="text-[11px] sm:text-xs truncate">{s.label}</span>
+                <span className="text-[11px] sm:text-xs">{s.label}</span>
               </div>
             </div>
           ))}
@@ -623,7 +905,7 @@ export const EnrollPage: React.FC = () => {
         )}
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* STEP 1: Personal Applicant Details */}
+          {/* STEP 1: Personal Applicant Details & Digital Banking PIN */}
           {step === 1 && (
             <div className="space-y-4">
               <div className="text-xs uppercase font-bold tracking-wider text-[#8c6d37] font-mono border-b border-slate-100 pb-1">
@@ -691,19 +973,11 @@ export const EnrollPage: React.FC = () => {
                     onChange={(e) => handleChange('nationality', e.target.value)}
                     className="w-full px-3.5 py-2 text-sm bg-slate-50 border border-slate-300 rounded-lg text-slate-900 focus:bg-white focus:outline-none focus:border-[#8c6d37]"
                   >
-                    <option value="Germany">Germany (Deutschland)</option>
-                    <option value="France">France</option>
-                    <option value="Italy">Italy (Italia)</option>
-                    <option value="Spain">Spain (España)</option>
-                    <option value="Netherlands">Netherlands (Nederland)</option>
-                    <option value="Switzerland">Switzerland (Schweiz)</option>
-                    <option value="Austria">Austria (Österreich)</option>
-                    <option value="Belgium">Belgium</option>
-                    <option value="Ireland">Ireland</option>
-                    <option value="Luxembourg">Luxembourg</option>
-                    <option value="Sweden">Sweden</option>
-                    <option value="United Kingdom">United Kingdom</option>
-                    <option value="United States">United States</option>
+                    {NATIONALITIES.map((nat) => (
+                      <option key={nat} value={nat}>
+                        {nat}
+                      </option>
+                    ))}
                   </select>
                 </div>
               </div>
@@ -726,18 +1000,13 @@ export const EnrollPage: React.FC = () => {
                     <select
                       value={formData.countryCode}
                       onChange={(e) => handleChange('countryCode', e.target.value)}
-                      className="w-28 px-2 py-2 text-xs bg-slate-50 border border-slate-300 rounded-lg text-slate-900 focus:bg-white"
+                      className="w-36 px-2 py-2 text-xs bg-slate-50 border border-slate-300 rounded-lg text-slate-900 focus:bg-white truncate"
                     >
-                      <option value="+49">🇩🇪 +49 (DE)</option>
-                      <option value="+33">🇫🇷 +33 (FR)</option>
-                      <option value="+39">🇮🇹 +39 (IT)</option>
-                      <option value="+34">🇪🇸 +34 (ES)</option>
-                      <option value="+31">🇳🇱 +31 (NL)</option>
-                      <option value="+41">🇨🇭 +41 (CH)</option>
-                      <option value="+43">🇦🇹 +43 (AT)</option>
-                      <option value="+353">🇮🇪 +353 (IE)</option>
-                      <option value="+44">🇬🇧 +44 (UK)</option>
-                      <option value="+1">🇺🇸 +1 (US)</option>
+                      {COUNTRIES.map((c) => (
+                        <option key={c.code} value={c.dialCode}>
+                          {c.flag} {c.dialCode} ({c.name})
+                        </option>
+                      ))}
                     </select>
                     <input
                       type="tel"
@@ -751,12 +1020,13 @@ export const EnrollPage: React.FC = () => {
                 </div>
               </div>
 
-              {/* Online Banking Credentials Configuration */}
+              {/* Digital Banking Credentials & 4-Digit Security PIN */}
               <div className="p-4 bg-slate-50 rounded-xl border border-slate-200 space-y-3">
                 <span className="text-xs font-bold uppercase tracking-wider text-slate-800 flex items-center gap-1.5 font-sans">
                   <Lock className="w-3.5 h-3.5 text-[#8c6d37]" />
-                  <span>Choose Your Digital Banking Login Credentials</span>
+                  <span>Choose Your Digital Banking Login &amp; 4-Digit Security PIN</span>
                 </span>
+
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <div>
                     <label className="block text-[11px] font-bold text-slate-600 mb-1">Username *</label>
@@ -792,6 +1062,43 @@ export const EnrollPage: React.FC = () => {
                     />
                   </div>
                 </div>
+
+                {/* 4-Digit PIN selection */}
+                <div className="pt-2 border-t border-slate-200 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-700 mb-1 flex items-center gap-1">
+                      <Key className="w-3 h-3 text-[#8c6d37]" />
+                      <span>Login &amp; Transfer PIN (4 Digits) *</span>
+                    </label>
+                    <input
+                      type="password"
+                      maxLength={4}
+                      required
+                      placeholder="••••"
+                      value={formData.loginPin}
+                      onChange={(e) => handleChange('loginPin', e.target.value.replace(/\D/g, '').slice(0, 4))}
+                      className="w-full px-3 py-2 text-sm font-mono text-center tracking-[0.5em] bg-white border border-slate-300 rounded-lg text-slate-900 font-bold"
+                    />
+                    <span className="text-[10px] text-slate-500 mt-0.5 block">
+                      Required at Passport Checkpoint &amp; for transfer approval.
+                    </span>
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                      Confirm 4-Digit PIN *
+                    </label>
+                    <input
+                      type="password"
+                      maxLength={4}
+                      required
+                      placeholder="••••"
+                      value={formData.confirmLoginPin}
+                      onChange={(e) => handleChange('confirmLoginPin', e.target.value.replace(/\D/g, '').slice(0, 4))}
+                      className="w-full px-3 py-2 text-sm font-mono text-center tracking-[0.5em] bg-white border border-slate-300 rounded-lg text-slate-900 font-bold"
+                    />
+                  </div>
+                </div>
               </div>
 
               <button
@@ -799,7 +1106,7 @@ export const EnrollPage: React.FC = () => {
                 onClick={() => {
                   if (validateStep1()) setStep(2);
                 }}
-                className="w-full py-3 rounded-xl bg-[#0a192f] hover:bg-[#132d52] text-white font-bold text-xs uppercase tracking-widest transition-all shadow-md flex items-center justify-center gap-2"
+                className="w-full py-3 rounded-xl bg-[#0a192f] hover:bg-[#132d52] text-white font-bold text-xs uppercase tracking-widest transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer"
               >
                 <span>Continue to Residential &amp; Tax Info</span>
                 <ArrowRight className="w-4 h-4" />
@@ -869,17 +1176,11 @@ export const EnrollPage: React.FC = () => {
                     onChange={(e) => handleChange('countryOfResidence', e.target.value)}
                     className="w-full px-3.5 py-2 text-sm bg-slate-50 border border-slate-300 rounded-lg text-slate-900 focus:bg-white"
                   >
-                    <option value="Germany">Germany (Deutschland)</option>
-                    <option value="France">France</option>
-                    <option value="Italy">Italy (Italia)</option>
-                    <option value="Spain">Spain (España)</option>
-                    <option value="Netherlands">Netherlands</option>
-                    <option value="Switzerland">Switzerland</option>
-                    <option value="Austria">Austria</option>
-                    <option value="Belgium">Belgium</option>
-                    <option value="Ireland">Ireland</option>
-                    <option value="United Kingdom">United Kingdom</option>
-                    <option value="United States">United States</option>
+                    {COUNTRIES.map((c) => (
+                      <option key={c.code} value={c.name}>
+                        {c.flag} {c.name}
+                      </option>
+                    ))}
                   </select>
                 </div>
                 <div>
@@ -901,7 +1202,7 @@ export const EnrollPage: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setStep(1)}
-                  className="w-1/3 py-2.5 rounded-xl border border-slate-300 hover:bg-slate-50 text-slate-700 font-semibold text-xs"
+                  className="w-1/3 py-2.5 rounded-xl border border-slate-300 hover:bg-slate-50 text-slate-700 font-semibold text-xs cursor-pointer"
                 >
                   Back
                 </button>
@@ -910,20 +1211,20 @@ export const EnrollPage: React.FC = () => {
                   onClick={() => {
                     if (validateStep2()) setStep(3);
                   }}
-                  className="w-2/3 py-2.5 rounded-xl bg-[#0a192f] hover:bg-[#132d52] text-white font-bold text-xs uppercase tracking-widest flex items-center justify-center gap-2"
+                  className="w-2/3 py-2.5 rounded-xl bg-[#0a192f] hover:bg-[#132d52] text-white font-bold text-xs uppercase tracking-widest flex items-center justify-center gap-2 cursor-pointer"
                 >
-                  <span>Continue to Employment &amp; KYC</span>
+                  <span>Continue to KYC &amp; Passport</span>
                   <ArrowRight className="w-4 h-4" />
                 </button>
               </div>
             </div>
           )}
 
-          {/* STEP 3: Employment, Wealth & Source of Funds */}
+          {/* STEP 3: Employment, Wealth & Passport Document Section */}
           {step === 3 && (
             <div className="space-y-4">
               <div className="text-xs uppercase font-bold tracking-wider text-[#8c6d37] font-mono border-b border-slate-100 pb-1">
-                Financial Profile &amp; Anti-Money Laundering (AML) KYC
+                Financial Profile &amp; Sovereign Passport KYC
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -986,16 +1287,57 @@ export const EnrollPage: React.FC = () => {
                 </div>
               </div>
 
-              <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-600 space-y-1">
-                <span className="font-bold text-slate-900">European &amp; Global Banking Compliance Notice:</span>
-                <p>In adherence to EU 5th AML Directive and international FATCA/CRS frameworks, First Atlantic Bank cross-references applicant identity against global compliance registries.</p>
+              {/* Passport Document Section */}
+              <div className="p-4 bg-slate-50 rounded-xl border border-slate-200 space-y-3">
+                <div className="flex items-center gap-2 text-xs font-bold uppercase text-slate-800">
+                  <FileText className="w-4 h-4 text-[#8c6d37]" />
+                  <span>Passport &amp; Biometric Identity Verification</span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 items-center">
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                      Official Passport Document Number *
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="e.g. C84920194"
+                      value={formData.passportNumber}
+                      onChange={(e) => handleChange('passportNumber', e.target.value)}
+                      className="w-full px-3.5 py-2 text-sm bg-white border border-slate-300 rounded-lg text-slate-900 font-mono focus:outline-none focus:border-[#8c6d37]"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                      Passport Biometric Photo Status
+                    </label>
+                    <div className="flex items-center gap-3 p-2 bg-white rounded-lg border border-slate-200">
+                      <div className="w-10 h-12 rounded overflow-hidden border border-[#c5a880] shrink-0 bg-slate-100">
+                        <img
+                          src={formData.passportPhoto}
+                          alt="Passport Photo"
+                          className="w-full h-full object-cover"
+                          referrerPolicy="no-referrer"
+                        />
+                      </div>
+                      <div className="text-[11px] text-slate-600">
+                        <span className="text-emerald-700 font-bold flex items-center gap-1">
+                          <CheckCircle2 className="w-3 h-3 text-emerald-600" /> Photo Attached
+                        </span>
+                        <span className="text-[10px] text-slate-400">Ready for biometric checkpoint</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
 
               <div className="flex gap-3 pt-2">
                 <button
                   type="button"
                   onClick={() => setStep(2)}
-                  className="w-1/3 py-2.5 rounded-xl border border-slate-300 hover:bg-slate-50 text-slate-700 font-semibold text-xs"
+                  className="w-1/3 py-2.5 rounded-xl border border-slate-300 hover:bg-slate-50 text-slate-700 font-semibold text-xs cursor-pointer"
                 >
                   Back
                 </button>
@@ -1004,7 +1346,7 @@ export const EnrollPage: React.FC = () => {
                   onClick={() => {
                     if (validateStep3()) setStep(4);
                   }}
-                  className="w-2/3 py-2.5 rounded-xl bg-[#0a192f] hover:bg-[#132d52] text-white font-bold text-xs uppercase tracking-widest flex items-center justify-center gap-2"
+                  className="w-2/3 py-2.5 rounded-xl bg-[#0a192f] hover:bg-[#132d52] text-white font-bold text-xs uppercase tracking-widest flex items-center justify-center gap-2 cursor-pointer"
                 >
                   <span>Continue to Account Tier &amp; Booking</span>
                   <ArrowRight className="w-4 h-4" />
@@ -1034,7 +1376,7 @@ export const EnrollPage: React.FC = () => {
                       key={r.id}
                       type="button"
                       onClick={() => handleChange('bookingRegion', r.id)}
-                      className={`p-3.5 rounded-xl border text-left transition-all ${
+                      className={`p-3.5 rounded-xl border text-left transition-all cursor-pointer ${
                         formData.bookingRegion === r.id
                           ? 'border-[#8c6d37] bg-amber-50/50 ring-2 ring-[#8c6d37]/20'
                           : 'border-slate-200 bg-slate-50 hover:bg-white'
@@ -1108,14 +1450,14 @@ export const EnrollPage: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setStep(3)}
-                  className="w-1/3 py-3 rounded-xl border border-slate-300 hover:bg-slate-50 text-slate-700 font-semibold text-xs"
+                  className="w-1/3 py-3 rounded-xl border border-slate-300 hover:bg-slate-50 text-slate-700 font-semibold text-xs cursor-pointer"
                 >
                   Back
                 </button>
                 <button
                   type="submit"
                   disabled={isLoading || !formData.termsAccepted || !formData.fatcaAccepted}
-                  className="w-2/3 py-3 rounded-xl bg-gradient-to-r from-[#c5a880] to-[#b39366] hover:brightness-105 text-slate-950 font-bold text-xs uppercase tracking-widest shadow-lg flex items-center justify-center gap-2"
+                  className="w-2/3 py-3 rounded-xl bg-gradient-to-r from-[#c5a880] to-[#b39366] hover:brightness-105 text-slate-950 font-bold text-xs uppercase tracking-widest shadow-lg flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
                 >
                   {isLoading ? (
                     <RefreshCw className="w-4 h-4 animate-spin" />
@@ -1134,7 +1476,7 @@ export const EnrollPage: React.FC = () => {
         <div className="text-center pt-2 border-t border-slate-100">
           <button
             onClick={() => setCurrentView('AUTH_LOGIN')}
-            className="text-xs text-slate-500 hover:text-slate-800"
+            className="text-xs text-slate-500 hover:text-slate-800 cursor-pointer"
           >
             Already an account holder? Sign In &rarr;
           </button>

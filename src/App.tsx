@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { BankProvider, useBank } from './context/BankContext';
 import { ToastContainer } from './components/common/ToastContainer';
 import { BiometricPromptModal } from './components/common/BiometricPromptModal';
+import { SmartsuppWidget } from './components/common/SmartsuppWidget';
 import { PublicNavbar } from './components/layout/PublicNavbar';
 import { PublicFooter } from './components/layout/PublicFooter';
 import { CustomerSidebar } from './components/layout/CustomerSidebar';
@@ -42,12 +43,35 @@ import { AdminLoginPage } from './pages/admin/AdminLoginPage';
 const MainAppRouter: React.FC = () => {
   const { currentView, setCurrentView, isAuthenticated, currentRole } = useBank();
 
-  // Synchronize hash routing with direct URL routes (e.g. #admin, /admin)
+  // Handle explicit hash navigation (e.g. #admin-secure-portal or #admin) without trapping users on refresh
   useEffect(() => {
+    // Check if this was a refresh (navigation type reload)
+    const isPageReload = () => {
+      try {
+        const perfEntries = performance.getEntriesByType('navigation');
+        if (perfEntries.length > 0) {
+          const navTiming = perfEntries[0] as PerformanceNavigationTiming;
+          return navTiming.type === 'reload';
+        }
+        return false;
+      } catch {
+        return false;
+      }
+    };
+
+    if (isPageReload()) {
+      // On browser reload/refresh, default to public front page and clear stale admin hash
+      if (window.location.hash.toLowerCase().includes('admin')) {
+        history.replaceState(null, document.title, window.location.pathname + window.location.search);
+      }
+      if (currentRole !== 'ADMIN' && !isAuthenticated) {
+        setCurrentView('PUBLIC_HOME');
+      }
+    }
+
     const handleHashAndPath = () => {
       const hash = window.location.hash.toLowerCase();
-      const path = window.location.pathname.toLowerCase();
-      if (hash === '#admin' || hash === '#/admin' || path === '/admin') {
+      if (hash === '#admin' || hash === '#/admin' || hash === '#admin-secure-portal') {
         if (currentRole === 'ADMIN') {
           setCurrentView('ADMIN_DASHBOARD');
         } else {
@@ -56,10 +80,27 @@ const MainAppRouter: React.FC = () => {
       }
     };
 
-    handleHashAndPath();
     window.addEventListener('hashchange', handleHashAndPath);
-    return () => window.removeEventListener('hashchange', handleHashAndPath);
-  }, [currentRole, setCurrentView]);
+
+    // Keyboard shortcut for secure institutional admin entry: Ctrl + Shift + A (or Cmd + Shift + A)
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === 'A' || e.key === 'a')) {
+        e.preventDefault();
+        window.location.hash = 'admin-secure-portal';
+        if (currentRole === 'ADMIN') {
+          setCurrentView('ADMIN_DASHBOARD');
+        } else {
+          setCurrentView('AUTH_ADMIN_LOGIN');
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('hashchange', handleHashAndPath);
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [currentRole, setCurrentView, isAuthenticated]);
 
   // 1. Dedicated Admin Authentication Route
   if (currentView === 'AUTH_ADMIN_LOGIN') {
@@ -156,6 +197,9 @@ export function App() {
 
         {/* Global Biometric Scan Prompt Modal */}
         <GlobalBiometricContainer />
+
+        {/* Smartsupp Live Chat & AI Concierge with 30s Idle Trigger & Push Alerts */}
+        <SmartsuppWidget />
 
         {/* Core App View */}
         <MainAppRouter />

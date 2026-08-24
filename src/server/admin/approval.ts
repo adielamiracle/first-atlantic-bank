@@ -1,6 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { db } from '../db';
 import { AdminUser, UserApprovalStatus } from '../../types';
+import { adminNotificationService } from '../notifications';
 
 export const adminApprovalRouter = Router();
 
@@ -129,6 +130,24 @@ adminApprovalRouter.post('/users/:userId/status', (req: Request, res: Response) 
     return res.status(400).json({ error: result.error });
   }
 
+  // If approved or activated, dispatch customer welcoming and onboarding alert to phone and email
+  if (status === 'APPROVED' && result.user) {
+    const rawUser = db.users.get(userId);
+    if (rawUser) {
+      const uAccount = Array.from(db.accounts.values()).find(a => a.userId === userId);
+      adminNotificationService.triggerCustomerWelcomeAndApprovalAlert({
+        id: rawUser.id,
+        firstName: rawUser.firstName,
+        lastName: rawUser.lastName,
+        email: rawUser.email,
+        phone: rawUser.phone,
+        accountNumber: uAccount?.accountNumber,
+        iban: uAccount?.iban,
+        currency: uAccount?.currency
+      });
+    }
+  }
+
   res.json({
     success: true,
     user: result.user,
@@ -174,11 +193,29 @@ adminApprovalRouter.post('/activation-queue/:id/approve', (req: Request, res: Re
     return res.status(400).json({ error: result.error });
   }
 
+  // Dispatch customer welcoming & active alert to phone & email
+  if (result.user && result.request?.userId) {
+    const rawUser = db.users.get(result.request.userId);
+    if (rawUser) {
+      const uAccount = Array.from(db.accounts.values()).find(a => a.userId === rawUser.id);
+      adminNotificationService.triggerCustomerWelcomeAndApprovalAlert({
+        id: rawUser.id,
+        firstName: rawUser.firstName,
+        lastName: rawUser.lastName,
+        email: rawUser.email,
+        phone: rawUser.phone,
+        accountNumber: uAccount?.accountNumber,
+        iban: uAccount?.iban,
+        currency: uAccount?.currency
+      });
+    }
+  }
+
   res.json({
     success: true,
     request: result.request,
     user: result.user,
-    message: `Dual-signature verification confirmed. Account activated for ${result.request?.userName}.`
+    message: `Dual-signature verification confirmed. Account activated for ${result.request?.userName}. Welcome alerts dispatched to user phone and email.`
   });
 });
 
@@ -200,6 +237,37 @@ adminApprovalRouter.post('/activation-queue/:id/reject', (req: Request, res: Res
     success: true,
     request: result.request,
     message: 'Account activation request declined.'
+  });
+});
+
+/**
+ * POST /api/admin/approval/users/:userId/send-welcome-alert
+ * Dispatches welcoming & alert notification to user's phone and email on demand
+ */
+adminApprovalRouter.post('/users/:userId/send-welcome-alert', (req: Request, res: Response) => {
+  const { userId } = req.params;
+  const rawUser = db.users.get(userId);
+  if (!rawUser) {
+    return res.status(404).json({ error: 'User not found in bank directory.' });
+  }
+
+  const uAccount = Array.from(db.accounts.values()).find(a => a.userId === userId);
+  const dispatch = adminNotificationService.triggerCustomerWelcomeAndApprovalAlert({
+    id: rawUser.id,
+    firstName: rawUser.firstName,
+    lastName: rawUser.lastName,
+    email: rawUser.email,
+    phone: rawUser.phone,
+    accountNumber: uAccount?.accountNumber,
+    iban: uAccount?.iban,
+    currency: uAccount?.currency
+  });
+
+  res.json({
+    success: true,
+    smsMessage: dispatch.smsMessage,
+    emailLog: dispatch.emailLog,
+    message: `Welcoming alert dispatched to ${rawUser.email} and SMS sent to ${rawUser.phone || 'registered phone'}.`
   });
 });
 

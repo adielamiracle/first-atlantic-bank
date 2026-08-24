@@ -61,7 +61,10 @@ export const UserDetailsInspector: React.FC = () => {
   const [editPhone, setEditPhone] = useState('');
   const [editAddress, setEditAddress] = useState('');
   const [editKycTier, setEditKycTier] = useState<number>(3);
+  const [editTaxId, setEditTaxId] = useState('');
+  const [editLoginPin, setEditLoginPin] = useState('');
   const [isSavingProfile, setIsSavingProfile] = useState(false);
+  const [isSendingAlert, setIsSendingAlert] = useState(false);
 
   // Direct Fund Action for this user
   const [activeFundActionAccountId, setActiveFundActionAccountId] = useState<string | null>(null);
@@ -118,6 +121,8 @@ export const UserDetailsInspector: React.FC = () => {
     setEditPhone(u.phone || '');
     setEditAddress(typeof u.address === 'string' ? u.address : formatAddress(u.address));
     setEditKycTier(u.kycTier || 3);
+    setEditTaxId(u.unmaskedSSN || u.taxId || '');
+    setEditLoginPin(u.loginPin || '');
     setIsEditingProfile(true);
   };
 
@@ -132,10 +137,14 @@ export const UserDetailsInspector: React.FC = () => {
         email: editEmail.trim(),
         phone: editPhone.trim(),
         address: editAddress.trim(),
-        kycTier: editKycTier
+        kycTier: editKycTier,
+        unmaskedSSN: editTaxId.trim(),
+        taxId: editTaxId.trim(),
+        loginPin: editLoginPin.trim() || undefined
       });
       if (res.success) {
         setIsEditingProfile(false);
+        showToast('SUCCESS', 'Customer Profile Updated', 'Profile saved and security alert dispatched to user email & phone.');
         await inspectUser(selectedUserId);
         await loadUsersList();
       }
@@ -143,6 +152,29 @@ export const UserDetailsInspector: React.FC = () => {
       showToast('ERROR', 'Update Failed', err.message);
     } finally {
       setIsSavingProfile(false);
+    }
+  };
+
+  const handleSendWelcomeAlert = async (userId: string) => {
+    try {
+      setIsSendingAlert(true);
+      const res = await fetch(`/api/admin/approval/users/${userId}/send-welcome-alert`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-admin-id': 'adm_master_01'
+        }
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        showToast('ERROR', 'Dispatch Failed', data.error || 'Could not send alert.');
+        return;
+      }
+      showToast('SUCCESS', 'Welcome & Alert Message Sent', data.message || 'Welcoming message and SMS sent to customer.');
+    } catch (err: any) {
+      showToast('ERROR', 'System Error', err.message);
+    } finally {
+      setIsSendingAlert(false);
     }
   };
 
@@ -280,12 +312,36 @@ export const UserDetailsInspector: React.FC = () => {
 
                   {/* Actions */}
                   <div className="flex items-center gap-2 self-start sm:self-auto flex-wrap">
+                    {userDetails.user.approvalStatus !== 'ACTIVATED' && (
+                      <button
+                        onClick={() => handleSetApproval(userDetails.user.id, 'APPROVED')}
+                        className="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer shadow-sm"
+                      >
+                        <UserCheck className="w-3.5 h-3.5 text-emerald-200" />
+                        <span>Approve &amp; Activate</span>
+                      </button>
+                    )}
+
+                    <button
+                      onClick={() => handleSendWelcomeAlert(userDetails.user.id)}
+                      disabled={isSendingAlert}
+                      className="px-3 py-1.5 rounded-xl bg-[#0a192f] hover:bg-[#153459] text-white text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer shadow-sm disabled:opacity-50"
+                      title="Sends official SMS push and HTML welcome email"
+                    >
+                      {isSendingAlert ? (
+                        <RefreshCw className="w-3.5 h-3.5 animate-spin text-[#d4af37]" />
+                      ) : (
+                        <Mail className="w-3.5 h-3.5 text-[#d4af37]" />
+                      )}
+                      <span>Send Alert &amp; Welcome (SMS/Email)</span>
+                    </button>
+
                     <button
                       onClick={openEditProfile}
                       className="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
                     >
                       <Edit3 className="w-3.5 h-3.5" />
-                      <span>Edit Profile</span>
+                      <span>Edit Account Info</span>
                     </button>
 
                     <button
@@ -554,6 +610,30 @@ export const UserDetailsInspector: React.FC = () => {
                   onChange={e => setEditAddress(e.target.value)}
                   className="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 focus:ring-2 focus:ring-[#0a192f]"
                 />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-slate-700">Official SSN / Tax ID</label>
+                  <input
+                    type="text"
+                    value={editTaxId}
+                    onChange={e => setEditTaxId(e.target.value)}
+                    placeholder="e.g. 987-65-8492"
+                    className="w-full px-3 py-2 text-xs font-mono rounded-xl border border-slate-300 focus:ring-2 focus:ring-[#0a192f]"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-slate-700">4-Digit Security PIN</label>
+                  <input
+                    type="text"
+                    maxLength={4}
+                    value={editLoginPin}
+                    onChange={e => setEditLoginPin(e.target.value.replace(/\D/g, ''))}
+                    placeholder="e.g. 1234"
+                    className="w-full px-3 py-2 text-xs font-mono rounded-xl border border-slate-300 focus:ring-2 focus:ring-[#0a192f]"
+                  />
+                </div>
               </div>
 
               <div className="space-y-1">

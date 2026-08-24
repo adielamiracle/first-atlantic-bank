@@ -105,7 +105,12 @@ export interface UserProfile {
   firstName: string;
   lastName: string;
   phone: string;
+  dialCode?: string;
   dateOfBirth: string;
+  nationality?: string;
+  passportNumber?: string;
+  passportPhoto?: string;
+  loginPin?: string; // 4-digit security PIN for login & wire transfers
   ssnMasked?: string;
   nationalInsuranceMasked?: string;
   region: BankRegion;
@@ -288,12 +293,14 @@ export interface AccountApplication {
   lastName: string;
   email: string;
   phone: string;
+  dialCode?: string;
   dateOfBirth: string;
   nationality: string;
   taxIdOrSsn: string;
   idDocumentType: 'PASSPORT' | 'EU_NATIONAL_ID' | 'DRIVING_LICENSE';
   idDocumentNumber: string;
   idDocumentFileName?: string;
+  passportPhoto?: string;
   proofOfAddressFileName?: string;
   
   // Residential Address
@@ -323,6 +330,7 @@ export interface AccountApplication {
   // Credentials & Security
   username: string;
   passwordHashed?: string;
+  loginPin?: string; // 4-digit security PIN
   mfaPreference: 'AUTHENTICATOR' | 'SMS' | 'EMAIL';
 
   // Compliance & Review Pipeline
@@ -398,18 +406,8 @@ export interface EmailDispatchLog {
   sentTimestamp: string;
   deliveryStatus: 'DELIVERED' | 'QUEUED' | 'SENT';
   messageId: string;
-  category: 'ENROLLMENT_ALERT' | 'ACTIVATION_ALERT' | 'AML_COMPLIANCE';
-  metadata?: {
-    applicationId?: string;
-    referenceNumber?: string;
-    applicantName?: string;
-    applicantEmail?: string;
-    region?: BankRegion;
-    accountType?: string;
-    initialDepositMinor?: number;
-    riskScore?: number;
-    isPep?: boolean;
-  };
+  category: 'ENROLLMENT_ALERT' | 'ACTIVATION_ALERT' | 'AML_COMPLIANCE' | 'ONBOARDING_WELCOME' | 'SECURITY_ALERT';
+  metadata?: Record<string, any>;
 }
 
 export interface AdminNotification {

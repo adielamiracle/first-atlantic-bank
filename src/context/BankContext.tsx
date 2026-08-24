@@ -136,6 +136,11 @@ interface BankContextType {
   saveBankReceivingAccount: (data: Partial<BankReceivingAccount>) => Promise<{ success: boolean; account?: BankReceivingAccount; error?: string }>;
   deleteBankReceivingAccount: (id: string) => Promise<{ success: boolean; error?: string }>;
 
+  // User Passport & 4-Digit Security PIN
+  updatePassportDetails: (data: { passportPhoto?: string; passportNumber?: string; nationality?: string }) => Promise<{ success: boolean; error?: string }>;
+  updateLoginPin: (currentPin: string, newPin: string) => Promise<{ success: boolean; error?: string }>;
+  validateTransferPin: (pin: string) => Promise<{ valid: boolean; error?: string }>;
+
   // Loading & State
   isLoading: boolean;
   isInitialSplash: boolean;
@@ -1315,6 +1320,78 @@ export const BankProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
+  const updatePassportDetails = async (data: { passportPhoto?: string; passportNumber?: string; nationality?: string }) => {
+    try {
+      const res = await fetch('/api/user/passport', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          ...getAuthHeader()
+        },
+        body: JSON.stringify(data)
+      });
+      const resData = await res.json();
+      if (!res.ok) {
+        showToast('ERROR', 'Update Failed', resData.error || 'Could not update passport profile.');
+        return { success: false, error: resData.error };
+      }
+      if (resData.user) {
+        setCurrentUser(resData.user);
+      }
+      showToast('SUCCESS', 'Passport Profile Updated', 'Your identity documentation and passport details have been saved.');
+      return { success: true };
+    } catch (err: any) {
+      showToast('ERROR', 'System Error', err.message);
+      return { success: false, error: err.message };
+    }
+  };
+
+  const updateLoginPin = async (currentPin: string, newPin: string) => {
+    try {
+      const res = await fetch('/api/user/pin', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          ...getAuthHeader()
+        },
+        body: JSON.stringify({ currentPin, newPin })
+      });
+      const resData = await res.json();
+      if (!res.ok) {
+        showToast('ERROR', 'PIN Change Failed', resData.error || 'Invalid current PIN.');
+        return { success: false, error: resData.error };
+      }
+      showToast('SUCCESS', 'PIN Changed', 'Your 4-digit Private Banking PIN has been updated successfully.');
+      if (currentUser) {
+        setCurrentUser({ ...currentUser, loginPin: newPin });
+      }
+      return { success: true };
+    } catch (err: any) {
+      showToast('ERROR', 'System Error', err.message);
+      return { success: false, error: err.message };
+    }
+  };
+
+  const validateTransferPin = async (pin: string) => {
+    try {
+      const res = await fetch('/api/auth/validate-transfer-pin', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...getAuthHeader()
+        },
+        body: JSON.stringify({ pin })
+      });
+      const resData = await res.json();
+      if (!res.ok || !resData.valid) {
+        return { valid: false, error: resData.error || 'Invalid 4-digit Authorization PIN.' };
+      }
+      return { valid: true };
+    } catch (err: any) {
+      return { valid: false, error: err.message || 'Error authorizing PIN.' };
+    }
+  };
+
   useEffect(() => {
     if (currentUser || currentRole === 'ADMIN') {
       refreshData();
@@ -1389,6 +1466,9 @@ export const BankProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         fetchBankReceivingAccounts,
         saveBankReceivingAccount,
         deleteBankReceivingAccount,
+        updatePassportDetails,
+        updateLoginPin,
+        validateTransferPin,
         isLoading,
         isInitialSplash,
         dismissSplash,

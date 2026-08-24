@@ -265,56 +265,56 @@ export const AdminDashboard: React.FC = () => {
       </header>
 
       {/* Main Container */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 pt-6 space-y-6">
-        {/* Quick Executive Stats Grid */}
-        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-          <div className="p-4 rounded-2xl bg-[#091b33] border border-slate-800 shadow-sm space-y-1">
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
-              Total Managed Vault Capital
+      <main className="max-w-7xl mx-auto px-3 sm:px-6 pt-4 sm:pt-6 space-y-4 sm:space-y-6">
+        {/* Streamlined Executive Stats Grid (Compact on Mobile) */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4">
+          <div className="p-3 sm:p-4 rounded-xl sm:rounded-2xl bg-[#091b33] border border-slate-800 shadow-sm space-y-0.5 sm:space-y-1">
+            <span className="text-[9px] sm:text-[10px] font-bold text-slate-300 uppercase tracking-wider block">
+              Managed Vault Capital
             </span>
-            <div className="text-lg sm:text-2xl font-bold font-mono text-[#d4af37]">
+            <div className="text-base sm:text-xl md:text-2xl font-bold font-mono text-[#d4af37]">
               <CurrencyDisplay
                 amountMinor={adminStats?.totalManagedAssetsUsdMinor || 148200000}
                 currency="USD"
                 size="lg"
-                className="font-bold text-[#d4af37] font-mono"
+                className="font-bold text-[#d4af37] font-mono text-sm sm:text-xl"
               />
             </div>
-            <span className="text-[10px] text-emerald-400 font-mono block">&uarr; Real-time Ledger Reserve</span>
+            <span className="text-[9px] sm:text-[10px] text-emerald-400 font-mono block truncate">&uarr; Ledger Reserve</span>
           </div>
 
-          <div className="p-4 rounded-2xl bg-[#091b33] border border-slate-800 shadow-sm space-y-1">
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
-              Total Customer Accounts
+          <div className="p-3 sm:p-4 rounded-xl sm:rounded-2xl bg-[#091b33] border border-slate-800 shadow-sm space-y-0.5 sm:space-y-1">
+            <span className="text-[9px] sm:text-[10px] font-bold text-slate-300 uppercase tracking-wider block">
+              Customer Accounts
             </span>
-            <div className="text-lg sm:text-2xl font-bold font-mono text-white">
+            <div className="text-base sm:text-xl md:text-2xl font-bold font-mono text-white">
               {accounts.length} Accounts
             </div>
-            <span className="text-[10px] text-slate-400 font-mono block">Across US / UK / EU Vaults</span>
+            <span className="text-[9px] sm:text-[10px] text-slate-300 font-mono block truncate">US • UK • EU Vaults</span>
           </div>
 
-          <div className="p-4 rounded-2xl bg-[#091b33] border border-slate-800 shadow-sm space-y-1">
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+          <div className="p-3 sm:p-4 rounded-xl sm:rounded-2xl bg-[#091b33] border border-slate-800 shadow-sm space-y-0.5 sm:space-y-1">
+            <span className="text-[9px] sm:text-[10px] font-bold text-slate-300 uppercase tracking-wider block">
               Pending Onboarding
             </span>
-            <div className="text-lg sm:text-2xl font-bold font-mono text-amber-400">
+            <div className="text-base sm:text-xl md:text-2xl font-bold font-mono text-amber-300">
               {adminStats?.pendingApplicationsCount || 0} In Review
             </div>
-            <span className="text-[10px] text-amber-300/80 font-mono block">KYC &amp; AML Verification</span>
+            <span className="text-[9px] sm:text-[10px] text-amber-300/90 font-mono block truncate">KYC/AML Clearance</span>
           </div>
 
-          <div className="p-4 rounded-2xl bg-[#091b33] border border-slate-800 shadow-sm space-y-1">
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
-              System Inbound Desks
+          <div className="p-3 sm:p-4 rounded-xl sm:rounded-2xl bg-[#091b33] border border-slate-800 shadow-sm space-y-0.5 sm:space-y-1">
+            <span className="text-[9px] sm:text-[10px] font-bold text-slate-300 uppercase tracking-wider block">
+              Inbound Desks
             </span>
-            <div className="text-lg sm:text-2xl font-bold font-mono text-emerald-400">
+            <div className="text-base sm:text-xl md:text-2xl font-bold font-mono text-emerald-300">
               Active Routing
             </div>
-            <span className="text-[10px] text-slate-400 font-mono block">Fedwire • CHAPS • SEPA</span>
+            <span className="text-[9px] sm:text-[10px] text-slate-300 font-mono block truncate">Fedwire • CHAPS • SEPA</span>
           </div>
         </div>
 
-        {/* Desktop Horizontal Navigation Tabs (Scrollable on small screens) */}
+        {/* Desktop Horizontal Navigation Tabs */}
         <div className="hidden lg:flex items-center gap-1.5 p-1.5 rounded-2xl bg-[#091b33] border border-slate-800 overflow-x-auto">
           {navItems.map(item => {
             const Icon = item.icon;
@@ -326,7 +326,7 @@ export const AdminDashboard: React.FC = () => {
                 className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
                   isActive
                     ? 'bg-[#c5a880] text-slate-950 shadow-sm'
-                    : 'text-slate-300 hover:text-white hover:bg-slate-800/60'
+                    : 'text-slate-200 hover:text-white hover:bg-slate-800/60'
                 }`}
               >
                 <Icon className="w-4 h-4" />
@@ -334,7 +334,7 @@ export const AdminDashboard: React.FC = () => {
                 {item.badge && (
                   <span
                     className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full font-mono ${
-                      isActive ? 'bg-slate-950 text-white' : 'bg-slate-800 text-slate-300'
+                      isActive ? 'bg-slate-950 text-white' : 'bg-slate-800 text-slate-200'
                     }`}
                   >
                     {item.badge}
@@ -345,8 +345,8 @@ export const AdminDashboard: React.FC = () => {
           })}
         </div>
 
-        {/* Mobile Horizontal Pill Bar */}
-        <div className="flex lg:hidden items-center gap-2 overflow-x-auto pb-1 no-scrollbar">
+        {/* Mobile Horizontal Pill Bar (Smooth touch scroll) */}
+        <div className="flex lg:hidden items-center gap-2 overflow-x-auto pb-1 no-scrollbar -mx-1 px-1">
           {navItems.map(item => {
             const Icon = item.icon;
             const isActive = activeTab === item.id;
@@ -356,14 +356,14 @@ export const AdminDashboard: React.FC = () => {
                 onClick={() => setActiveTab(item.id as any)}
                 className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold shrink-0 transition-all cursor-pointer ${
                   isActive
-                    ? 'bg-[#c5a880] text-slate-950 font-extrabold shadow-sm'
-                    : 'bg-[#091b33] text-slate-300 border border-slate-800'
+                    ? 'bg-[#c5a880] text-slate-950 font-extrabold shadow-sm ring-1 ring-[#c5a880]'
+                    : 'bg-[#091b33] text-slate-200 border border-slate-700/80 active:bg-slate-800'
                 }`}
               >
                 <Icon className="w-3.5 h-3.5" />
-                <span>{item.label}</span>
+                <span className="whitespace-nowrap">{item.label}</span>
                 {item.badge && (
-                  <span className="text-[9px] px-1 py-0.2 rounded-full bg-slate-900 text-white font-mono">
+                  <span className="text-[9px] px-1.5 py-0.2 rounded-full bg-slate-900 text-white font-mono">
                     {item.badge}
                   </span>
                 )}

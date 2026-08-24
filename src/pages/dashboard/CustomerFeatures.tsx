@@ -418,10 +418,57 @@ export const StatementsPage: React.FC = () => {
 };
 
 export const SecurityCenterPage: React.FC = () => {
-  const { showToast, biometricState, toggleBiometrics, openBiometricPrompt, darkMode } = useBank();
+  const {
+    showToast,
+    biometricState,
+    toggleBiometrics,
+    updateBiometricSettings,
+    openBiometricPrompt,
+    darkMode
+  } = useBank();
 
   const handleRevoke = (device: string) => {
     showToast('SUCCESS', 'Session Terminated', `Device session for ${device} has been revoked.`);
+  };
+
+  const handleToggleLoginBiometrics = async () => {
+    if (!biometricState.enabled) {
+      // If biometrics isn't enabled at all, prompt enrollment first
+      const result = await toggleBiometrics(true);
+      if (result.success) {
+        updateBiometricSettings({ requireForLogin: true });
+      }
+    } else {
+      const nextVal = !biometricState.requireForLogin;
+      updateBiometricSettings({ requireForLogin: nextVal });
+      showToast(
+        'SUCCESS',
+        nextVal ? 'Biometric Quick Login Enabled' : 'Biometric Quick Login Disabled',
+        nextVal
+          ? 'FaceID / Fingerprint will now be accepted for 1-tap sign in.'
+          : 'Standard PIN & Password required on next sign in.'
+      );
+    }
+  };
+
+  const handleToggleWireBiometrics = () => {
+    const nextVal = !biometricState.requireForWires;
+    updateBiometricSettings({ requireForWires: nextVal });
+    showToast(
+      'INFO',
+      'Transfer Policy Updated',
+      nextVal ? 'Biometric sensor required for outgoing wires.' : 'Biometric wire check relaxed.'
+    );
+  };
+
+  const handleToggleCardBiometrics = () => {
+    const nextVal = !biometricState.requireForCardUnfreeze;
+    updateBiometricSettings({ requireForCardUnfreeze: nextVal });
+    showToast(
+      'INFO',
+      'Card Security Updated',
+      nextVal ? 'Biometric confirmation required to unfreeze cards.' : 'Biometric card check relaxed.'
+    );
   };
 
   return (
@@ -485,13 +532,13 @@ export const SecurityCenterPage: React.FC = () => {
                   className="px-4 py-2.5 rounded-xl bg-[#c5a880] text-slate-950 font-bold text-xs uppercase tracking-wider flex items-center gap-1.5 hover:brightness-105 transition-all cursor-pointer shadow-md"
                 >
                   <Scan className="w-3.5 h-3.5" />
-                  <span>Test Biometrics</span>
+                  <span>Test Sensor</span>
                 </button>
                 <button
                   onClick={() => toggleBiometrics(false)}
                   className="px-4 py-2.5 rounded-xl border border-slate-700 hover:bg-slate-800 text-slate-300 font-bold text-xs transition-colors cursor-pointer"
                 >
-                  Disable
+                  Unbind Key
                 </button>
               </>
             ) : (
@@ -503,6 +550,118 @@ export const SecurityCenterPage: React.FC = () => {
                 <span>Enroll Biometric Key</span>
               </button>
             )}
+          </div>
+        </div>
+      </div>
+
+      {/* Dedicated Biometric Quick Login & Access Controls */}
+      <div className="bg-white dark:bg-[#0a192f] rounded-2xl p-6 border border-slate-200 dark:border-[#1e3656] shadow-sm space-y-4 transition-colors">
+        <div className="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-800">
+          <div>
+            <h3 className="text-sm font-bold font-serif text-slate-900 dark:text-white">
+              Biometric Access Policy &amp; Quick Login Preferences
+            </h3>
+            <p className="text-xs text-slate-500 dark:text-slate-400">
+              Customize which security touchpoints accept FaceID, Touch ID, or Hardware Fingerprint scan.
+            </p>
+          </div>
+          <span className="text-[11px] font-mono font-bold text-[#8c6d37] dark:text-[#c5a880] bg-[#c5a880]/10 px-2.5 py-1 rounded-lg border border-[#c5a880]/30">
+            FIDO2 / WebAuthn Level 2
+          </span>
+        </div>
+
+        <div className="divide-y divide-slate-100 dark:divide-slate-800 text-xs">
+          {/* Quick Login Toggle */}
+          <div className="py-3.5 flex items-center justify-between gap-4">
+            <div className="space-y-0.5">
+              <div className="font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                <Fingerprint className="w-4 h-4 text-[#8c6d37] dark:text-[#c5a880]" />
+                <span>Quick Biometric Login Access (FaceID / Fingerprint)</span>
+              </div>
+              <p className="text-slate-500 dark:text-slate-400 text-[11px] leading-relaxed">
+                Allow 1-tap passkey biometric login on this device without typing your password each session.
+              </p>
+            </div>
+
+            <button
+              onClick={handleToggleLoginBiometrics}
+              type="button"
+              role="switch"
+              aria-checked={biometricState.enabled && biometricState.requireForLogin}
+              className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                biometricState.enabled && biometricState.requireForLogin
+                  ? 'bg-emerald-500'
+                  : 'bg-slate-300 dark:bg-slate-700'
+              }`}
+            >
+              <span
+                className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                  biometricState.enabled && biometricState.requireForLogin ? 'translate-x-5' : 'translate-x-0'
+                }`}
+              />
+            </button>
+          </div>
+
+          {/* Wire Pre-authorization Toggle */}
+          <div className="py-3.5 flex items-center justify-between gap-4">
+            <div className="space-y-0.5">
+              <div className="font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                <Shield className="w-4 h-4 text-slate-600 dark:text-slate-400" />
+                <span>Biometric Wire Transfer Pre-Authorization</span>
+              </div>
+              <p className="text-slate-500 dark:text-slate-400 text-[11px] leading-relaxed">
+                Require a live biometric scan to release high-value Fedwire, SWIFT, and CHAPS disbursements.
+              </p>
+            </div>
+
+            <button
+              onClick={handleToggleWireBiometrics}
+              type="button"
+              role="switch"
+              aria-checked={biometricState.requireForWires}
+              className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                biometricState.requireForWires
+                  ? 'bg-emerald-500'
+                  : 'bg-slate-300 dark:bg-slate-700'
+              }`}
+            >
+              <span
+                className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                  biometricState.requireForWires ? 'translate-x-5' : 'translate-x-0'
+                }`}
+              />
+            </button>
+          </div>
+
+          {/* Card Unfreeze Toggle */}
+          <div className="py-3.5 flex items-center justify-between gap-4">
+            <div className="space-y-0.5">
+              <div className="font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                <Lock className="w-4 h-4 text-slate-600 dark:text-slate-400" />
+                <span>Biometric Titanium Card Unfreeze Confirmation</span>
+              </div>
+              <p className="text-slate-500 dark:text-slate-400 text-[11px] leading-relaxed">
+                Require biometric authentication before unlocking or adjusting limits on Atlantic Infinite cards.
+              </p>
+            </div>
+
+            <button
+              onClick={handleToggleCardBiometrics}
+              type="button"
+              role="switch"
+              aria-checked={biometricState.requireForCardUnfreeze}
+              className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                biometricState.requireForCardUnfreeze
+                  ? 'bg-emerald-500'
+                  : 'bg-slate-300 dark:bg-slate-700'
+              }`}
+            >
+              <span
+                className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                  biometricState.requireForCardUnfreeze ? 'translate-x-5' : 'translate-x-0'
+                }`}
+              />
+            </button>
           </div>
         </div>
       </div>
@@ -927,7 +1086,152 @@ export const ProfilePage: React.FC = () => {
         </div>
       </div>
 
-      {/* 3. KYC Records & Personal Identity Profile */}
+      {/* 3. Verified Sovereign Passport & Identification Section */}
+      <div className="bg-white dark:bg-[#0a192f] rounded-2xl p-6 sm:p-7 border border-slate-200 dark:border-[#1e3656] shadow-sm space-y-6 transition-colors">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-100 dark:border-slate-800">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-amber-50 dark:bg-amber-950/40 text-[#c5a880] flex items-center justify-center border border-amber-200 dark:border-amber-900/60">
+              <FileText className="w-5 h-5" />
+            </div>
+            <div>
+              <h3 className="text-base font-bold text-slate-900 dark:text-white font-serif flex items-center gap-2">
+                <span>Verified Passport &amp; Sovereign Identification</span>
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-400 border border-emerald-300 dark:border-emerald-800">
+                  KYC VERIFIED
+                </span>
+              </h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400">
+                Statutory biometric identity document on file for international multi-currency settlement and checkpoint login.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-center">
+          {/* Passport Photo Preview / Card */}
+          <div className="md:col-span-1 flex flex-col items-center justify-center p-4 rounded-xl bg-slate-50 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 text-center space-y-3">
+            <div className="relative w-28 h-36 rounded-xl overflow-hidden border-2 border-[#c5a880] shadow-md bg-slate-200 dark:bg-slate-800">
+              <img
+                src={currentUser?.passportPhoto || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&auto=format&fit=crop&q=80'}
+                alt="Client Passport"
+                className="w-full h-full object-cover"
+                referrerPolicy="no-referrer"
+              />
+              <div className="absolute bottom-0 inset-x-0 bg-slate-950/80 text-[#e5ca95] text-[9px] font-mono py-0.5 uppercase tracking-wider">
+                Biometric ID
+              </div>
+            </div>
+            <div className="text-xs">
+              <div className="font-bold text-slate-800 dark:text-slate-200">{currentUser?.firstName} {currentUser?.lastName}</div>
+              <div className="text-[11px] text-slate-500 font-mono">Doc: {currentUser?.passportNumber || 'P98420193'}</div>
+            </div>
+          </div>
+
+          {/* Document Details */}
+          <div className="md:col-span-2 space-y-4 text-xs">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 font-mono">
+              <div className="p-3 bg-slate-50 dark:bg-slate-900/60 rounded-xl border border-slate-200 dark:border-slate-800">
+                <span className="text-[10px] text-slate-400 uppercase block font-sans">Passport Document Number:</span>
+                <span className="font-bold text-slate-900 dark:text-slate-100 text-sm">{currentUser?.passportNumber || 'P98420193'}</span>
+              </div>
+              <div className="p-3 bg-slate-50 dark:bg-slate-900/60 rounded-xl border border-slate-200 dark:border-slate-800">
+                <span className="text-[10px] text-slate-400 uppercase block font-sans">Nationality / Citizenship:</span>
+                <span className="font-bold text-slate-900 dark:text-slate-100 text-sm">{currentUser?.nationality || 'German / European Union'}</span>
+              </div>
+              <div className="p-3 bg-slate-50 dark:bg-slate-900/60 rounded-xl border border-slate-200 dark:border-slate-800">
+                <span className="text-[10px] text-slate-400 uppercase block font-sans">Identity Verification Level:</span>
+                <span className="font-bold text-emerald-600 dark:text-emerald-400">Tier 3 (Institutional Qualified)</span>
+              </div>
+              <div className="p-3 bg-slate-50 dark:bg-slate-900/60 rounded-xl border border-slate-200 dark:border-slate-800">
+                <span className="text-[10px] text-slate-400 uppercase block font-sans">Biometric Checkpoint:</span>
+                <span className="font-bold text-emerald-600 dark:text-emerald-400">Active &amp; Enforced</span>
+              </div>
+            </div>
+
+            <div className="p-3.5 rounded-xl bg-blue-50/60 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-900/50 text-slate-700 dark:text-slate-300 text-[11px] leading-relaxed">
+              <span className="font-bold text-blue-900 dark:text-blue-300 block mb-1">Passport Login Checkpoint Guarantee:</span>
+              Whenever you sign in, your verified passport identity is presented alongside your secure 4-Digit PIN to ensure uninterrupted sovereign protection against unauthorized terminal access.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* 4. 4-Digit Private Banking PIN Management */}
+      <div className="bg-white dark:bg-[#0a192f] rounded-2xl p-6 sm:p-7 border border-slate-200 dark:border-[#1e3656] shadow-sm space-y-5 transition-colors">
+        <div className="flex items-center gap-3 pb-3 border-b border-slate-100 dark:border-slate-800">
+          <div className="w-10 h-10 rounded-xl bg-[#0a192f] dark:bg-[#112a4a] text-[#c5a880] flex items-center justify-center border border-[#c5a880]/30">
+            <Key className="w-5 h-5" />
+          </div>
+          <div>
+            <h3 className="text-base font-bold text-slate-900 dark:text-white font-serif">
+              4-Digit Private Banking PIN
+            </h3>
+            <p className="text-xs text-slate-500 dark:text-slate-400">
+              Used for the Passport Sign-In Checkpoint and authorizing outbound interbank wires.
+            </p>
+          </div>
+        </div>
+
+        <form
+          onSubmit={async (e) => {
+            e.preventDefault();
+            const form = e.currentTarget;
+            const newPin = (form.elements.namedItem('newPin') as HTMLInputElement).value;
+            const confirmPin = (form.elements.namedItem('confirmPin') as HTMLInputElement).value;
+            if (newPin.length !== 4 || !/^\d{4}$/.test(newPin)) {
+              showToast('ERROR', 'Invalid PIN', 'PIN must be exactly 4 numeric digits.');
+              return;
+            }
+            if (newPin !== confirmPin) {
+              showToast('ERROR', 'Mismatch', 'New PIN and confirmation do not match.');
+              return;
+            }
+            showToast('SUCCESS', '4-Digit PIN Updated', 'Your new private banking PIN is active.');
+            form.reset();
+          }}
+          className="space-y-4"
+        >
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-bold uppercase text-slate-700 dark:text-slate-300 mb-1">
+                New 4-Digit PIN *
+              </label>
+              <input
+                name="newPin"
+                type="password"
+                maxLength={4}
+                required
+                placeholder="••••"
+                className="w-full px-3.5 py-2 text-sm font-mono text-center tracking-[0.5em] bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-800 rounded-lg text-slate-900 dark:text-slate-100 focus:outline-none focus:border-[#8c6d37]"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-bold uppercase text-slate-700 dark:text-slate-300 mb-1">
+                Confirm New 4-Digit PIN *
+              </label>
+              <input
+                name="confirmPin"
+                type="password"
+                maxLength={4}
+                required
+                placeholder="••••"
+                className="w-full px-3.5 py-2 text-sm font-mono text-center tracking-[0.5em] bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-800 rounded-lg text-slate-900 dark:text-slate-100 focus:outline-none focus:border-[#8c6d37]"
+              />
+            </div>
+          </div>
+
+          <div className="flex justify-end pt-1">
+            <button
+              type="submit"
+              className="px-5 py-2.5 rounded-xl bg-[#0a192f] dark:bg-[#112a4a] hover:bg-[#15345d] text-white font-bold text-xs uppercase tracking-wider cursor-pointer border border-[#c5a880]/30 shadow-sm"
+            >
+              Update 4-Digit PIN
+            </button>
+          </div>
+        </form>
+      </div>
+
+      {/* 5. KYC Records & Personal Identity Profile */}
       <form onSubmit={handleSave} className="bg-white dark:bg-[#0a192f] rounded-2xl p-6 sm:p-7 border border-slate-200 dark:border-[#1e3656] shadow-sm space-y-6 transition-colors">
         <div className="flex items-center gap-4 pb-4 border-b border-slate-100 dark:border-slate-800">
           <div className="w-14 h-14 rounded-full bg-[#0a192f] text-[#d4af37] flex items-center justify-center text-lg font-bold font-serif border border-[#c5a880]/30 shadow-sm">

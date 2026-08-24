@@ -460,6 +460,170 @@ export class AdminNotificationService {
     `;
   }
 
+  /**
+   * Dispatches official account approval and onboarding welcoming message to client's phone & email
+   */
+  public triggerCustomerWelcomeAndApprovalAlert(user: {
+    id: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+    phone?: string;
+    accountNumber?: string;
+    iban?: string;
+    currency?: string;
+  }): { emailLog: EmailDispatchLog; smsMessage: string } {
+    const nowIso = new Date().toISOString();
+    const emailLogId = `email_cust_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
+    const messageId = `msg_welcome_${Date.now()}_${Math.random().toString(36).slice(2, 8)}@system.firstatlanticbank.com`;
+
+    const smsMessage = `[First Atlantic Bank] Welcome ${user.firstName}! Your private account has been officially APPROVED and ACTIVATED. Your secure portal is now open for deposits, international wires, and multicurrency custody. Account: ${user.accountNumber || 'Primary Vault'}.`;
+
+    const emailSubject = `Welcome to First Atlantic Bank — Your Institutional Account is Officially Approved & Active`;
+    const bodyPreview = `Dear ${user.firstName} ${user.lastName}, your private banking facilities and digital credentials have been approved by compliance. You may now deposit funds and execute global transactions.`;
+
+    const htmlContent = `
+      <div style="font-family: 'Segoe UI', Arial, sans-serif; background-color: #050e1a; color: #f1f5f9; padding: 28px; border-radius: 12px; border: 1px solid #1e293b; max-width: 620px; margin: auto;">
+        <div style="border-bottom: 2px solid #d4af37; padding-bottom: 16px; margin-bottom: 20px;">
+          <div style="color: #d4af37; font-size: 11px; letter-spacing: 2px; text-transform: uppercase; font-weight: bold;">First Atlantic Bank • Private Client Services</div>
+          <h2 style="color: #ffffff; margin: 6px 0 0 0; font-size: 22px;">Account Approved &amp; Operational</h2>
+        </div>
+        <p style="font-size: 14px; line-height: 1.6; color: #cbd5e1;">
+          Dear <strong>${user.firstName} ${user.lastName}</strong>,
+        </p>
+        <p style="font-size: 14px; line-height: 1.6; color: #cbd5e1;">
+          We are pleased to inform you that your First Atlantic Bank account has completed institutional KYC verification and is now <strong>fully approved and activated</strong>.
+        </p>
+
+        <div style="background-color: #0a192f; border: 1px solid #1e3656; border-radius: 8px; padding: 18px; margin: 20px 0;">
+          <div style="font-size: 12px; text-transform: uppercase; letter-spacing: 1.5px; color: #d4af37; font-weight: bold; margin-bottom: 12px;">Active Custody Coordinates</div>
+          <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
+            <tr style="border-bottom: 1px solid #132438;">
+              <td style="padding: 8px 0; color: #94a3b8;">Primary Holder:</td>
+              <td style="padding: 8px 0; color: #ffffff; font-weight: bold;">${user.firstName} ${user.lastName}</td>
+            </tr>
+            <tr style="border-bottom: 1px solid #132438;">
+              <td style="padding: 8px 0; color: #94a3b8;">Account Number:</td>
+              <td style="padding: 8px 0; color: #ffffff; font-family: monospace;">${user.accountNumber || '8492019482'}</td>
+            </tr>
+            ${user.iban ? `
+            <tr style="border-bottom: 1px solid #132438;">
+              <td style="padding: 8px 0; color: #94a3b8;">International IBAN:</td>
+              <td style="padding: 8px 0; color: #d4af37; font-family: monospace;">${user.iban}</td>
+            </tr>` : ''}
+            <tr style="border-bottom: 1px solid #132438;">
+              <td style="padding: 8px 0; color: #94a3b8;">Registered Email:</td>
+              <td style="padding: 8px 0; color: #cbd5e1;">${user.email}</td>
+            </tr>
+            ${user.phone ? `
+            <tr>
+              <td style="padding: 8px 0; color: #94a3b8;">Mobile Verification:</td>
+              <td style="padding: 8px 0; color: #cbd5e1;">${user.phone}</td>
+            </tr>` : ''}
+          </table>
+        </div>
+
+        <div style="padding: 12px 16px; background-color: #07101d; border-radius: 6px; border: 1px solid #10b98133; font-size: 12px; color: #10b981; line-height: 1.5; margin-bottom: 22px;">
+          ✓ SMS and Email notifications are active. You may now log in using your registered username or email address and password.
+        </div>
+
+        <div style="border-top: 1px solid #1e293b; padding-top: 16px; text-align: center; font-size: 11px; color: #64748b; line-height: 1.4;">
+          <p style="margin: 0 0 4px 0;">First Atlantic Bank • 1 Wall Street, New York &amp; 8 Grosvenor Crescent, London</p>
+          <p style="margin: 0;">Secured with 256-Bit TLS 1.3 &amp; Global Deposit Insurance Standards.</p>
+        </div>
+      </div>
+    `;
+
+    const emailLog: EmailDispatchLog = {
+      id: emailLogId,
+      recipientEmail: user.email,
+      recipientName: `${user.firstName} ${user.lastName}`,
+      senderEmail: 'welcome@system.firstatlanticbank.com',
+      subject: emailSubject,
+      bodyPreview,
+      htmlContent,
+      sentTimestamp: nowIso,
+      deliveryStatus: 'DELIVERED',
+      messageId,
+      category: 'ONBOARDING_WELCOME',
+      metadata: {
+        userId: user.id,
+        phone: user.phone,
+        smsDispatched: true,
+        smsContent: smsMessage
+      }
+    };
+
+    this.emailLogs.unshift(emailLog);
+
+    return { emailLog, smsMessage };
+  }
+
+  /**
+   * Dispatches security alert on administrative profile modification
+   */
+  public triggerCustomerAccountUpdateAlert(user: {
+    id: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+    phone?: string;
+  }, updateDetails: string): { emailLog: EmailDispatchLog; smsMessage: string } {
+    const nowIso = new Date().toISOString();
+    const emailLogId = `email_update_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
+    const messageId = `msg_update_${Date.now()}_${Math.random().toString(36).slice(2, 8)}@system.firstatlanticbank.com`;
+
+    const smsMessage = `[First Atlantic Bank Security Alert] Your account profile and compliance information was updated by Bank Administration. Details: ${updateDetails}. If you did not authorize this, contact your Private Banker immediately.`;
+
+    const emailSubject = `Security Notice: Administrative Updates Made to Your First Atlantic Account`;
+    const bodyPreview = `Security Notification for ${user.firstName} ${user.lastName}: Administrative updates were processed on your profile.`;
+
+    const htmlContent = `
+      <div style="font-family: 'Segoe UI', Arial, sans-serif; background-color: #050e1a; color: #f1f5f9; padding: 28px; border-radius: 12px; border: 1px solid #1e293b; max-width: 620px; margin: auto;">
+        <div style="border-bottom: 2px solid #d4af37; padding-bottom: 16px; margin-bottom: 20px;">
+          <div style="color: #d4af37; font-size: 11px; letter-spacing: 2px; text-transform: uppercase; font-weight: bold;">First Atlantic Bank • Security Operations</div>
+          <h2 style="color: #ffffff; margin: 6px 0 0 0; font-size: 20px;">Account Profile Updated</h2>
+        </div>
+        <p style="font-size: 14px; line-height: 1.6; color: #cbd5e1;">
+          Dear <strong>${user.firstName} ${user.lastName}</strong>,
+        </p>
+        <p style="font-size: 14px; line-height: 1.6; color: #cbd5e1;">
+          This automated security dispatch confirms that your First Atlantic Bank profile record was updated by an authorized Compliance Administrator.
+        </p>
+        <div style="background-color: #0a192f; border: 1px solid #1e3656; border-radius: 8px; padding: 14px; margin: 18px 0; font-size: 13px; color: #e2e8f0;">
+          <strong>Update Summary:</strong> ${updateDetails}
+        </div>
+        <p style="font-size: 12px; color: #94a3b8;">
+          Timestamp: ${nowIso} • Notice dispatched to phone (${user.phone || 'on file'}) and email (${user.email}).
+        </p>
+      </div>
+    `;
+
+    const emailLog: EmailDispatchLog = {
+      id: emailLogId,
+      recipientEmail: user.email,
+      recipientName: `${user.firstName} ${user.lastName}`,
+      senderEmail: 'security@system.firstatlanticbank.com',
+      subject: emailSubject,
+      bodyPreview,
+      htmlContent,
+      sentTimestamp: nowIso,
+      deliveryStatus: 'DELIVERED',
+      messageId,
+      category: 'SECURITY_ALERT',
+      metadata: {
+        userId: user.id,
+        phone: user.phone,
+        smsDispatched: true,
+        smsContent: smsMessage
+      }
+    };
+
+    this.emailLogs.unshift(emailLog);
+
+    return { emailLog, smsMessage };
+  }
+
   private formatMinor(minor: number, currency: 'USD' | 'GBP' | 'EUR'): string {
     const symbol = currency === 'USD' ? '$' : currency === 'GBP' ? '£' : '€';
     return `${symbol}${(minor / 100).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;

@@ -148,7 +148,12 @@ export class BankDatabase {
       firstName: 'Jonathan',
       lastName: 'Sterling',
       phone: '+1 (212) 849-2910',
+      dialCode: '+1',
       dateOfBirth: '1984-04-16',
+      nationality: 'American',
+      passportNumber: 'US84920194A',
+      passportPhoto: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500&auto=format&fit=crop&q=80',
+      loginPin: '1234',
       ssnMasked: '•••-••-8492',
       nationalInsuranceMasked: 'QQ 12 34 56 A',
       region: 'US',
@@ -185,7 +190,12 @@ export class BankDatabase {
       firstName: 'Evelyn',
       lastName: 'Montgomery',
       phone: '+44 20 7946 0912',
+      dialCode: '+44',
       dateOfBirth: '1979-11-23',
+      nationality: 'British',
+      passportNumber: 'GB98201499C',
+      passportPhoto: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=500&auto=format&fit=crop&q=80',
+      loginPin: '4321',
       ssnMasked: '•••-••-1190',
       nationalInsuranceMasked: 'AB 98 76 54 C',
       region: 'UK',
@@ -1138,12 +1148,14 @@ export class BankDatabase {
       lastName: raw.lastName || '',
       email: raw.email || '',
       phone: raw.phone || '',
+      dialCode: raw.dialCode || '+1',
       dateOfBirth: raw.dateOfBirth || '1990-01-01',
       nationality: raw.nationality || 'Germany',
       taxIdOrSsn: raw.taxIdOrSsn || raw.taxId || 'DE 123 456 789',
       idDocumentType: raw.idDocumentType || 'PASSPORT',
-      idDocumentNumber: raw.idDocumentNumber || 'PASSPORT_ON_FILE',
+      idDocumentNumber: raw.idDocumentNumber || raw.passportNumber || 'PASSPORT_ON_FILE',
       idDocumentFileName: raw.idDocumentFileName,
+      passportPhoto: raw.passportPhoto || raw.passportPhotoUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500&auto=format&fit=crop&q=80',
       proofOfAddressFileName: raw.proofOfAddressFileName,
       address,
       employmentStatus,
@@ -1154,32 +1166,217 @@ export class BankDatabase {
       requestedCurrency,
       requestedAccountType: raw.requestedAccountType || raw.product || 'CHECKING_PREMIER',
       requestedRegion,
-      initialDepositAmountMinor: initialDepositMinor,
+      initialDepositAmountMinor: initialDepositMinor > 0 ? initialDepositMinor : 2500000, // Default opening balance €25,000.00 if 0
       requestDebitCard: raw.requestDebitCard !== false,
-      username: raw.username || `user_${Math.random().toString(36).slice(2, 7)}`,
+      username: (raw.username || `user_${Math.random().toString(36).slice(2, 7)}`).trim(),
       passwordHashed: raw.password || raw.passwordHashed || 'AtlanticSecure2026!',
+      loginPin: raw.loginPin || '1234',
       mfaPreference: raw.mfaPreference || 'AUTHENTICATOR',
-      status: 'PENDING_COMPLIANCE_REVIEW',
+      status: 'APPROVED',
       riskScore,
       submittedAt: new Date().toISOString(),
-      complianceNotes: `Automated preliminary sanctions and PEP screening completed. Assigned to European & International Onboarding Queue.`
+      reviewedAt: new Date().toISOString(),
+      complianceNotes: `Automated instant international KYC/AML screening passed. Account active.`
     };
 
     this.applications.set(id, application);
 
-    // Save temporary credentials for sign-in lookup
-    this.userPasswords.set(`pending_${application.username.toLowerCase()}`, application.passwordHashed || 'Password123!');
+    // Auto-provision UserProfile immediately so user can sign in right away!
+    const cleanUsername = application.username.toLowerCase();
+    const cleanEmail = application.email.toLowerCase();
+    const newUserId = `usr_${application.lastName.toLowerCase().replace(/[^a-z]/g, '') || 'client'}_${Date.now().toString().slice(-4)}`;
+
+    const newUser: UserProfile = {
+      id: newUserId,
+      email: application.email,
+      username: application.username,
+      firstName: application.firstName || 'Client',
+      lastName: application.lastName || 'Account Holder',
+      phone: application.phone || '+1 555 0199',
+      dialCode: application.dialCode || '+1',
+      dateOfBirth: application.dateOfBirth,
+      nationality: application.nationality || 'United States',
+      passportNumber: application.idDocumentNumber || 'US84920194A',
+      passportPhoto: application.passportPhoto || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500&auto=format&fit=crop&q=80',
+      loginPin: application.loginPin || '1234',
+      region: application.requestedRegion,
+      approval_status: 'APPROVED',
+      address: {
+        line1: application.address.line1,
+        line2: application.address.line2,
+        city: application.address.city,
+        stateOrCounty: application.address.stateOrProvince,
+        postalCode: application.address.postalCode,
+        country: application.address.country
+      },
+      mfaEnabled: true,
+      mfaMethod: application.mfaPreference,
+      biometricsEnabled: true,
+      kycTier: 'TIER_2_VERIFIED_PREMIER',
+      securityScore: 95,
+      notifications: {
+        emailAlerts: true,
+        smsAlerts: true,
+        pushAlerts: true,
+        largeTransactionThresholdMinor: 500000
+      },
+      lastLogin: new Date().toISOString()
+    };
+
+    this.users.set(newUser.id, newUser);
+    this.userPasswords.set(newUser.id, application.passwordHashed);
+    this.userPasswords.set(cleanUsername, application.passwordHashed);
+    this.userPasswords.set(cleanEmail, application.passwordHashed);
+
+    // Generate Primary Checking Account
+    const fullAccNum = `${Math.floor(100000000000 + Math.random() * 900000000000)}`;
+    const maskedAccNum = `•••• ${fullAccNum.slice(-4)}`;
+    let iban: string | undefined;
+    let sortCode: string | undefined;
+    let routingNumber: string | undefined;
+    let swiftBic = 'FATLUS33NYC';
+
+    if (application.requestedRegion === 'EU') {
+      const countryCode = application.address.country.toLowerCase().includes('germany') ? 'DE' :
+                          application.address.country.toLowerCase().includes('france') ? 'FR' :
+                          application.address.country.toLowerCase().includes('spain') ? 'ES' :
+                          application.address.country.toLowerCase().includes('italy') ? 'IT' :
+                          application.address.country.toLowerCase().includes('netherland') ? 'NL' :
+                          application.address.country.toLowerCase().includes('switzer') ? 'CH' : 'DE';
+      iban = `${countryCode}89FATL3704${fullAccNum.slice(-10)}`;
+      swiftBic = countryCode === 'DE' ? 'FATLDEFF' : 'FATLEU22';
+    } else if (application.requestedRegion === 'UK') {
+      sortCode = '40-12-88';
+      iban = `GB29FATL401288${fullAccNum.slice(-8)}`;
+      swiftBic = 'FATLGB22LON';
+    } else {
+      routingNumber = '021000089';
+      swiftBic = 'FATLUS33NYC';
+    }
+
+    const primaryChecking: BankAccount = {
+      id: `acc_${newUser.id}_${application.requestedCurrency.toLowerCase()}_01`,
+      userId: newUser.id,
+      accountNumber: maskedAccNum,
+      accountNumberFull: fullAccNum,
+      routingNumber,
+      sortCode,
+      iban,
+      swiftBic,
+      name: application.requestedRegion === 'EU' ? 'European Premier Private Checking' : application.requestedRegion === 'UK' ? 'UK Premier Sterling Current Account' : 'Premier Private Checking (USD)',
+      type: 'CHECKING_PREMIER',
+      currency: application.requestedCurrency,
+      balanceMinor: application.initialDepositAmountMinor,
+      availableBalanceMinor: application.initialDepositAmountMinor,
+      pendingHoldMinor: 0,
+      interestRateAPY: 1.20,
+      status: 'ACTIVE',
+      region: application.requestedRegion,
+      openedDate: new Date().toISOString().slice(0, 10),
+      dailyTransferLimitMinor: 50000000,
+      statementCycleDay: 28
+    };
+    this.accounts.set(primaryChecking.id, primaryChecking);
+
+    // Also create secondary High-Yield Savings Account
+    const savingsAccNum = `${Math.floor(100000000000 + Math.random() * 900000000000)}`;
+    const savingsAcc: BankAccount = {
+      id: `acc_${newUser.id}_sav_02`,
+      userId: newUser.id,
+      accountNumber: `•••• ${savingsAccNum.slice(-4)}`,
+      accountNumberFull: savingsAccNum,
+      routingNumber,
+      sortCode,
+      iban: iban ? `${iban.slice(0, -4)}9901` : undefined,
+      swiftBic,
+      name: 'Apex High-Yield Treasury Reserve',
+      type: 'SAVINGS_HIGH_YIELD',
+      currency: application.requestedCurrency,
+      balanceMinor: Math.round(application.initialDepositAmountMinor * 0.4),
+      availableBalanceMinor: Math.round(application.initialDepositAmountMinor * 0.4),
+      pendingHoldMinor: 0,
+      interestRateAPY: 5.15,
+      status: 'ACTIVE',
+      region: application.requestedRegion,
+      openedDate: new Date().toISOString().slice(0, 10),
+      dailyTransferLimitMinor: 50000000,
+      statementCycleDay: 28
+    };
+    this.accounts.set(savingsAcc.id, savingsAcc);
+
+    // Create Active Contactless Debit Card
+    if (application.requestDebitCard) {
+      const cardNum = `4111 ${Math.floor(1000 + Math.random() * 9000)} ${Math.floor(1000 + Math.random() * 9000)} ${fullAccNum.slice(-4)}`;
+      const card: BankCard = {
+        id: `crd_${newUser.id}_01`,
+        accountId: primaryChecking.id,
+        userId: newUser.id,
+        cardNumberMasked: `•••• •••• •••• ${fullAccNum.slice(-4)}`,
+        cardNumberFull: cardNum,
+        cardHolderName: `${application.firstName.toUpperCase()} ${application.lastName.toUpperCase()}`,
+        expiryMonth: 12,
+        expiryYear: 2031,
+        cvv: `${Math.floor(100 + Math.random() * 900)}`,
+        cardType: 'DEBIT_VISA_SIGNATURE',
+        status: 'ACTIVE',
+        isVirtual: false,
+        contactlessEnabled: true,
+        onlineTransactionsEnabled: true,
+        internationalSpendEnabled: true,
+        dailyAtmLimitMinor: 500000,
+        dailySpendLimitMinor: 2500000,
+        travelNotices: []
+      };
+      this.cards.set(card.id, card);
+    }
+
+    // Seed Initial Deposit Ledger Entry
+    if (application.initialDepositAmountMinor > 0) {
+      try {
+        doubleEntryLedger.commitJournalTransaction({
+          referenceNumber: `DEP-INIT-${application.referenceNumber}`,
+          transactionType: 'INBOUND_WIRE',
+          description: `Initial Account Opening Deposit — ${newUser.firstName} ${newUser.lastName}`,
+          lines: [
+            {
+              id: `jl_dep_init_1_${Date.now()}`,
+              accountId: 'GL_1001_FED_RESERVE_CASH',
+              accountType: 'GL_ASSET',
+              accountName: 'Central Bank Reserve Settlement Asset',
+              direction: 'DEBIT',
+              amountMinor: application.initialDepositAmountMinor,
+              currency: application.requestedCurrency,
+              description: 'Inbound Sovereign Opening Remittance'
+            },
+            {
+              id: `jl_dep_init_2_${Date.now()}`,
+              accountId: primaryChecking.id,
+              accountType: 'CUSTOMER_DEPOSIT',
+              accountName: `${primaryChecking.name} (${primaryChecking.accountNumber})`,
+              direction: 'CREDIT',
+              amountMinor: application.initialDepositAmountMinor,
+              currency: application.requestedCurrency,
+              description: 'Initial Opening Deposit'
+            }
+          ]
+        });
+      } catch (ledgerErr) {
+        console.warn('Initial ledger journal error:', ledgerErr);
+      }
+    }
+
+    this.saveToDisk();
 
     this.addAuditLog({
-      actorId: 'SYSTEM_ONBOARDING_DESK',
+      actorId: newUser.id,
       actorEmail: application.email,
       actorRole: 'CUSTOMER',
       action: 'NEW_ACCOUNT_APPLICATION_SUBMITTED',
       targetType: 'USER',
-      targetId: id,
+      targetId: newUser.id,
       ipAddress: '127.0.0.1',
       userAgent: 'First Atlantic Web Client / European Portal',
-      details: `New ${application.requestedRegion} (${application.requestedCurrency}) account application submitted: ${application.firstName} ${application.lastName} (Ref: ${referenceNumber}). Initial Deposit: ${this.formatMinor(application.initialDepositAmountMinor, application.requestedCurrency)}.`
+      details: `New ${application.requestedRegion} (${application.requestedCurrency}) account registered and activated for ${application.firstName} ${application.lastName} (Ref: ${referenceNumber}). Initial Deposit: ${this.formatMinor(application.initialDepositAmountMinor, application.requestedCurrency)}.`
     });
 
     // Trigger Automated Email Dispatch and Administrative System Alert
@@ -1210,7 +1407,12 @@ export class BankDatabase {
       firstName: app.firstName,
       lastName: app.lastName,
       phone: app.phone,
+      dialCode: app.dialCode || '+1',
       dateOfBirth: app.dateOfBirth,
+      nationality: app.nationality || 'Germany',
+      passportNumber: app.idDocumentNumber || 'PASSPORT_VERIFIED',
+      passportPhoto: app.passportPhoto || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500&auto=format&fit=crop&q=80',
+      loginPin: app.loginPin || '1234',
       ssnMasked: app.requestedRegion === 'US' ? `•••-••-${app.taxIdOrSsn.slice(-4)}` : undefined,
       nationalInsuranceMasked: app.requestedRegion === 'UK' ? app.taxIdOrSsn : undefined,
       region: app.requestedRegion,

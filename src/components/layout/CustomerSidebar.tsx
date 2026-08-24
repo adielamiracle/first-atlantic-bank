@@ -26,6 +26,7 @@ export const CustomerSidebar: React.FC = () => {
     currentView, 
     setCurrentView, 
     currentUser, 
+    currentRole,
     logout, 
     switchToAdmin, 
     darkMode, 
@@ -118,16 +119,19 @@ export const CustomerSidebar: React.FC = () => {
           </span>
         </button>
 
-        <button
-          onClick={() => switchToAdmin()}
-          className="w-full flex items-center justify-between px-3 py-2 rounded-lg bg-amber-950/30 hover:bg-amber-950/60 text-amber-300 text-xs font-medium border border-amber-800/40 transition-colors cursor-pointer"
-        >
-          <span className="flex items-center gap-2">
-            <ShieldAlert className="w-3.5 h-3.5 text-amber-400" />
-            <span>Admin Console</span>
-          </span>
-          <ChevronRight className="w-3 h-3 text-amber-400/70" />
-        </button>
+        {/* Admin Console - Only visible if user has ADMIN role for maximum privacy and security */}
+        {(currentRole === 'ADMIN' || currentUser?.role === 'ADMIN') && (
+          <button
+            onClick={() => switchToAdmin()}
+            className="w-full flex items-center justify-between px-3 py-2 rounded-lg bg-amber-950/30 hover:bg-amber-950/60 text-amber-300 text-xs font-medium border border-amber-800/40 transition-colors cursor-pointer"
+          >
+            <span className="flex items-center gap-2">
+              <ShieldAlert className="w-3.5 h-3.5 text-amber-400" />
+              <span>Admin Console</span>
+            </span>
+            <ChevronRight className="w-3 h-3 text-amber-400/70" />
+          </button>
+        )}
 
         <button
           onClick={() => logout()}

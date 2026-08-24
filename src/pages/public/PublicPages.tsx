@@ -33,28 +33,28 @@ import {
 export const PersonalPage: React.FC = () => {
   const { setCurrentView } = useBank();
   return (
-    <div className="bg-[#f8fafc] dark:bg-[#07101e] text-slate-800 dark:text-slate-100 py-12 px-6 sm:px-8 max-w-7xl mx-auto space-y-12 transition-colors">
-      <div className="text-center max-w-3xl mx-auto space-y-3">
-        <span className="text-xs uppercase font-bold tracking-widest text-[#8c6d37] dark:text-[#c5a880]">Personal Banking Solutions</span>
-        <h1 className="text-3xl sm:text-5xl font-bold font-serif text-slate-900 dark:text-white">
+    <div className="bg-[#f8fafc] dark:bg-[#07101e] text-slate-800 dark:text-slate-100 py-8 sm:py-12 px-4 sm:px-8 max-w-7xl mx-auto space-y-8 sm:space-y-12 transition-colors">
+      <div className="text-center max-w-3xl mx-auto space-y-2 sm:space-y-3">
+        <span className="text-[10px] sm:text-xs uppercase font-bold tracking-widest text-[#8c6d37] dark:text-[#c5a880]">Personal Banking Solutions</span>
+        <h1 className="text-2xl sm:text-4xl md:text-5xl font-bold font-serif text-slate-900 dark:text-white">
           Crafted for Everyday Sophistication
         </h1>
-        <p className="text-slate-600 dark:text-slate-300 text-sm leading-relaxed">
+        <p className="text-slate-600 dark:text-slate-300 text-xs sm:text-sm leading-relaxed">
           From high-yield liquidity to unlimited global fee-free checking, First Atlantic personal banking is tailored to transatlantic professionals and private families.
         </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-        <div className="bg-white dark:bg-[#0a192f] rounded-2xl p-8 border border-slate-200 dark:border-[#1e3656] shadow-sm space-y-4 flex flex-col justify-between transition-colors">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-8">
+        <div className="bg-white dark:bg-[#0a192f] rounded-xl sm:rounded-2xl p-5 sm:p-8 border border-slate-200 dark:border-[#1e3656] shadow-sm space-y-4 flex flex-col justify-between transition-colors">
           <div className="space-y-3">
-            <div className="w-12 h-12 rounded-xl bg-[#0a192f] dark:bg-[#112a4a] text-[#d4af37] flex items-center justify-center border border-[#c5a880]/30">
-              <Landmark className="w-6 h-6" />
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-[#0a192f] dark:bg-[#112a4a] text-[#d4af37] flex items-center justify-center border border-[#c5a880]/30">
+              <Landmark className="w-5 h-5 sm:w-6 sm:h-6" />
             </div>
-            <h3 className="text-xl font-bold font-serif text-slate-900 dark:text-white">Premier Checking</h3>
+            <h3 className="text-lg sm:text-xl font-bold font-serif text-slate-900 dark:text-white">Premier Checking</h3>
             <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
               No monthly maintenance fees with qualifying balance. Includes complimentary outgoing domestic wires, personalized checkbooks, and private concierge phone dispatch.
             </p>
-            <div className="text-2xl font-bold font-mono text-slate-900 dark:text-white pt-2">$0 <span className="text-xs text-slate-500 dark:text-slate-400 font-normal">Monthly Fee</span></div>
+            <div className="text-xl sm:text-2xl font-bold font-mono text-slate-900 dark:text-white pt-2">$0 <span className="text-xs text-slate-500 dark:text-slate-400 font-normal">Monthly Fee</span></div>
           </div>
           <button
             onClick={() => setCurrentView('AUTH_ENROLL')}
@@ -64,19 +64,19 @@ export const PersonalPage: React.FC = () => {
           </button>
         </div>
 
-        <div className="bg-white dark:bg-[#0a192f] rounded-2xl p-8 border border-[#c5a880]/60 shadow-md space-y-4 flex flex-col justify-between relative transition-colors">
+        <div className="bg-white dark:bg-[#0a192f] rounded-xl sm:rounded-2xl p-5 sm:p-8 border border-[#c5a880]/60 shadow-md space-y-4 flex flex-col justify-between relative transition-colors">
           <div className="absolute top-4 right-4 bg-[#c5a880]/20 text-[#8c6d37] dark:text-[#e5ca95] text-[10px] font-bold uppercase px-2.5 py-1 rounded-md">
             5.15% APY
           </div>
           <div className="space-y-3">
-            <div className="w-12 h-12 rounded-xl bg-[#0a192f] dark:bg-[#112a4a] text-[#d4af37] flex items-center justify-center border border-[#c5a880]/30">
-              <TrendingUp className="w-6 h-6" />
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-[#0a192f] dark:bg-[#112a4a] text-[#d4af37] flex items-center justify-center border border-[#c5a880]/30">
+              <TrendingUp className="w-5 h-5 sm:w-6 sm:h-6" />
             </div>
-            <h3 className="text-xl font-bold font-serif text-slate-900 dark:text-white">Apex High-Yield Savings</h3>
+            <h3 className="text-lg sm:text-xl font-bold font-serif text-slate-900 dark:text-white">Apex High-Yield Savings</h3>
             <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
               Leading market yield compounded daily with zero lockup requirements. Fully insured up to $250k (US) / £85k (UK).
             </p>
-            <div className="text-2xl font-bold font-mono text-emerald-600 dark:text-emerald-400 pt-2">5.15% <span className="text-xs text-slate-500 dark:text-slate-400 font-normal">APY</span></div>
+            <div className="text-xl sm:text-2xl font-bold font-mono text-emerald-600 dark:text-emerald-400 pt-2">5.15% <span className="text-xs text-slate-500 dark:text-slate-400 font-normal">APY</span></div>
           </div>
           <button
             onClick={() => setCurrentView('AUTH_ENROLL')}
@@ -86,16 +86,16 @@ export const PersonalPage: React.FC = () => {
           </button>
         </div>
 
-        <div className="bg-white dark:bg-[#0a192f] rounded-2xl p-8 border border-slate-200 dark:border-[#1e3656] shadow-sm space-y-4 flex flex-col justify-between transition-colors">
+        <div className="bg-white dark:bg-[#0a192f] rounded-xl sm:rounded-2xl p-5 sm:p-8 border border-slate-200 dark:border-[#1e3656] shadow-sm space-y-4 flex flex-col justify-between transition-colors">
           <div className="space-y-3">
-            <div className="w-12 h-12 rounded-xl bg-[#0a192f] dark:bg-[#112a4a] text-[#d4af37] flex items-center justify-center border border-[#c5a880]/30">
-              <CreditCard className="w-6 h-6" />
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-[#0a192f] dark:bg-[#112a4a] text-[#d4af37] flex items-center justify-center border border-[#c5a880]/30">
+              <CreditCard className="w-5 h-5 sm:w-6 sm:h-6" />
             </div>
-            <h3 className="text-xl font-bold font-serif text-slate-900 dark:text-white">Atlantic Infinite Card</h3>
+            <h3 className="text-lg sm:text-xl font-bold font-serif text-slate-900 dark:text-white">Atlantic Infinite Card</h3>
             <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
               Heavy metal card with 3x points on global travel, comprehensive airport lounge access, and zero foreign transaction surcharges.
             </p>
-            <div className="text-2xl font-bold font-mono text-slate-900 dark:text-white pt-2">0% Intro APR <span className="text-xs text-slate-500 dark:text-slate-400 font-normal">for 15 mos</span></div>
+            <div className="text-xl sm:text-2xl font-bold font-mono text-slate-900 dark:text-white pt-2">0% Intro APR <span className="text-xs text-slate-500 dark:text-slate-400 font-normal">for 15 mos</span></div>
           </div>
           <button
             onClick={() => setCurrentView('AUTH_ENROLL')}
@@ -112,55 +112,55 @@ export const PersonalPage: React.FC = () => {
 export const BusinessPage: React.FC = () => {
   const { setCurrentView } = useBank();
   return (
-    <div className="bg-[#f8fafc] dark:bg-[#07101e] text-slate-800 dark:text-slate-100 py-12 px-6 sm:px-8 max-w-7xl mx-auto space-y-12 transition-colors">
-      <div className="text-center max-w-3xl mx-auto space-y-3">
-        <span className="text-xs uppercase font-bold tracking-widest text-[#8c6d37] dark:text-[#c5a880]">Commercial &amp; Corporate Banking</span>
-        <h1 className="text-3xl sm:text-5xl font-bold font-serif text-slate-900 dark:text-white">
+    <div className="bg-[#f8fafc] dark:bg-[#07101e] text-slate-800 dark:text-slate-100 py-8 sm:py-12 px-4 sm:px-8 max-w-7xl mx-auto space-y-8 sm:space-y-12 transition-colors">
+      <div className="text-center max-w-3xl mx-auto space-y-2 sm:space-y-3">
+        <span className="text-[10px] sm:text-xs uppercase font-bold tracking-widest text-[#8c6d37] dark:text-[#c5a880]">Commercial &amp; Corporate Banking</span>
+        <h1 className="text-2xl sm:text-4xl md:text-5xl font-bold font-serif text-slate-900 dark:text-white">
           Institutional Treasury &amp; Credit
         </h1>
-        <p className="text-slate-600 dark:text-slate-300 text-sm leading-relaxed">
+        <p className="text-slate-600 dark:text-slate-300 text-xs sm:text-sm leading-relaxed">
           Robust treasury liquidity management, multi-signatory maker-checker payment approvals, automated FX sweeps, and revolving commercial lines of credit.
         </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        <div className="bg-white dark:bg-[#0a192f] rounded-2xl p-8 border border-slate-200 dark:border-[#1e3656] shadow-sm space-y-5 transition-colors">
-          <div className="w-12 h-12 rounded-xl bg-[#0a192f] dark:bg-[#112a4a] text-[#d4af37] flex items-center justify-center border border-[#c5a880]/30">
-            <Building className="w-6 h-6" />
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-8">
+        <div className="bg-white dark:bg-[#0a192f] rounded-xl sm:rounded-2xl p-5 sm:p-8 border border-slate-200 dark:border-[#1e3656] shadow-sm space-y-4 sm:space-y-5 transition-colors">
+          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-[#0a192f] dark:bg-[#112a4a] text-[#d4af37] flex items-center justify-center border border-[#c5a880]/30">
+            <Building className="w-5 h-5 sm:w-6 sm:h-6" />
           </div>
-          <h3 className="text-xl font-bold font-serif text-slate-900 dark:text-white">Corporate Treasury Operating Account</h3>
+          <h3 className="text-lg sm:text-xl font-bold font-serif text-slate-900 dark:text-white">Corporate Treasury Operating Account</h3>
           <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
             Engineered for high-volume enterprises operating across US and European jurisdictions. Direct API ledger synchronization, batch ACH/BACS payroll processing, and multi-user RBAC controls.
           </p>
           <ul className="space-y-2 text-xs text-slate-700 dark:text-slate-300">
-            <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" /> Multi-user maker-checker dual controls</li>
-            <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" /> Automated overnight yield sweep accounts</li>
-            <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" /> Sub-accounts for tax escrow and departmental budgeting</li>
+            <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" /> Multi-user maker-checker dual controls</li>
+            <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" /> Automated overnight yield sweep accounts</li>
+            <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" /> Sub-accounts for tax escrow and departmental budgeting</li>
           </ul>
           <button
             onClick={() => setCurrentView('AUTH_ENROLL')}
-            className="px-5 py-2.5 rounded-lg bg-[#0a192f] dark:bg-[#112a4a] hover:bg-[#153459] text-white font-semibold text-xs uppercase tracking-wider border border-[#c5a880]/30 cursor-pointer"
+            className="w-full sm:w-auto px-5 py-2.5 rounded-lg bg-[#0a192f] dark:bg-[#112a4a] hover:bg-[#153459] text-white font-semibold text-xs uppercase tracking-wider border border-[#c5a880]/30 cursor-pointer"
           >
             Inquire for Enterprise
           </button>
         </div>
 
-        <div className="bg-white dark:bg-[#0a192f] rounded-2xl p-8 border border-slate-200 dark:border-[#1e3656] shadow-sm space-y-5 transition-colors">
-          <div className="w-12 h-12 rounded-xl bg-[#0a192f] dark:bg-[#112a4a] text-[#d4af37] flex items-center justify-center border border-[#c5a880]/30">
-            <Briefcase className="w-6 h-6" />
+        <div className="bg-white dark:bg-[#0a192f] rounded-xl sm:rounded-2xl p-5 sm:p-8 border border-slate-200 dark:border-[#1e3656] shadow-sm space-y-4 sm:space-y-5 transition-colors">
+          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-[#0a192f] dark:bg-[#112a4a] text-[#d4af37] flex items-center justify-center border border-[#c5a880]/30">
+            <Briefcase className="w-5 h-5 sm:w-6 sm:h-6" />
           </div>
-          <h3 className="text-xl font-bold font-serif text-slate-900 dark:text-white">Commercial Lending &amp; Real Estate</h3>
+          <h3 className="text-lg sm:text-xl font-bold font-serif text-slate-900 dark:text-white">Commercial Lending &amp; Real Estate</h3>
           <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
             Custom-structured debt facilities from $1M to $50M+ for acquisition, refinance, construction, or operational working capital in prime US and UK markets.
           </p>
           <ul className="space-y-2 text-xs text-slate-700 dark:text-slate-300">
-            <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" /> Fixed and floating rate commercial mortgages</li>
-            <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" /> Revolving working capital lines with flexible drawdowns</li>
-            <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" /> Equipment financing and structured project debt</li>
+            <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" /> Fixed and floating rate commercial mortgages</li>
+            <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" /> Revolving working capital lines with flexible drawdowns</li>
+            <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" /> Equipment financing and structured project debt</li>
           </ul>
           <button
             onClick={() => setCurrentView('AUTH_ENROLL')}
-            className="px-5 py-2.5 rounded-lg bg-[#0a192f] dark:bg-[#112a4a] hover:bg-[#153459] text-white font-semibold text-xs uppercase tracking-wider border border-[#c5a880]/30 cursor-pointer"
+            className="w-full sm:w-auto px-5 py-2.5 rounded-lg bg-[#0a192f] dark:bg-[#112a4a] hover:bg-[#153459] text-white font-semibold text-xs uppercase tracking-wider border border-[#c5a880]/30 cursor-pointer"
           >
             Connect with Loan Officer
           </button>
@@ -172,43 +172,43 @@ export const BusinessPage: React.FC = () => {
 
 export const WealthPage: React.FC = () => {
   return (
-    <div className="bg-[#f8fafc] dark:bg-[#07101e] text-slate-800 dark:text-slate-100 py-12 px-6 sm:px-8 max-w-7xl mx-auto space-y-12 transition-colors">
-      <div className="text-center max-w-3xl mx-auto space-y-3">
-        <span className="text-xs uppercase font-bold tracking-widest text-[#8c6d37] dark:text-[#c5a880]">Private Client &amp; Family Office</span>
-        <h1 className="text-3xl sm:text-5xl font-bold font-serif text-slate-900 dark:text-white">
+    <div className="bg-[#f8fafc] dark:bg-[#07101e] text-slate-800 dark:text-slate-100 py-8 sm:py-12 px-4 sm:px-8 max-w-7xl mx-auto space-y-8 sm:space-y-12 transition-colors">
+      <div className="text-center max-w-3xl mx-auto space-y-2 sm:space-y-3">
+        <span className="text-[10px] sm:text-xs uppercase font-bold tracking-widest text-[#8c6d37] dark:text-[#c5a880]">Private Client &amp; Family Office</span>
+        <h1 className="text-2xl sm:text-4xl md:text-5xl font-bold font-serif text-slate-900 dark:text-white">
           Stewardship Across Generations
         </h1>
-        <p className="text-slate-600 dark:text-slate-300 text-sm leading-relaxed">
+        <p className="text-slate-600 dark:text-slate-300 text-xs sm:text-sm leading-relaxed">
           First Atlantic Private Wealth provides discretionary portfolio management, trust &amp; fiduciary governance, and bespoke liquidity solutions for high-net-worth individuals.
         </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-white dark:bg-[#0a192f] rounded-2xl p-7 border border-slate-200 dark:border-[#1e3656] shadow-sm space-y-4 transition-colors">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
+        <div className="bg-white dark:bg-[#0a192f] rounded-xl sm:rounded-2xl p-5 sm:p-7 border border-slate-200 dark:border-[#1e3656] shadow-sm space-y-3.5 sm:space-y-4 transition-colors">
           <div className="w-10 h-10 rounded-lg bg-[#0a192f] dark:bg-[#112a4a] text-[#d4af37] flex items-center justify-center border border-[#c5a880]/30">
             <Shield className="w-5 h-5" />
           </div>
-          <h3 className="text-lg font-bold font-serif text-slate-900 dark:text-white">Fiduciary Trust Services</h3>
+          <h3 className="text-base sm:text-lg font-bold font-serif text-slate-900 dark:text-white">Fiduciary Trust Services</h3>
           <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
             Delaware, London, and international trust administration, charitable foundations, and tax-efficient wealth succession.
           </p>
         </div>
 
-        <div className="bg-white dark:bg-[#0a192f] rounded-2xl p-7 border border-slate-200 dark:border-[#1e3656] shadow-sm space-y-4 transition-colors">
+        <div className="bg-white dark:bg-[#0a192f] rounded-xl sm:rounded-2xl p-5 sm:p-7 border border-slate-200 dark:border-[#1e3656] shadow-sm space-y-3.5 sm:space-y-4 transition-colors">
           <div className="w-10 h-10 rounded-lg bg-[#0a192f] dark:bg-[#112a4a] text-[#d4af37] flex items-center justify-center border border-[#c5a880]/30">
             <Award className="w-5 h-5" />
           </div>
-          <h3 className="text-lg font-bold font-serif text-slate-900 dark:text-white">Bespoke Lombard Credit</h3>
+          <h3 className="text-base sm:text-lg font-bold font-serif text-slate-900 dark:text-white">Bespoke Lombard Credit</h3>
           <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
             Liquidity facilities secured against high-grade equity portfolios, sovereign debt, or physical precious metals without tax realization events.
           </p>
         </div>
 
-        <div className="bg-white dark:bg-[#0a192f] rounded-2xl p-7 border border-slate-200 dark:border-[#1e3656] shadow-sm space-y-4 transition-colors">
+        <div className="bg-white dark:bg-[#0a192f] rounded-xl sm:rounded-2xl p-5 sm:p-7 border border-slate-200 dark:border-[#1e3656] shadow-sm space-y-3.5 sm:space-y-4 transition-colors">
           <div className="w-10 h-10 rounded-lg bg-[#0a192f] dark:bg-[#112a4a] text-[#d4af37] flex items-center justify-center border border-[#c5a880]/30">
             <Globe2 className="w-5 h-6" />
           </div>
-          <h3 className="text-lg font-bold font-serif text-slate-900 dark:text-white">Transatlantic Advisory</h3>
+          <h3 className="text-base sm:text-lg font-bold font-serif text-slate-900 dark:text-white">Transatlantic Advisory</h3>
           <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
             Dual US-UK residency wealth structuring, FATCA/CRS compliance optimization, and cross-border multi-currency hedging.
           </p>
@@ -221,42 +221,42 @@ export const WealthPage: React.FC = () => {
 export const InternationalPage: React.FC = () => {
   const { setCurrentView } = useBank();
   return (
-    <div className="bg-[#f8fafc] dark:bg-[#07101e] text-slate-800 dark:text-slate-100 py-12 px-6 sm:px-8 max-w-7xl mx-auto space-y-12 transition-colors">
-      <div className="text-center max-w-3xl mx-auto space-y-3">
-        <span className="text-xs uppercase font-bold tracking-widest text-[#8c6d37] dark:text-[#c5a880]">Cross-Border Treasury</span>
-        <h1 className="text-3xl sm:text-5xl font-bold font-serif text-slate-900 dark:text-white">
+    <div className="bg-[#f8fafc] dark:bg-[#07101e] text-slate-800 dark:text-slate-100 py-8 sm:py-12 px-4 sm:px-8 max-w-7xl mx-auto space-y-8 sm:space-y-12 transition-colors">
+      <div className="text-center max-w-3xl mx-auto space-y-2 sm:space-y-3">
+        <span className="text-[10px] sm:text-xs uppercase font-bold tracking-widest text-[#8c6d37] dark:text-[#c5a880]">Cross-Border Treasury</span>
+        <h1 className="text-2xl sm:text-4xl md:text-5xl font-bold font-serif text-slate-900 dark:text-white">
           Global Multi-Currency Banking
         </h1>
-        <p className="text-slate-600 dark:text-slate-300 text-sm leading-relaxed">
+        <p className="text-slate-600 dark:text-slate-300 text-xs sm:text-sm leading-relaxed">
           Seamlessly navigate US Dollar, British Pound, and Euro liquidity with native clearing networks (Fedwire, CHAPS, Faster Payments, SEPA, and SWIFT).
         </p>
       </div>
 
-      <div className="bg-[#0a192f] text-white rounded-2xl p-8 sm:p-12 border border-slate-800 shadow-xl space-y-8">
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 text-center">
-          <div className="p-6 rounded-xl bg-[#0e2746] border border-slate-700">
-            <span className="text-xs uppercase font-bold text-[#c5a880] tracking-wider block mb-1">United States</span>
-            <div className="text-2xl font-bold font-mono">USD ($)</div>
-            <p className="text-[11px] text-slate-400 mt-1">ABA Routing: 021000089 (Fedwire &amp; ACH)</p>
+      <div className="bg-[#0a192f] text-white rounded-xl sm:rounded-2xl p-5 sm:p-10 md:p-12 border border-slate-800 shadow-xl space-y-6 sm:space-y-8">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 text-center">
+          <div className="p-4 sm:p-6 rounded-xl bg-[#0e2746] border border-slate-700">
+            <span className="text-[10px] sm:text-xs uppercase font-bold text-[#c5a880] tracking-wider block mb-1">United States</span>
+            <div className="text-xl sm:text-2xl font-bold font-mono">USD ($)</div>
+            <p className="text-[10px] sm:text-[11px] text-slate-400 mt-1">ABA Routing: 021000089 (Fedwire &amp; ACH)</p>
           </div>
 
-          <div className="p-6 rounded-xl bg-[#0e2746] border border-slate-700">
-            <span className="text-xs uppercase font-bold text-[#c5a880] tracking-wider block mb-1">United Kingdom</span>
-            <div className="text-2xl font-bold font-mono">GBP (£)</div>
-            <p className="text-[11px] text-slate-400 mt-1">Sort Code: 40-12-88 (FPS &amp; CHAPS)</p>
+          <div className="p-4 sm:p-6 rounded-xl bg-[#0e2746] border border-slate-700">
+            <span className="text-[10px] sm:text-xs uppercase font-bold text-[#c5a880] tracking-wider block mb-1">United Kingdom</span>
+            <div className="text-xl sm:text-2xl font-bold font-mono">GBP (£)</div>
+            <p className="text-[10px] sm:text-[11px] text-slate-400 mt-1">Sort Code: 40-12-88 (FPS &amp; CHAPS)</p>
           </div>
 
-          <div className="p-6 rounded-xl bg-[#0e2746] border border-slate-700">
-            <span className="text-xs uppercase font-bold text-[#c5a880] tracking-wider block mb-1">European Union</span>
-            <div className="text-2xl font-bold font-mono">EUR (€)</div>
-            <p className="text-[11px] text-slate-400 mt-1">IBAN &amp; SEPA Instant Network</p>
+          <div className="p-4 sm:p-6 rounded-xl bg-[#0e2746] border border-slate-700">
+            <span className="text-[10px] sm:text-xs uppercase font-bold text-[#c5a880] tracking-wider block mb-1">European Union</span>
+            <div className="text-xl sm:text-2xl font-bold font-mono">EUR (€)</div>
+            <p className="text-[10px] sm:text-[11px] text-slate-400 mt-1">IBAN &amp; SEPA Instant Network</p>
           </div>
         </div>
 
-        <div className="text-center pt-4">
+        <div className="text-center pt-2 sm:pt-4">
           <button
             onClick={() => setCurrentView('AUTH_ENROLL')}
-            className="px-6 py-3 rounded-lg bg-[#c5a880] hover:bg-[#d4af37] text-slate-950 font-bold text-xs uppercase tracking-wider shadow-md transition-all cursor-pointer"
+            className="w-full sm:w-auto px-6 py-3 rounded-lg bg-[#c5a880] hover:bg-[#d4af37] text-slate-950 font-bold text-xs uppercase tracking-wider shadow-md transition-all cursor-pointer"
           >
             Open Multi-Currency Account
           </button>
@@ -268,19 +268,19 @@ export const InternationalPage: React.FC = () => {
 
 export const LocationsPage: React.FC = () => {
   return (
-    <div className="bg-[#f8fafc] dark:bg-[#07101e] text-slate-800 dark:text-slate-100 py-12 px-6 sm:px-8 max-w-7xl mx-auto space-y-12 transition-colors">
-      <div className="text-center max-w-3xl mx-auto space-y-3">
-        <span className="text-xs uppercase font-bold tracking-widest text-[#8c6d37] dark:text-[#c5a880]">Global Advisory Footprint</span>
-        <h1 className="text-3xl sm:text-5xl font-bold font-serif text-slate-900 dark:text-white">
+    <div className="bg-[#f8fafc] dark:bg-[#07101e] text-slate-800 dark:text-slate-100 py-8 sm:py-12 px-4 sm:px-8 max-w-7xl mx-auto space-y-8 sm:space-y-12 transition-colors">
+      <div className="text-center max-w-3xl mx-auto space-y-2 sm:space-y-3">
+        <span className="text-[10px] sm:text-xs uppercase font-bold tracking-widest text-[#8c6d37] dark:text-[#c5a880]">Global Advisory Footprint</span>
+        <h1 className="text-2xl sm:text-4xl md:text-5xl font-bold font-serif text-slate-900 dark:text-white">
           Executive Lounges &amp; Offices
         </h1>
-        <p className="text-slate-600 dark:text-slate-300 text-sm leading-relaxed">
+        <p className="text-slate-600 dark:text-slate-300 text-xs sm:text-sm leading-relaxed">
           Private conference rooms, vault deposit boxes, and in-person relationship manager appointments.
         </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <div className="bg-white dark:bg-[#0a192f] rounded-2xl p-7 border border-slate-200 dark:border-[#1e3656] shadow-sm space-y-3 transition-colors">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+        <div className="bg-white dark:bg-[#0a192f] rounded-xl sm:rounded-2xl p-5 sm:p-7 border border-slate-200 dark:border-[#1e3656] shadow-sm space-y-3 transition-colors">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-lg bg-[#0a192f] dark:bg-[#112a4a] text-[#d4af37] flex items-center justify-center border border-[#c5a880]/30">
               <MapPin className="w-5 h-5" />
@@ -299,7 +299,7 @@ export const LocationsPage: React.FC = () => {
           </div>
         </div>
 
-        <div className="bg-white dark:bg-[#0a192f] rounded-2xl p-7 border border-slate-200 dark:border-[#1e3656] shadow-sm space-y-3 transition-colors">
+        <div className="bg-white dark:bg-[#0a192f] rounded-xl sm:rounded-2xl p-5 sm:p-7 border border-slate-200 dark:border-[#1e3656] shadow-sm space-y-3 transition-colors">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-lg bg-[#0a192f] dark:bg-[#112a4a] text-[#d4af37] flex items-center justify-center border border-[#c5a880]/30">
               <MapPin className="w-5 h-5" />
@@ -318,7 +318,7 @@ export const LocationsPage: React.FC = () => {
           </div>
         </div>
 
-        <div className="bg-white dark:bg-[#0a192f] rounded-2xl p-7 border border-slate-200 dark:border-[#1e3656] shadow-sm space-y-3 transition-colors">
+        <div className="bg-white dark:bg-[#0a192f] rounded-xl sm:rounded-2xl p-5 sm:p-7 border border-slate-200 dark:border-[#1e3656] shadow-sm space-y-3 transition-colors">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-lg bg-[#0a192f] dark:bg-[#112a4a] text-[#d4af37] flex items-center justify-center border border-[#c5a880]/30">
               <MapPin className="w-5 h-5" />
@@ -337,7 +337,7 @@ export const LocationsPage: React.FC = () => {
           </div>
         </div>
 
-        <div className="bg-white dark:bg-[#0a192f] rounded-2xl p-7 border border-slate-200 dark:border-[#1e3656] shadow-sm space-y-3 transition-colors">
+        <div className="bg-white dark:bg-[#0a192f] rounded-xl sm:rounded-2xl p-5 sm:p-7 border border-slate-200 dark:border-[#1e3656] shadow-sm space-y-3 transition-colors">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-lg bg-[#0a192f] dark:bg-[#112a4a] text-[#d4af37] flex items-center justify-center border border-[#c5a880]/30">
               <MapPin className="w-5 h-5" />
@@ -358,11 +358,11 @@ export const LocationsPage: React.FC = () => {
       </div>
 
       {/* Global Inquiries & Support Desk Box */}
-      <div className="bg-[#0a192f] rounded-2xl p-8 text-white border border-[#c5a880]/40 shadow-xl space-y-6">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-700/80 pb-6">
+      <div className="bg-[#0a192f] rounded-xl sm:rounded-2xl p-5 sm:p-8 text-white border border-[#c5a880]/40 shadow-xl space-y-5 sm:space-y-6">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 sm:gap-4 border-b border-slate-700/80 pb-4 sm:pb-6">
           <div>
-            <span className="text-xs uppercase font-bold tracking-widest text-[#d4af37]">24/7 Global Client Services</span>
-            <h2 className="text-2xl font-bold font-serif pt-1">Direct Correspondence Channels</h2>
+            <span className="text-[10px] sm:text-xs uppercase font-bold tracking-widest text-[#d4af37]">24/7 Global Client Services</span>
+            <h2 className="text-xl sm:text-2xl font-bold font-serif pt-1">Direct Correspondence Channels</h2>
           </div>
           <div className="flex items-center gap-2 text-xs text-emerald-400 font-mono">
             <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
@@ -370,28 +370,28 @@ export const LocationsPage: React.FC = () => {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="p-5 rounded-xl bg-slate-900/80 border border-slate-700/60 space-y-2">
-            <h4 className="text-sm font-bold text-[#d4af37] uppercase tracking-wider">Client &amp; Technical Support</h4>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+          <div className="p-4 sm:p-5 rounded-xl bg-slate-900/80 border border-slate-700/60 space-y-2">
+            <h4 className="text-xs sm:text-sm font-bold text-[#d4af37] uppercase tracking-wider">Client &amp; Technical Support</h4>
             <p className="text-xs text-slate-300 leading-relaxed">
               For online banking access, password assistance, debit cards, transfer queries, and mobile banking:
             </p>
             <a
               href="mailto:support@firstatlanticbank.com"
-              className="inline-block pt-2 text-sm font-mono font-bold text-white hover:text-[#d4af37] underline transition-colors"
+              className="inline-block pt-1 text-xs sm:text-sm font-mono font-bold text-white hover:text-[#d4af37] underline transition-colors break-all"
             >
               support@firstatlanticbank.com
             </a>
           </div>
 
-          <div className="p-5 rounded-xl bg-slate-900/80 border border-slate-700/60 space-y-2">
-            <h4 className="text-sm font-bold text-[#d4af37] uppercase tracking-wider">General Inquiries &amp; Corporate</h4>
+          <div className="p-4 sm:p-5 rounded-xl bg-slate-900/80 border border-slate-700/60 space-y-2">
+            <h4 className="text-xs sm:text-sm font-bold text-[#d4af37] uppercase tracking-wider">General Inquiries &amp; Corporate</h4>
             <p className="text-xs text-slate-300 leading-relaxed">
               For institutional onboarding, private wealth consultation, regulatory compliance, and media relations:
             </p>
             <a
               href="mailto:contact@firstatlanticbank.com"
-              className="inline-block pt-2 text-sm font-mono font-bold text-white hover:text-[#d4af37] underline transition-colors"
+              className="inline-block pt-1 text-xs sm:text-sm font-mono font-bold text-white hover:text-[#d4af37] underline transition-colors break-all"
             >
               contact@firstatlanticbank.com
             </a>
@@ -544,28 +544,28 @@ export const SecurityPublicPage: React.FC = () => {
     : reviews.filter((r) => r.category === reviewFilter);
 
   return (
-    <div className="bg-[#f8fafc] dark:bg-[#07101e] text-slate-800 dark:text-slate-100 py-12 px-6 sm:px-8 max-w-7xl mx-auto space-y-14 transition-colors">
-      <div className="text-center max-w-3xl mx-auto space-y-3">
-        <span className="text-xs uppercase font-bold tracking-widest text-[#8c6d37] dark:text-[#c5a880]">Institutional Cyber Resilience &amp; Trust</span>
-        <h1 className="text-3xl sm:text-5xl font-bold font-serif text-slate-900 dark:text-white">
+    <div className="bg-[#f8fafc] dark:bg-[#07101e] text-slate-800 dark:text-slate-100 py-8 sm:py-12 px-4 sm:px-8 max-w-7xl mx-auto space-y-8 sm:space-y-12 transition-colors">
+      <div className="text-center max-w-3xl mx-auto space-y-2 sm:space-y-3">
+        <span className="text-[10px] sm:text-xs uppercase font-bold tracking-widest text-[#8c6d37] dark:text-[#c5a880]">Institutional Cyber Resilience &amp; Trust</span>
+        <h1 className="text-2xl sm:text-4xl md:text-5xl font-bold font-serif text-slate-900 dark:text-white">
           Security Architecture &amp; Trust Ratings
         </h1>
-        <p className="text-slate-600 dark:text-slate-300 text-sm leading-relaxed">
+        <p className="text-slate-600 dark:text-slate-300 text-xs sm:text-sm leading-relaxed">
           How our defense-in-depth framework protects sovereign customer capital, confidential transaction journals, and API integration pathways across global jurisdictions.
         </p>
       </div>
 
       {/* Trust & Verification Bar */}
-      <div className="flex flex-col md:flex-row items-center justify-between gap-6 p-6 rounded-2xl bg-white dark:bg-[#0a192f] border border-slate-200 dark:border-[#1e3656] shadow-sm">
+      <div className="flex flex-col md:flex-row items-center justify-between gap-4 sm:gap-6 p-4 sm:p-6 rounded-xl sm:rounded-2xl bg-white dark:bg-[#0a192f] border border-slate-200 dark:border-[#1e3656] shadow-sm">
         {/* Trustpilot Summary */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-xl bg-[#00b67a] flex items-center justify-center text-white font-bold text-xl shadow-sm">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-[#00b67a] flex items-center justify-center text-white font-bold text-lg sm:text-xl shadow-sm">
               ★
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <span className="font-extrabold text-lg text-slate-900 dark:text-white font-serif">Trustpilot</span>
+                <span className="font-extrabold text-base sm:text-lg text-slate-900 dark:text-white font-serif">Trustpilot</span>
                 <span className="px-2 py-0.5 rounded bg-[#00b67a]/20 text-[#00b67a] text-[10px] font-bold uppercase tracking-wider">
                   Excellent
                 </span>
@@ -577,33 +577,33 @@ export const SecurityPublicPage: React.FC = () => {
                   ))}
                 </div>
                 <span className="font-bold text-slate-800 dark:text-slate-200">4.9 / 5.0</span>
-                <span>• 2,840+ verified client reviews</span>
+                <span>• 2,840+ reviews</span>
               </div>
             </div>
           </div>
         </div>
 
         {/* Institutional Integrity & Zero Breaches */}
-        <div className="flex flex-wrap items-center gap-4 text-xs">
-          <div className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300">
-            <ShieldCheck className="w-4 h-4 text-emerald-500" />
-            <span className="font-semibold">ISO 27001 &amp; SOC 2 Type II Certified</span>
+        <div className="flex flex-wrap items-center gap-2.5 sm:gap-4 text-xs">
+          <div className="flex items-center gap-1.5 sm:gap-2 px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-lg sm:rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 text-[11px] sm:text-xs">
+            <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
+            <span className="font-semibold">ISO 27001 &amp; SOC 2 Type II</span>
           </div>
 
-          <div className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 text-[#8c6d37] dark:text-[#c5a880]">
-            <Shield className="w-4 h-4" />
-            <span className="font-semibold">Zero Historical Security Breaches</span>
+          <div className="flex items-center gap-1.5 sm:gap-2 px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-lg sm:rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 text-[#8c6d37] dark:text-[#c5a880] text-[11px] sm:text-xs">
+            <Shield className="w-3.5 h-3.5" />
+            <span className="font-semibold">Zero Historical Breaches</span>
           </div>
         </div>
       </div>
 
       {/* Security Architecture Pillars */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-white dark:bg-[#0a192f] rounded-2xl p-7 border border-slate-200 dark:border-[#1e3656] shadow-sm space-y-4 transition-colors">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
+        <div className="bg-white dark:bg-[#0a192f] rounded-xl sm:rounded-2xl p-5 sm:p-7 border border-slate-200 dark:border-[#1e3656] shadow-sm space-y-3 sm:space-y-4 transition-colors">
           <div className="w-10 h-10 rounded-lg bg-[#0a192f] dark:bg-[#112a4a] text-[#d4af37] flex items-center justify-center border border-[#c5a880]/30">
             <Lock className="w-5 h-5" />
           </div>
-          <h3 className="text-lg font-bold font-serif text-slate-900 dark:text-white">End-to-End Cryptography</h3>
+          <h3 className="text-base sm:text-lg font-bold font-serif text-slate-900 dark:text-white">End-to-End Cryptography</h3>
           <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
             All customer sessions, ledger journals, and inter-service communications are encrypted in transit via TLS 1.3 and at rest with AES-256 HSM keys.
           </p>
@@ -614,11 +614,11 @@ export const SecurityPublicPage: React.FC = () => {
           </ul>
         </div>
 
-        <div className="bg-white dark:bg-[#0a192f] rounded-2xl p-7 border border-slate-200 dark:border-[#1e3656] shadow-sm space-y-4 transition-colors">
+        <div className="bg-white dark:bg-[#0a192f] rounded-xl sm:rounded-2xl p-5 sm:p-7 border border-slate-200 dark:border-[#1e3656] shadow-sm space-y-3 sm:space-y-4 transition-colors">
           <div className="w-10 h-10 rounded-lg bg-[#0a192f] dark:bg-[#112a4a] text-[#d4af37] flex items-center justify-center border border-[#c5a880]/30">
             <ShieldCheck className="w-5 h-5" />
           </div>
-          <h3 className="text-lg font-bold font-serif text-slate-900 dark:text-white">Immutable Ledger Auditing</h3>
+          <h3 className="text-base sm:text-lg font-bold font-serif text-slate-900 dark:text-white">Immutable Ledger Auditing</h3>
           <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
             Financial adjustments and transfers are signed with cryptographic checksum hashes, preventing unauthorized retroactive modifications.
           </p>
@@ -629,11 +629,11 @@ export const SecurityPublicPage: React.FC = () => {
           </ul>
         </div>
 
-        <div className="bg-white dark:bg-[#0a192f] rounded-2xl p-7 border border-slate-200 dark:border-[#1e3656] shadow-sm space-y-4 transition-colors">
+        <div className="bg-white dark:bg-[#0a192f] rounded-xl sm:rounded-2xl p-5 sm:p-7 border border-slate-200 dark:border-[#1e3656] shadow-sm space-y-3 sm:space-y-4 transition-colors">
           <div className="w-10 h-10 rounded-lg bg-[#0a192f] dark:bg-[#112a4a] text-[#d4af37] flex items-center justify-center border border-[#c5a880]/30">
             <Server className="w-5 h-5" />
           </div>
-          <h3 className="text-lg font-bold font-serif text-slate-900 dark:text-white">24/7 AML &amp; Fraud Radar</h3>
+          <h3 className="text-base sm:text-lg font-bold font-serif text-slate-900 dark:text-white">24/7 AML &amp; Fraud Radar</h3>
           <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
             Real-time heuristic engines inspect transaction velocity, geolocation anomalies, impossible travel, and device fingerprints.
           </p>
@@ -646,10 +646,10 @@ export const SecurityPublicPage: React.FC = () => {
       </div>
 
       {/* Verified Client Testimonials Section */}
-      <div className="space-y-6 pt-4 border-t border-slate-200 dark:border-slate-800">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      <div className="space-y-5 sm:space-y-6 pt-4 border-t border-slate-200 dark:border-slate-800">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
           <div>
-            <h2 className="text-xl sm:text-2xl font-bold font-serif text-slate-900 dark:text-white">
+            <h2 className="text-lg sm:text-2xl font-bold font-serif text-slate-900 dark:text-white">
               Verified Client Testimonials &amp; Trust Ratings
             </h2>
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
@@ -658,18 +658,18 @@ export const SecurityPublicPage: React.FC = () => {
           </div>
 
           {/* Filter Tabs */}
-          <div className="flex flex-wrap items-center gap-1.5 p-1 rounded-xl bg-slate-100 dark:bg-[#0a192f] border border-slate-200 dark:border-slate-800">
+          <div className="flex flex-wrap items-center gap-1 p-1 rounded-xl bg-slate-100 dark:bg-[#0a192f] border border-slate-200 dark:border-slate-800 w-full sm:w-auto">
             {[
-              { id: 'ALL', label: 'All Reviews (2.8k)' },
-              { id: 'WEALTH', label: 'Private Wealth' },
-              { id: 'TREASURY', label: 'Treasury & FX' },
+              { id: 'ALL', label: 'All' },
+              { id: 'WEALTH', label: 'Wealth' },
+              { id: 'TREASURY', label: 'Treasury' },
               { id: 'SAVINGS', label: 'High-Yield' },
-              { id: 'CARDS', label: 'Titanium Card' }
+              { id: 'CARDS', label: 'Card' }
             ].map((tab) => (
               <button
                 key={tab.id}
                 onClick={() => setReviewFilter(tab.id as any)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                className={`px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
                   reviewFilter === tab.id
                     ? 'bg-white dark:bg-[#112a4a] text-slate-900 dark:text-[#c5a880] shadow-xs font-bold'
                     : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
@@ -682,18 +682,18 @@ export const SecurityPublicPage: React.FC = () => {
         </div>
 
         {/* Reviews Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
           {filteredReviews.map((review) => (
             <div
               key={review.id}
-              className="bg-white dark:bg-[#0a192f] rounded-2xl p-6 border border-slate-200 dark:border-[#1e3656] shadow-sm hover:shadow-md transition-all flex flex-col justify-between space-y-4"
+              className="bg-white dark:bg-[#0a192f] rounded-xl sm:rounded-2xl p-4 sm:p-6 border border-slate-200 dark:border-[#1e3656] shadow-sm hover:shadow-md transition-all flex flex-col justify-between space-y-3.5 sm:space-y-4"
             >
-              <div className="space-y-3">
+              <div className="space-y-2.5 sm:space-y-3">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-1">
                     <div className="flex text-[#00b67a]">
                       {[...Array(review.stars)].map((_, i) => (
-                        <Star key={i} className="w-4 h-4 fill-[#00b67a] text-[#00b67a]" />
+                        <Star key={i} className="w-3.5 h-3.5 sm:w-4 sm:h-4 fill-[#00b67a] text-[#00b67a]" />
                       ))}
                     </div>
                     <span className="text-xs font-bold text-slate-700 dark:text-slate-300 ml-1">5.0</span>
@@ -701,11 +701,11 @@ export const SecurityPublicPage: React.FC = () => {
 
                   <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 text-[10px] font-semibold border border-emerald-200 dark:border-emerald-800">
                     <CheckCircle2 className="w-3 h-3" />
-                    <span>Verified Client</span>
+                    <span>Verified</span>
                   </span>
                 </div>
 
-                <h4 className="text-sm font-bold text-slate-900 dark:text-white font-serif leading-snug">
+                <h4 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white font-serif leading-snug">
                   "{review.title}"
                 </h4>
                 <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
@@ -713,12 +713,12 @@ export const SecurityPublicPage: React.FC = () => {
                 </p>
               </div>
 
-              <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs">
+              <div className="pt-2.5 sm:pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs">
                 <div>
-                  <div className="font-bold text-slate-800 dark:text-slate-200">{review.name}</div>
-                  <div className="text-[11px] text-slate-500 dark:text-slate-400">{review.role} • {review.location}</div>
+                  <div className="font-bold text-slate-800 dark:text-slate-200 text-xs">{review.name}</div>
+                  <div className="text-[10px] sm:text-[11px] text-slate-500 dark:text-slate-400">{review.role} • {review.location}</div>
                 </div>
-                <span className="text-[10px] font-mono text-slate-400">{review.date}</span>
+                <span className="text-[9px] sm:text-[10px] font-mono text-slate-400">{review.date}</span>
               </div>
             </div>
           ))}
@@ -726,14 +726,14 @@ export const SecurityPublicPage: React.FC = () => {
       </div>
 
       {/* VERIFIED SECURITY PARTNERS & PROTOCOLS SECTION */}
-      <div className="space-y-8 pt-4 border-t border-slate-200 dark:border-slate-800">
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+      <div className="space-y-6 sm:space-y-8 pt-4 border-t border-slate-200 dark:border-slate-800">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 sm:gap-4">
           <div>
-            <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 text-xs font-mono font-bold uppercase tracking-wider mb-2">
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 text-[10px] sm:text-xs font-mono font-bold uppercase tracking-wider mb-2">
               <ShieldCheck className="w-3.5 h-3.5" />
-              <span>Independent Audit &amp; Technical Clearances</span>
+              <span>Independent Clearances</span>
             </div>
-            <h2 className="text-2xl sm:text-3xl font-bold font-serif text-slate-900 dark:text-white">
+            <h2 className="text-xl sm:text-3xl font-bold font-serif text-slate-900 dark:text-white">
               Verified Security Partners &amp; Infrastructure
             </h2>
             <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 max-w-2xl mt-1">
@@ -746,24 +746,24 @@ export const SecurityPublicPage: React.FC = () => {
               id="live-security-verify-btn"
               onClick={triggerLiveVerification}
               disabled={isVerifyingLive}
-              className="inline-flex items-center gap-2.5 px-4 py-2.5 rounded-xl bg-slate-900 dark:bg-[#112a4a] hover:bg-slate-800 dark:hover:bg-[#1a3f6d] text-white border border-[#c5a880]/50 text-xs font-bold transition-all shadow-md cursor-pointer disabled:opacity-70 group"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-slate-900 dark:bg-[#112a4a] hover:bg-slate-800 dark:hover:bg-[#1a3f6d] text-white border border-[#c5a880]/50 text-xs font-bold transition-all shadow-md cursor-pointer disabled:opacity-70 group"
             >
               <RefreshCw className={`w-3.5 h-3.5 text-[#c5a880] ${isVerifyingLive ? 'animate-spin' : 'group-hover:rotate-180 transition-transform duration-500'}`} />
-              <span>{isVerifyingLive ? 'Querying Verification Nodes...' : 'Verify Live Certificate & Protocols'}</span>
+              <span>{isVerifyingLive ? 'Querying...' : 'Verify Live Certificates'}</span>
             </button>
           </div>
         </div>
 
         {/* Partner Cards Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
           {securityPartners.map((partner) => (
             <div
               key={partner.id}
-              className="bg-white dark:bg-[#0a192f] rounded-2xl p-5 border border-slate-200 dark:border-[#1e3656] shadow-xs hover:border-[#c5a880]/70 hover:shadow-md transition-all flex flex-col justify-between space-y-4"
+              className="bg-white dark:bg-[#0a192f] rounded-xl sm:rounded-2xl p-4 sm:p-5 border border-slate-200 dark:border-[#1e3656] shadow-xs hover:border-[#c5a880]/70 hover:shadow-md transition-all flex flex-col justify-between space-y-3.5 sm:space-y-4"
             >
-              <div className="space-y-3">
+              <div className="space-y-2.5 sm:space-y-3">
                 <div className="flex items-center justify-between">
-                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${partner.badgeColor} uppercase tracking-wider`}>
+                  <span className={`text-[9px] sm:text-[10px] font-bold px-2 py-0.5 rounded-full border ${partner.badgeColor} uppercase tracking-wider`}>
                     {partner.badge}
                   </span>
                   <span className="inline-flex items-center gap-1 text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold">
@@ -773,7 +773,7 @@ export const SecurityPublicPage: React.FC = () => {
                 </div>
 
                 <div>
-                  <h3 className="text-base font-bold font-serif text-slate-900 dark:text-white">
+                  <h3 className="text-sm sm:text-base font-bold font-serif text-slate-900 dark:text-white">
                     {partner.name}
                   </h3>
                   <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
@@ -781,19 +781,19 @@ export const SecurityPublicPage: React.FC = () => {
                   </p>
                 </div>
 
-                <div className="p-2.5 rounded-lg bg-slate-50 dark:bg-slate-900/70 border border-slate-200/80 dark:border-slate-800 space-y-1 font-mono text-[10px]">
+                <div className="p-2 sm:p-2.5 rounded-lg bg-slate-50 dark:bg-slate-900/70 border border-slate-200/80 dark:border-slate-800 space-y-1 font-mono text-[9px] sm:text-[10px]">
                   <div className="text-slate-400 dark:text-slate-500 uppercase tracking-wider">Protocol Certificate</div>
                   <div className="text-slate-800 dark:text-slate-200 font-bold truncate">{partner.certId}</div>
-                  <div className="text-slate-500 dark:text-slate-400 text-[9px] truncate">{partner.sha}</div>
+                  <div className="text-slate-500 dark:text-slate-400 text-[8px] sm:text-[9px] truncate">{partner.sha}</div>
                 </div>
 
-                <p className="text-[11px] text-slate-600 dark:text-slate-300 leading-relaxed">
+                <p className="text-[10px] sm:text-[11px] text-slate-600 dark:text-slate-300 leading-relaxed">
                   {partner.protocols}
                 </p>
               </div>
 
-              <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
-                <span className="text-[10px] font-mono text-[#8c6d37] dark:text-[#c5a880] font-semibold">
+              <div className="pt-2.5 sm:pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                <span className="text-[9px] sm:text-[10px] font-mono text-[#8c6d37] dark:text-[#c5a880] font-semibold">
                   {partner.auditStatus}
                 </span>
                 <button
@@ -809,27 +809,27 @@ export const SecurityPublicPage: React.FC = () => {
         </div>
 
         {/* Interactive Technical Protocols Breakdown Panel */}
-        <div className="p-6 rounded-2xl bg-white dark:bg-[#0a192f] border border-slate-200 dark:border-[#1e3656] shadow-sm space-y-6">
+        <div className="p-4 sm:p-6 rounded-xl sm:rounded-2xl bg-white dark:bg-[#0a192f] border border-slate-200 dark:border-[#1e3656] shadow-sm space-y-4 sm:space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 dark:border-slate-800 pb-4">
             <div className="flex items-center gap-2">
-              <Cpu className="w-5 h-5 text-[#8c6d37] dark:text-[#c5a880]" />
-              <h3 className="text-base sm:text-lg font-bold font-serif text-slate-900 dark:text-white">
+              <Cpu className="w-4 h-4 sm:w-5 sm:h-5 text-[#8c6d37] dark:text-[#c5a880]" />
+              <h3 className="text-sm sm:text-lg font-bold font-serif text-slate-900 dark:text-white">
                 Technical Security Protocols &amp; Execution Standards
               </h3>
             </div>
 
             {/* Protocol Tabs */}
-            <div className="flex flex-wrap items-center gap-1.5 p-1 rounded-xl bg-slate-100 dark:bg-[#071322] border border-slate-200 dark:border-slate-800 text-xs">
+            <div className="flex flex-wrap items-center gap-1 p-1 rounded-xl bg-slate-100 dark:bg-[#071322] border border-slate-200 dark:border-slate-800 text-xs w-full sm:w-auto">
               {[
-                { id: 'MULTI_SIG', label: 'Multi-Sig & 4-Eyes' },
+                { id: 'MULTI_SIG', label: 'Multi-Sig' },
                 { id: 'HSM_KEYS', label: 'HSM Enclaves' },
-                { id: 'SOC2_AUDIT', label: 'SOC 2 & ISO 27001' },
-                { id: 'WAF_DDOS', label: 'Edge DDoS & WAF' }
+                { id: 'SOC2_AUDIT', label: 'SOC 2' },
+                { id: 'WAF_DDOS', label: 'WAF Edge' }
               ].map((tab) => (
                 <button
                   key={tab.id}
                   onClick={() => setActiveProtocolTab(tab.id as any)}
-                  className={`px-3 py-1.5 rounded-lg font-semibold transition-all cursor-pointer ${
+                  className={`px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg font-semibold text-xs transition-all cursor-pointer ${
                     activeProtocolTab === tab.id
                       ? 'bg-white dark:bg-[#112a4a] text-slate-900 dark:text-[#c5a880] shadow-xs font-bold'
                       : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
@@ -842,33 +842,33 @@ export const SecurityPublicPage: React.FC = () => {
           </div>
 
           {/* Active Tab Protocol Detail Content */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-xs leading-relaxed">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5 sm:gap-6 text-xs leading-relaxed">
             {activeProtocolTab === 'MULTI_SIG' && (
               <>
-                <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 space-y-2">
+                <div className="p-3.5 sm:p-4 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 space-y-1.5 sm:space-y-2">
                   <div className="font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+                    <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
                     Dual-Officer Signing Thresholds
                   </div>
-                  <p className="text-slate-600 dark:text-slate-300">
+                  <p className="text-slate-600 dark:text-slate-300 text-[11px] sm:text-xs">
                     Wires exceeding $100,000 equivalent require two distinct authorized signatory cryptographic tokens before queue release to clearing rails.
                   </p>
                 </div>
-                <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 space-y-2">
+                <div className="p-3.5 sm:p-4 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 space-y-1.5 sm:space-y-2">
                   <div className="font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+                    <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
                     Time-Locked Beneficiary Escrow
                   </div>
-                  <p className="text-slate-600 dark:text-slate-300">
+                  <p className="text-slate-600 dark:text-slate-300 text-[11px] sm:text-xs">
                     Newly enrolled international beneficiaries observe an institutional 60-minute cryptographic cooldown to prevent unauthorized session takeovers.
                   </p>
                 </div>
-                <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 space-y-2">
+                <div className="p-3.5 sm:p-4 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 space-y-1.5 sm:space-y-2">
                   <div className="font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+                    <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
                     Biometric WebAuthn Attestation
                   </div>
-                  <p className="text-slate-600 dark:text-slate-300">
+                  <p className="text-slate-600 dark:text-slate-300 text-[11px] sm:text-xs">
                     Client portal authorizations utilize FIDO2 hardware passkeys and biometric secure enclaves (Apple TouchID / Windows Hello).
                   </p>
                 </div>
@@ -877,30 +877,30 @@ export const SecurityPublicPage: React.FC = () => {
 
             {activeProtocolTab === 'HSM_KEYS' && (
               <>
-                <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 space-y-2">
+                <div className="p-3.5 sm:p-4 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 space-y-1.5 sm:space-y-2">
                   <div className="font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+                    <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
                     FIPS 140-2 Level 3 HSM Enclaves
                   </div>
-                  <p className="text-slate-600 dark:text-slate-300">
+                  <p className="text-slate-600 dark:text-slate-300 text-[11px] sm:text-xs">
                     Private keys never touch software memory or hard drives. All ledger journals are signed directly inside tamper-resistant physical modules in Frankfurt and Zurich.
                   </p>
                 </div>
-                <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 space-y-2">
+                <div className="p-3.5 sm:p-4 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 space-y-1.5 sm:space-y-2">
                   <div className="font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+                    <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
                     Post-Quantum Curve Resilience
                   </div>
-                  <p className="text-slate-600 dark:text-slate-300">
+                  <p className="text-slate-600 dark:text-slate-300 text-[11px] sm:text-xs">
                     Prepared for next-generation quantum threats with hybrid ECDSA P-384 and lattice-based cryptographic signature encapsulation.
                   </p>
                 </div>
-                <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 space-y-2">
+                <div className="p-3.5 sm:p-4 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 space-y-1.5 sm:space-y-2">
                   <div className="font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+                    <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
                     Immutable Hash Chains
                   </div>
-                  <p className="text-slate-600 dark:text-slate-300">
+                  <p className="text-slate-600 dark:text-slate-300 text-[11px] sm:text-xs">
                     Every ledger adjustment is appended to an immutable Merkle DAG structure preventing historical ledger modification or reordering.
                   </p>
                 </div>
@@ -909,30 +909,30 @@ export const SecurityPublicPage: React.FC = () => {
 
             {activeProtocolTab === 'SOC2_AUDIT' && (
               <>
-                <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 space-y-2">
+                <div className="p-3.5 sm:p-4 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 space-y-1.5 sm:space-y-2">
                   <div className="font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+                    <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
                     Annual SOC 2 Type II Attestation
                   </div>
-                  <p className="text-slate-600 dark:text-slate-300">
+                  <p className="text-slate-600 dark:text-slate-300 text-[11px] sm:text-xs">
                     Continuous evaluation across Security, Availability, and Confidentiality Trust Services Criteria audited independently by Kroll.
                   </p>
                 </div>
-                <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 space-y-2">
+                <div className="p-3.5 sm:p-4 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 space-y-1.5 sm:space-y-2">
                   <div className="font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+                    <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
                     ISO/IEC 27001:2022 Certified
                   </div>
-                  <p className="text-slate-600 dark:text-slate-300">
+                  <p className="text-slate-600 dark:text-slate-300 text-[11px] sm:text-xs">
                     Global Information Security Management System (ISMS) governing cloud infra, physical data vaults, and employee operational access.
                   </p>
                 </div>
-                <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 space-y-2">
+                <div className="p-3.5 sm:p-4 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 space-y-1.5 sm:space-y-2">
                   <div className="font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+                    <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
                     Zero Critical CVE SLA
                   </div>
-                  <p className="text-slate-600 dark:text-slate-300">
+                  <p className="text-slate-600 dark:text-slate-300 text-[11px] sm:text-xs">
                     Continuous automated vulnerability scans with guaranteed sub-24h patching SLAs for any upstream third-party security advisory.
                   </p>
                 </div>
@@ -941,30 +941,30 @@ export const SecurityPublicPage: React.FC = () => {
 
             {activeProtocolTab === 'WAF_DDOS' && (
               <>
-                <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 space-y-2">
+                <div className="p-3.5 sm:p-4 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 space-y-1.5 sm:space-y-2">
                   <div className="font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+                    <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
                     Layer 7 Intelligent WAF &amp; Bot Defense
                   </div>
-                  <p className="text-slate-600 dark:text-slate-300">
+                  <p className="text-slate-600 dark:text-slate-300 text-[11px] sm:text-xs">
                     Real-time behavioral ML models analyzing request signatures to block credential stuffing, SQL injection, and automated scraping.
                   </p>
                 </div>
-                <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 space-y-2">
+                <div className="p-3.5 sm:p-4 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 space-y-1.5 sm:space-y-2">
                   <div className="font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+                    <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
                     300+ Tbps Global Anycast Edge
                   </div>
-                  <p className="text-slate-600 dark:text-slate-300">
+                  <p className="text-slate-600 dark:text-slate-300 text-[11px] sm:text-xs">
                     Distributed Anycast network absorbs and mitigates volumetric DDoS attacks at edge nodes without impacting core banking latency.
                   </p>
                 </div>
-                <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 space-y-2">
+                <div className="p-3.5 sm:p-4 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 space-y-1.5 sm:space-y-2">
                   <div className="font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+                    <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
                     Strict CSP &amp; HSTS Preload
                   </div>
-                  <p className="text-slate-600 dark:text-slate-300">
+                  <p className="text-slate-600 dark:text-slate-300 text-[11px] sm:text-xs">
                     Mandatory HTTPS with max-age HSTS preload, zero inline script evaluation, and isolated client session sandboxing.
                   </p>
                 </div>
@@ -976,18 +976,18 @@ export const SecurityPublicPage: React.FC = () => {
 
       {/* DYNAMIC SECURITY VERIFICATION MODAL / INSPECTOR */}
       {showVerifyModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
-          <div className="bg-white dark:bg-[#0a192f] border border-slate-200 dark:border-[#1e3656] rounded-2xl p-6 sm:p-8 max-w-2xl w-full shadow-2xl space-y-6 text-slate-800 dark:text-slate-100">
-            <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-4">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-500 flex items-center justify-center border border-emerald-500/40">
-                  <ShieldCheck className="w-5 h-5" />
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-xs">
+          <div className="bg-white dark:bg-[#0a192f] border border-slate-200 dark:border-[#1e3656] rounded-xl sm:rounded-2xl p-5 sm:p-8 max-w-2xl w-full shadow-2xl space-y-4 sm:space-y-6 text-slate-800 dark:text-slate-100 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3 sm:pb-4">
+              <div className="flex items-center gap-2.5 sm:gap-3">
+                <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-emerald-500/20 text-emerald-500 flex items-center justify-center border border-emerald-500/40 shrink-0">
+                  <ShieldCheck className="w-4 h-4 sm:w-5 sm:h-5" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-bold font-serif text-slate-900 dark:text-white">
-                    Live Security Certificate &amp; Protocol Attestation
+                  <h3 className="text-sm sm:text-lg font-bold font-serif text-slate-900 dark:text-white">
+                    Live Security Certificate Attestation
                   </h3>
-                  <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 font-mono">
+                  <div className="flex items-center gap-1.5 text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 font-mono">
                     <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
                     <span>{lastVerifiedTime}</span>
                   </div>
@@ -995,63 +995,63 @@ export const SecurityPublicPage: React.FC = () => {
               </div>
               <button
                 onClick={() => setShowVerifyModal(false)}
-                className="p-2 rounded-lg text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <div className="space-y-4 text-xs font-mono">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="space-y-3 sm:space-y-4 text-xs font-mono">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3">
                 <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-1">
-                  <span className="text-slate-400 block text-[10px] uppercase">LEI Identifier</span>
+                  <span className="text-slate-400 block text-[9px] sm:text-[10px] uppercase">LEI Identifier</span>
                   <span className="font-bold text-slate-900 dark:text-white text-xs">984500732A11BC894412</span>
                   <span className="text-[10px] text-emerald-500 block">Active &amp; GLEIF Verified</span>
                 </div>
                 <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-1">
-                  <span className="text-slate-400 block text-[10px] uppercase">Cipher Suite</span>
+                  <span className="text-slate-400 block text-[9px] sm:text-[10px] uppercase">Cipher Suite</span>
                   <span className="font-bold text-slate-900 dark:text-white text-xs">TLS_AES_256_GCM_SHA384</span>
                   <span className="text-[10px] text-emerald-500 block">Post-Quantum Ready</span>
                 </div>
               </div>
 
-              <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-1.5">
-                <div className="flex items-center justify-between text-[10px] text-slate-400">
+              <div className="p-3 sm:p-3.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-1.5">
+                <div className="flex items-center justify-between text-[9px] sm:text-[10px] text-slate-400">
                   <span className="uppercase">SHA-256 Public Key Fingerprint</span>
                   <span className="text-emerald-500 font-bold">DIGICERT EV ROOT CA</span>
                 </div>
-                <div className="text-[11px] text-slate-800 dark:text-slate-200 font-bold break-all bg-white dark:bg-slate-950 p-2 rounded-lg border border-slate-200 dark:border-slate-800">
+                <div className="text-[10px] sm:text-[11px] text-slate-800 dark:text-slate-200 font-bold break-all bg-white dark:bg-slate-950 p-2 rounded-lg border border-slate-200 dark:border-slate-800">
                   7F:8A:2C:99:E1:5D:84:10:9B:33:4F:12:00:AA:CD:55:E2:81:90:4B:C7:32:09:11:88:FE:41:99:34:BC:01:A9
                 </div>
               </div>
 
-              <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-2">
-                <span className="text-slate-400 text-[10px] uppercase block">Independent Verification Nodes</span>
-                <div className="space-y-1 text-slate-700 dark:text-slate-300">
+              <div className="p-3 sm:p-3.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-2">
+                <span className="text-slate-400 text-[9px] sm:text-[10px] uppercase block">Independent Verification Nodes</span>
+                <div className="space-y-1 text-slate-700 dark:text-slate-300 text-[11px] sm:text-xs">
                   <div className="flex items-center justify-between">
-                    <span>✓ Kroll SOC 2 Type II Surveillance:</span>
+                    <span>✓ Kroll SOC 2 Type II:</span>
                     <span className="text-emerald-500 font-bold">Current (No Deficiencies)</span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span>✓ Cloudflare Magic Transit Anycast WAF:</span>
+                    <span>✓ Cloudflare Anycast WAF:</span>
                     <span className="text-emerald-500 font-bold">Active (0 Anomalies)</span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span>✓ Thales Luna HSM Enclave Vault:</span>
-                    <span className="text-emerald-500 font-bold">Operational (FIPS 140-2 Level 3)</span>
+                    <span>✓ Thales Luna HSM Vault:</span>
+                    <span className="text-emerald-500 font-bold">Operational (Level 3)</span>
                   </div>
                 </div>
               </div>
             </div>
 
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2">
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-2.5 sm:gap-3 pt-2">
               <a
                 href="https://www.gleif.org"
                 target="_blank"
                 rel="noreferrer"
                 className="inline-flex items-center gap-1.5 text-xs text-[#8c6d37] dark:text-[#c5a880] hover:underline font-semibold"
               >
-                <span>Check GLEIF Global Legal Entity Registry</span>
+                <span>Check GLEIF Global Registry</span>
                 <ExternalLink className="w-3.5 h-3.5" />
               </a>
 
@@ -1059,7 +1059,7 @@ export const SecurityPublicPage: React.FC = () => {
                 onClick={() => setShowVerifyModal(false)}
                 className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-[#c5a880] hover:bg-[#d4af37] text-slate-950 font-bold text-xs uppercase tracking-wider transition-colors cursor-pointer"
               >
-                Close Attestation Inspector
+                Close Attestation
               </button>
             </div>
           </div>
@@ -1067,11 +1067,11 @@ export const SecurityPublicPage: React.FC = () => {
       )}
 
       {/* Statutory Custody Proof */}
-      <div className="bg-[#0a192f] rounded-2xl p-8 text-white border border-[#c5a880]/40 shadow-xl space-y-6">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-700/80 pb-6">
+      <div className="bg-[#0a192f] rounded-xl sm:rounded-2xl p-5 sm:p-8 text-white border border-[#c5a880]/40 shadow-xl space-y-5 sm:space-y-6">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 sm:gap-4 border-b border-slate-700/80 pb-4 sm:pb-6">
           <div>
-            <span className="text-xs uppercase font-bold tracking-widest text-[#d4af37]">Sovereign Legal Clearances</span>
-            <h2 className="text-2xl font-bold font-serif pt-1">Institutional Custody &amp; Regulatory Protection</h2>
+            <span className="text-[10px] sm:text-xs uppercase font-bold tracking-widest text-[#d4af37]">Sovereign Legal Clearances</span>
+            <h2 className="text-xl sm:text-2xl font-bold font-serif pt-1">Institutional Custody &amp; Regulatory Protection</h2>
           </div>
           <div className="flex items-center gap-2 text-xs text-emerald-400 font-mono">
             <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
@@ -1079,16 +1079,16 @@ export const SecurityPublicPage: React.FC = () => {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-xs text-slate-300">
-          <div className="p-4 rounded-xl bg-slate-900/80 border border-slate-700/60 space-y-2">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 text-xs text-slate-300">
+          <div className="p-4 rounded-xl bg-slate-900/80 border border-slate-700/60 space-y-1.5 sm:space-y-2">
             <h4 className="font-bold text-[#d4af37] uppercase tracking-wider">United States (FDIC)</h4>
             <p>FDIC Certificate #34920. Standard insurance up to $250,000 per depositor across all qualifying accounts.</p>
           </div>
-          <div className="p-4 rounded-xl bg-slate-900/80 border border-slate-700/60 space-y-2">
+          <div className="p-4 rounded-xl bg-slate-900/80 border border-slate-700/60 space-y-1.5 sm:space-y-2">
             <h4 className="font-bold text-[#d4af37] uppercase tracking-wider">United Kingdom (PRA / FCA)</h4>
             <p>PRA &amp; FCA Authorised Firm #900188. Financial Services Compensation Scheme (FSCS) protection up to £85,000.</p>
           </div>
-          <div className="p-4 rounded-xl bg-slate-900/80 border border-slate-700/60 space-y-2">
+          <div className="p-4 rounded-xl bg-slate-900/80 border border-slate-700/60 space-y-1.5 sm:space-y-2">
             <h4 className="font-bold text-[#d4af37] uppercase tracking-wider">European Union (BaFin / ECB)</h4>
             <p>Institutional Registry #108420. Statutory European Deposit Guarantee Scheme (DGS) coverage up to €100,000.</p>
           </div>
@@ -1097,7 +1097,7 @@ export const SecurityPublicPage: React.FC = () => {
         <div className="pt-2 flex justify-end">
           <button
             onClick={() => setCurrentView('AUTH_ENROLL')}
-            className="px-6 py-2.5 rounded-xl bg-[#c5a880] hover:bg-[#d4af37] text-slate-950 font-bold text-xs uppercase tracking-wider transition-colors cursor-pointer"
+            className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-[#c5a880] hover:bg-[#d4af37] text-slate-950 font-bold text-xs uppercase tracking-wider transition-colors cursor-pointer"
           >
             Apply for Private Client Account &rarr;
           </button>
@@ -1106,3 +1106,4 @@ export const SecurityPublicPage: React.FC = () => {
     </div>
   );
 };
+

@@ -98,8 +98,33 @@ export const PublicNavbar: React.FC = () => {
 
       {/* Mobile Drawer */}
       {mobileMenuOpen && (
-        <div className="lg:hidden border-t border-slate-800 bg-[#071322] px-6 py-5 space-y-4">
-          <div className="flex flex-col space-y-2">
+        <div className="lg:hidden border-t border-slate-800 bg-[#071322] px-4 sm:px-6 py-4 space-y-4">
+          {/* Quick Region & Dark Mode Row on Mobile */}
+          <div className="flex items-center justify-between pb-3 border-b border-slate-800/80">
+            <div className="flex items-center rounded-lg p-0.5 bg-slate-900 border border-slate-800 text-xs">
+              {(['EU', 'UK', 'US'] as const).map((r) => (
+                <button
+                  key={r}
+                  onClick={() => setRegion(r)}
+                  className={`px-3 py-1 rounded text-xs font-bold transition-colors cursor-pointer ${
+                    region === r ? 'bg-[#c5a880] text-slate-950' : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  {r}
+                </button>
+              ))}
+            </div>
+
+            <button
+              onClick={toggleDarkMode}
+              className="px-3 py-1.5 rounded-lg text-xs font-medium text-slate-300 hover:text-white bg-slate-900 border border-slate-800 flex items-center gap-1.5 cursor-pointer"
+            >
+              {darkMode ? <Sun className="w-3.5 h-3.5 text-[#e5ca95]" /> : <Moon className="w-3.5 h-3.5 text-slate-300" />}
+              <span>{darkMode ? "Light" : "Dark"}</span>
+            </button>
+          </div>
+
+          <div className="flex flex-col space-y-1">
             {navItems.map((item) => (
               <button
                 key={item.view}
@@ -108,7 +133,7 @@ export const PublicNavbar: React.FC = () => {
                   setMobileMenuOpen(false);
                 }}
                 className={`text-left text-sm py-2 px-3 rounded-lg cursor-pointer ${
-                  currentView === item.view ? 'bg-slate-800 text-[#e5ca95] font-semibold' : 'text-slate-300'
+                  currentView === item.view ? 'bg-slate-800 text-[#e5ca95] font-semibold' : 'text-slate-300 hover:bg-slate-800/50'
                 }`}
               >
                 {item.label}
@@ -116,23 +141,23 @@ export const PublicNavbar: React.FC = () => {
             ))}
           </div>
 
-          <div className="pt-4 border-t border-slate-800 flex flex-col gap-3">
+          <div className="pt-3 border-t border-slate-800 flex flex-col gap-2.5">
             <button
               onClick={() => {
                 setCurrentView('AUTH_LOGIN');
                 setMobileMenuOpen(false);
               }}
-              className="w-full py-2.5 text-center text-sm font-bold bg-[#c5a880] text-slate-950 rounded-lg flex items-center justify-center gap-2 cursor-pointer"
+              className="w-full py-2.5 text-center text-sm font-bold bg-[#c5a880] text-slate-950 rounded-lg flex items-center justify-center gap-2 cursor-pointer active:scale-98"
             >
               <Lock className="w-4 h-4" />
-              Sign In to First Atlantic
+              <span>Sign In to First Atlantic</span>
             </button>
             <button
               onClick={() => {
                 setCurrentView('AUTH_ENROLL');
                 setMobileMenuOpen(false);
               }}
-              className="w-full py-2.5 text-center text-sm font-semibold border border-slate-700 text-slate-300 rounded-lg cursor-pointer"
+              className="w-full py-2.5 text-center text-sm font-semibold border border-slate-700 text-slate-200 rounded-lg cursor-pointer active:scale-98"
             >
               Open an Account
             </button>
