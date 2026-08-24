@@ -207,12 +207,6 @@ export const LoginPage: React.FC = () => {
     }
   };
 
-  const setQuickUser = (u: string, p: string) => {
-    setUsername(u);
-    setPassword(p);
-    setErrorMessage('');
-  };
-
   return (
     <div className="min-h-[85vh] bg-[#f8fafc] flex flex-col justify-center items-center py-10 px-4 sm:px-6">
       <div className="w-full max-w-md space-y-5">
@@ -224,47 +218,6 @@ export const LoginPage: React.FC = () => {
           <p className="text-xs uppercase tracking-widest text-[#8c6d37] font-bold pt-1 font-sans">
             Secure Client Online Banking
           </p>
-        </div>
-
-        {/* Quick Demo Credentials Pill Bar */}
-        <div className="p-3 bg-slate-100 rounded-xl border border-slate-200 text-xs space-y-2">
-          <div className="flex items-center justify-between text-[11px] font-semibold text-slate-600">
-            <span>⚡ Instant One-Click Demo Sign In:</span>
-          </div>
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5 font-mono text-[11px]">
-            <button
-              type="button"
-              onClick={() => setQuickUser('jsterling', 'AtlanticSecure2026!')}
-              className="px-2.5 py-1.5 rounded-lg bg-white hover:bg-slate-50 border border-slate-300 text-slate-800 font-bold hover:border-[#8c6d37] transition-all cursor-pointer text-left truncate"
-              title="Jonathan Sterling (US & Global)"
-            >
-              👤 J. Sterling
-            </button>
-            <button
-              type="button"
-              onClick={() => setQuickUser('emontgomery', 'AtlanticSecure2026!')}
-              className="px-2.5 py-1.5 rounded-lg bg-white hover:bg-slate-50 border border-slate-300 text-slate-800 font-bold hover:border-[#8c6d37] transition-all cursor-pointer text-left truncate"
-              title="Evelyn Montgomery (UK Sterling)"
-            >
-              👤 E. Montgomery
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                const last = localStorage.getItem('last_registered_username');
-                if (last) {
-                  const pass = localStorage.getItem('last_registered_password') || 'AtlanticSecure2026!';
-                  setQuickUser(last, pass);
-                } else {
-                  setQuickUser('jsterling', 'AtlanticSecure2026!');
-                }
-              }}
-              className="px-2.5 py-1.5 rounded-lg bg-amber-50 hover:bg-amber-100 border border-amber-300 text-amber-900 font-bold transition-all cursor-pointer text-left truncate col-span-2 sm:col-span-1"
-              title="Your Created Account"
-            >
-              ✨ My Account
-            </button>
-          </div>
         </div>
 
         {/* Main Sign In Container */}
@@ -379,7 +332,7 @@ export const LoginPage: React.FC = () => {
                     Enter Your 4-Digit Private PIN *
                   </label>
                   <span className="text-[11px] text-slate-500 font-mono">
-                    (Default demo PIN: <span className="font-bold text-slate-900">1234</span>)
+                    Confidential Security PIN
                   </span>
                 </div>
 
@@ -470,13 +423,10 @@ export const LoginPage: React.FC = () => {
                   </label>
                   <button
                     type="button"
-                    onClick={() => {
-                      setPassword('AtlanticSecure2026!');
-                      showToast('INFO', 'Password Pre-filled', 'Default demo secure password applied: AtlanticSecure2026!');
-                    }}
+                    onClick={() => setCurrentView('AUTH_FORGOT_PASSWORD')}
                     className="text-[11px] text-[#8c6d37] hover:underline cursor-pointer font-medium"
                   >
-                    Use default demo password
+                    Forgot Password?
                   </button>
                 </div>
                 <div className="relative">
