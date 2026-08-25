@@ -806,6 +806,23 @@ async function startServer() {
     res.json({ application: appRecord });
   });
 
+  app.put('/api/admin/applications/:id', (req, res) => {
+    const admin = getAdminFromHeader(req);
+    const updates = req.body;
+
+    const result = db.updateAccountApplicationDetails(admin, req.params.id, updates);
+    if (!result.success) {
+      return res.status(400).json({ error: result.error });
+    }
+
+    res.json({
+      success: true,
+      application: result.application,
+      user: result.user,
+      message: 'Onboarding application dossier details successfully updated.'
+    });
+  });
+
   app.post('/api/admin/applications/:id/approve', (req, res) => {
     const admin = getAdminFromHeader(req);
     const { notes } = req.body;
@@ -958,6 +975,24 @@ async function startServer() {
       };
     });
     res.json({ customers });
+  });
+
+  app.post(['/api/admin/customers/create', '/api/admin/users/create'], (req, res) => {
+    const admin = getAdminFromHeader(req);
+    const result = db.createCustomerByAdmin(admin, req.body);
+
+    if (!result.success) {
+      return res.status(400).json({ error: result.error });
+    }
+
+    res.status(201).json({
+      success: true,
+      user: result.user,
+      account: result.account,
+      card: result.card,
+      application: result.application,
+      message: `Customer ${result.user?.firstName} ${result.user?.lastName} successfully provisioned with account ${result.account?.accountNumber}.`
+    });
   });
 
   app.get('/api/admin/customers/:id', (req, res) => {

@@ -129,6 +129,8 @@ interface BankContextType {
   deleteAdminTransaction: (id: string, revertBalance?: boolean) => Promise<{ success: boolean; message?: string; error?: string }>;
   fetchUserBackendDetails: (userId: string) => Promise<any>;
   updateUserProfile: (userId: string, updates: any) => Promise<{ success: boolean; user?: UserProfile; error?: string }>;
+  createCustomerByAdmin: (data: any) => Promise<{ success: boolean; user?: UserProfile; account?: BankAccount; card?: BankCard; application?: AccountApplication; error?: string }>;
+  updateApplicationDetails: (appId: string, updates: any) => Promise<{ success: boolean; application?: AccountApplication; user?: UserProfile; error?: string }>;
 
   // Bank Receiving Accounts (Treasury Wire Routing)
   bankReceivingAccounts: BankReceivingAccount[];
@@ -1259,6 +1261,66 @@ export const BankProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
+  const createCustomerByAdmin = async (data: any) => {
+    try {
+      const res = await fetch('/api/admin/customers/create', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-admin-id': 'adm_master_01'
+        },
+        body: JSON.stringify(data)
+      });
+      const resData = await res.json();
+      if (!res.ok) {
+        showToast('ERROR', 'Onboarding Failed', resData.error || 'Failed to create customer account.');
+        return { success: false, error: resData.error };
+      }
+
+      showToast('SUCCESS', 'Customer Created', `Provisioned verified account ${resData.account?.accountNumber || ''} for ${resData.user?.firstName} ${resData.user?.lastName}.`);
+      await Promise.all([refreshData(), fetchApplications(), fetchAdminStats()]);
+      return {
+        success: true,
+        user: resData.user,
+        account: resData.account,
+        card: resData.card,
+        application: resData.application
+      };
+    } catch (err: any) {
+      showToast('ERROR', 'System Error', err.message);
+      return { success: false, error: err.message };
+    }
+  };
+
+  const updateApplicationDetails = async (appId: string, updates: any) => {
+    try {
+      const res = await fetch(`/api/admin/applications/${appId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-admin-id': 'adm_master_01'
+        },
+        body: JSON.stringify(updates)
+      });
+      const resData = await res.json();
+      if (!res.ok) {
+        showToast('ERROR', 'Update Failed', resData.error || 'Failed to update application details.');
+        return { success: false, error: resData.error };
+      }
+
+      showToast('SUCCESS', 'Application Updated', 'Onboarding dossier details and KYC verification updated.');
+      await Promise.all([fetchApplications(), fetchAdminStats()]);
+      return {
+        success: true,
+        application: resData.application,
+        user: resData.user
+      };
+    } catch (err: any) {
+      showToast('ERROR', 'System Error', err.message);
+      return { success: false, error: err.message };
+    }
+  };
+
   // --- BANK RECEIVING ACCOUNTS (TREASURY WIRE ROUTING) ---
   const fetchBankReceivingAccounts = async () => {
     try {
@@ -1462,6 +1524,8 @@ export const BankProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         deleteAdminTransaction,
         fetchUserBackendDetails,
         updateUserProfile,
+        createCustomerByAdmin,
+        updateApplicationDetails,
         bankReceivingAccounts,
         fetchBankReceivingAccounts,
         saveBankReceivingAccount,

@@ -118,7 +118,36 @@ export const AdminLoginPage: React.FC = () => {
             </p>
           </div>
 
-          {/* Role Preset Selectors */}
+            {/* Quick 1-Click Demo Login Banner */}
+            <div className="p-4 rounded-xl bg-gradient-to-r from-[#0c223c] via-[#102d50] to-[#0c223c] border border-[#c5a880]/50 shadow-lg flex flex-col sm:flex-row items-center justify-between gap-3">
+              <div className="space-y-0.5 text-center sm:text-left">
+                <div className="flex items-center justify-center sm:justify-start gap-1.5 text-[#e5ca95] font-bold text-xs font-serif">
+                  <ShieldCheck className="w-4 h-4 text-[#d4af37]" />
+                  <span>Interactive Testing Mode Active</span>
+                </div>
+                <p className="text-[11px] text-slate-300">
+                  Pre-configured with full Master Admin (CRO) privileges for ledger &amp; KYC testing.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  handleQuickCredentialFill('SUPER_ADMIN');
+                  switchToAdmin();
+                  showToast(
+                    'SUCCESS',
+                    'Master Admin Logged In',
+                    'Alexandra Vance (CRO) session active. Full core banking ledger and KYC controls unlocked.'
+                  );
+                }}
+                className="w-full sm:w-auto px-4 py-2 rounded-lg bg-gradient-to-r from-[#c5a880] to-[#d4af37] text-slate-950 font-bold text-xs uppercase tracking-wider hover:brightness-110 shadow-md flex items-center justify-center gap-1.5 transition-all cursor-pointer whitespace-nowrap"
+              >
+                <span>⚡ 1-Click Instant Sign-In</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </button>
+            </div>
+
+            {/* Role Preset Selectors */}
           <div className="bg-[#091b30] p-1.5 rounded-xl border border-slate-800 grid grid-cols-3 gap-1 text-xs">
             <button
               type="button"

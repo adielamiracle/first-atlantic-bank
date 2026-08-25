@@ -33,10 +33,10 @@ import {
 export const PersonalPage: React.FC = () => {
   const { setCurrentView } = useBank();
   return (
-    <div className="bg-[#f8fafc] dark:bg-[#07101e] text-slate-800 dark:text-slate-100 py-8 sm:py-12 px-4 sm:px-8 max-w-7xl mx-auto space-y-8 sm:space-y-12 transition-colors">
-      <div className="text-center max-w-3xl mx-auto space-y-2 sm:space-y-3">
-        <span className="text-[10px] sm:text-xs uppercase font-bold tracking-widest text-[#8c6d37] dark:text-[#c5a880]">Personal Banking Solutions</span>
-        <h1 className="text-2xl sm:text-4xl md:text-5xl font-bold font-serif text-slate-900 dark:text-white">
+    <div className="bg-[#f8fafc] dark:bg-[#07101e] text-slate-800 dark:text-slate-100 py-6 sm:py-10 px-4 sm:px-8 max-w-7xl mx-auto space-y-6 sm:space-y-10 transition-colors">
+      <div className="text-center max-w-3xl mx-auto space-y-1.5 sm:space-y-2">
+        <span className="text-[10px] sm:text-xs uppercase font-bold tracking-widest text-[#8c6d37] dark:text-[#c5a880] font-mono">Personal Banking Solutions</span>
+        <h1 className="text-xl sm:text-3xl md:text-4xl font-bold font-serif text-slate-900 dark:text-white">
           Crafted for Everyday Sophistication
         </h1>
         <p className="text-slate-600 dark:text-slate-300 text-xs sm:text-sm leading-relaxed">
@@ -44,62 +44,62 @@ export const PersonalPage: React.FC = () => {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-8">
-        <div className="bg-white dark:bg-[#0a192f] rounded-xl sm:rounded-2xl p-5 sm:p-8 border border-slate-200 dark:border-[#1e3656] shadow-sm space-y-4 flex flex-col justify-between transition-colors">
-          <div className="space-y-3">
-            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-[#0a192f] dark:bg-[#112a4a] text-[#d4af37] flex items-center justify-center border border-[#c5a880]/30">
-              <Landmark className="w-5 h-5 sm:w-6 sm:h-6" />
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
+        <div className="bg-white dark:bg-[#0a192f] rounded-xl sm:rounded-2xl p-5 sm:p-6 border border-slate-200 dark:border-[#1e3656] shadow-xs space-y-3.5 flex flex-col justify-between transition-colors">
+          <div className="space-y-2.5">
+            <div className="w-10 h-10 rounded-xl bg-[#0a192f] dark:bg-[#112a4a] text-[#d4af37] flex items-center justify-center border border-[#c5a880]/30 shadow-xs">
+              <Landmark className="w-5 h-5" />
             </div>
-            <h3 className="text-lg sm:text-xl font-bold font-serif text-slate-900 dark:text-white">Premier Checking</h3>
+            <h3 className="text-base sm:text-lg font-bold font-serif text-slate-900 dark:text-white">Premier Checking</h3>
             <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
               No monthly maintenance fees with qualifying balance. Includes complimentary outgoing domestic wires, personalized checkbooks, and private concierge phone dispatch.
             </p>
-            <div className="text-xl sm:text-2xl font-bold font-mono text-slate-900 dark:text-white pt-2">$0 <span className="text-xs text-slate-500 dark:text-slate-400 font-normal">Monthly Fee</span></div>
+            <div className="text-lg sm:text-xl font-bold font-mono text-slate-900 dark:text-white pt-1">$0 <span className="text-xs text-slate-500 dark:text-slate-400 font-normal">Monthly Fee</span></div>
           </div>
           <button
             onClick={() => setCurrentView('AUTH_ENROLL')}
-            className="w-full py-2.5 rounded-lg bg-[#0a192f] dark:bg-[#112a4a] hover:bg-[#153459] dark:hover:bg-[#1a3f6d] text-white font-semibold text-xs uppercase tracking-wider transition-colors border border-[#c5a880]/30 cursor-pointer"
+            className="w-full py-2.5 rounded-xl bg-[#0a192f] dark:bg-[#112a4a] hover:bg-[#153459] dark:hover:bg-[#1a3f6d] text-white font-bold text-xs uppercase tracking-wider transition-colors border border-[#c5a880]/30 cursor-pointer shadow-xs"
           >
             Apply Online
           </button>
         </div>
 
-        <div className="bg-white dark:bg-[#0a192f] rounded-xl sm:rounded-2xl p-5 sm:p-8 border border-[#c5a880]/60 shadow-md space-y-4 flex flex-col justify-between relative transition-colors">
-          <div className="absolute top-4 right-4 bg-[#c5a880]/20 text-[#8c6d37] dark:text-[#e5ca95] text-[10px] font-bold uppercase px-2.5 py-1 rounded-md">
+        <div className="bg-white dark:bg-[#0a192f] rounded-xl sm:rounded-2xl p-5 sm:p-6 border border-[#c5a880]/60 shadow-md space-y-3.5 flex flex-col justify-between relative transition-colors">
+          <div className="absolute top-4 right-4 bg-[#c5a880]/20 text-[#8c6d37] dark:text-[#e5ca95] text-[10px] font-bold uppercase px-2.5 py-0.5 rounded-full border border-[#c5a880]/30 font-mono">
             5.15% APY
           </div>
-          <div className="space-y-3">
-            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-[#0a192f] dark:bg-[#112a4a] text-[#d4af37] flex items-center justify-center border border-[#c5a880]/30">
-              <TrendingUp className="w-5 h-5 sm:w-6 sm:h-6" />
+          <div className="space-y-2.5">
+            <div className="w-10 h-10 rounded-xl bg-[#0a192f] dark:bg-[#112a4a] text-[#d4af37] flex items-center justify-center border border-[#c5a880]/30 shadow-xs">
+              <TrendingUp className="w-5 h-5" />
             </div>
-            <h3 className="text-lg sm:text-xl font-bold font-serif text-slate-900 dark:text-white">Apex High-Yield Savings</h3>
+            <h3 className="text-base sm:text-lg font-bold font-serif text-slate-900 dark:text-white">Apex High-Yield Savings</h3>
             <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
               Leading market yield compounded daily with zero lockup requirements. Fully insured up to $250k (US) / £85k (UK).
             </p>
-            <div className="text-xl sm:text-2xl font-bold font-mono text-emerald-600 dark:text-emerald-400 pt-2">5.15% <span className="text-xs text-slate-500 dark:text-slate-400 font-normal">APY</span></div>
+            <div className="text-lg sm:text-xl font-bold font-mono text-emerald-600 dark:text-emerald-400 pt-1">5.15% <span className="text-xs text-slate-500 dark:text-slate-400 font-normal">APY</span></div>
           </div>
           <button
             onClick={() => setCurrentView('AUTH_ENROLL')}
-            className="w-full py-2.5 rounded-lg bg-[#c5a880] hover:bg-[#d4af37] text-slate-950 font-bold text-xs uppercase tracking-wider transition-colors cursor-pointer"
+            className="w-full py-2.5 rounded-xl bg-gradient-to-r from-[#c5a880] to-[#b39366] hover:brightness-105 text-slate-950 font-bold text-xs uppercase tracking-wider transition-all cursor-pointer shadow-md"
           >
             Open Account
           </button>
         </div>
 
-        <div className="bg-white dark:bg-[#0a192f] rounded-xl sm:rounded-2xl p-5 sm:p-8 border border-slate-200 dark:border-[#1e3656] shadow-sm space-y-4 flex flex-col justify-between transition-colors">
-          <div className="space-y-3">
-            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-[#0a192f] dark:bg-[#112a4a] text-[#d4af37] flex items-center justify-center border border-[#c5a880]/30">
-              <CreditCard className="w-5 h-5 sm:w-6 sm:h-6" />
+        <div className="bg-white dark:bg-[#0a192f] rounded-xl sm:rounded-2xl p-5 sm:p-6 border border-slate-200 dark:border-[#1e3656] shadow-xs space-y-3.5 flex flex-col justify-between transition-colors">
+          <div className="space-y-2.5">
+            <div className="w-10 h-10 rounded-xl bg-[#0a192f] dark:bg-[#112a4a] text-[#d4af37] flex items-center justify-center border border-[#c5a880]/30 shadow-xs">
+              <CreditCard className="w-5 h-5" />
             </div>
-            <h3 className="text-lg sm:text-xl font-bold font-serif text-slate-900 dark:text-white">Atlantic Infinite Card</h3>
+            <h3 className="text-base sm:text-lg font-bold font-serif text-slate-900 dark:text-white">Atlantic Infinite Card</h3>
             <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
               Heavy metal card with 3x points on global travel, comprehensive airport lounge access, and zero foreign transaction surcharges.
             </p>
-            <div className="text-xl sm:text-2xl font-bold font-mono text-slate-900 dark:text-white pt-2">0% Intro APR <span className="text-xs text-slate-500 dark:text-slate-400 font-normal">for 15 mos</span></div>
+            <div className="text-lg sm:text-xl font-bold font-mono text-slate-900 dark:text-white pt-1">0% Intro APR <span className="text-xs text-slate-500 dark:text-slate-400 font-normal">for 15 mos</span></div>
           </div>
           <button
             onClick={() => setCurrentView('AUTH_ENROLL')}
-            className="w-full py-2.5 rounded-lg bg-[#0a192f] dark:bg-[#112a4a] hover:bg-[#153459] dark:hover:bg-[#1a3f6d] text-white font-semibold text-xs uppercase tracking-wider transition-colors border border-[#c5a880]/30 cursor-pointer"
+            className="w-full py-2.5 rounded-xl bg-[#0a192f] dark:bg-[#112a4a] hover:bg-[#153459] dark:hover:bg-[#1a3f6d] text-white font-bold text-xs uppercase tracking-wider transition-colors border border-[#c5a880]/30 cursor-pointer shadow-xs"
           >
             Apply for Card
           </button>
@@ -112,10 +112,10 @@ export const PersonalPage: React.FC = () => {
 export const BusinessPage: React.FC = () => {
   const { setCurrentView } = useBank();
   return (
-    <div className="bg-[#f8fafc] dark:bg-[#07101e] text-slate-800 dark:text-slate-100 py-8 sm:py-12 px-4 sm:px-8 max-w-7xl mx-auto space-y-8 sm:space-y-12 transition-colors">
-      <div className="text-center max-w-3xl mx-auto space-y-2 sm:space-y-3">
-        <span className="text-[10px] sm:text-xs uppercase font-bold tracking-widest text-[#8c6d37] dark:text-[#c5a880]">Commercial &amp; Corporate Banking</span>
-        <h1 className="text-2xl sm:text-4xl md:text-5xl font-bold font-serif text-slate-900 dark:text-white">
+    <div className="bg-[#f8fafc] dark:bg-[#07101e] text-slate-800 dark:text-slate-100 py-6 sm:py-10 px-4 sm:px-8 max-w-7xl mx-auto space-y-6 sm:space-y-10 transition-colors">
+      <div className="text-center max-w-3xl mx-auto space-y-1.5 sm:space-y-2">
+        <span className="text-[10px] sm:text-xs uppercase font-bold tracking-widest text-[#8c6d37] dark:text-[#c5a880] font-mono">Commercial &amp; Corporate Banking</span>
+        <h1 className="text-xl sm:text-3xl md:text-4xl font-bold font-serif text-slate-900 dark:text-white">
           Institutional Treasury &amp; Credit
         </h1>
         <p className="text-slate-600 dark:text-slate-300 text-xs sm:text-sm leading-relaxed">
@@ -123,12 +123,12 @@ export const BusinessPage: React.FC = () => {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-8">
-        <div className="bg-white dark:bg-[#0a192f] rounded-xl sm:rounded-2xl p-5 sm:p-8 border border-slate-200 dark:border-[#1e3656] shadow-sm space-y-4 sm:space-y-5 transition-colors">
-          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-[#0a192f] dark:bg-[#112a4a] text-[#d4af37] flex items-center justify-center border border-[#c5a880]/30">
-            <Building className="w-5 h-5 sm:w-6 sm:h-6" />
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+        <div className="bg-white dark:bg-[#0a192f] rounded-xl sm:rounded-2xl p-5 sm:p-7 border border-slate-200 dark:border-[#1e3656] shadow-xs space-y-4 transition-colors">
+          <div className="w-10 h-10 rounded-xl bg-[#0a192f] dark:bg-[#112a4a] text-[#d4af37] flex items-center justify-center border border-[#c5a880]/30 shadow-xs">
+            <Building className="w-5 h-5" />
           </div>
-          <h3 className="text-lg sm:text-xl font-bold font-serif text-slate-900 dark:text-white">Corporate Treasury Operating Account</h3>
+          <h3 className="text-base sm:text-lg font-bold font-serif text-slate-900 dark:text-white">Corporate Treasury Operating Account</h3>
           <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
             Engineered for high-volume enterprises operating across US and European jurisdictions. Direct API ledger synchronization, batch ACH/BACS payroll processing, and multi-user RBAC controls.
           </p>
@@ -139,17 +139,17 @@ export const BusinessPage: React.FC = () => {
           </ul>
           <button
             onClick={() => setCurrentView('AUTH_ENROLL')}
-            className="w-full sm:w-auto px-5 py-2.5 rounded-lg bg-[#0a192f] dark:bg-[#112a4a] hover:bg-[#153459] text-white font-semibold text-xs uppercase tracking-wider border border-[#c5a880]/30 cursor-pointer"
+            className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-[#0a192f] dark:bg-[#112a4a] hover:bg-[#153459] text-white font-bold text-xs uppercase tracking-wider border border-[#c5a880]/30 cursor-pointer shadow-xs"
           >
             Inquire for Enterprise
           </button>
         </div>
 
-        <div className="bg-white dark:bg-[#0a192f] rounded-xl sm:rounded-2xl p-5 sm:p-8 border border-slate-200 dark:border-[#1e3656] shadow-sm space-y-4 sm:space-y-5 transition-colors">
-          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-[#0a192f] dark:bg-[#112a4a] text-[#d4af37] flex items-center justify-center border border-[#c5a880]/30">
-            <Briefcase className="w-5 h-5 sm:w-6 sm:h-6" />
+        <div className="bg-white dark:bg-[#0a192f] rounded-xl sm:rounded-2xl p-5 sm:p-7 border border-slate-200 dark:border-[#1e3656] shadow-xs space-y-4 transition-colors">
+          <div className="w-10 h-10 rounded-xl bg-[#0a192f] dark:bg-[#112a4a] text-[#d4af37] flex items-center justify-center border border-[#c5a880]/30 shadow-xs">
+            <Briefcase className="w-5 h-5" />
           </div>
-          <h3 className="text-lg sm:text-xl font-bold font-serif text-slate-900 dark:text-white">Commercial Lending &amp; Real Estate</h3>
+          <h3 className="text-base sm:text-lg font-bold font-serif text-slate-900 dark:text-white">Commercial Lending &amp; Real Estate</h3>
           <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
             Custom-structured debt facilities from $1M to $50M+ for acquisition, refinance, construction, or operational working capital in prime US and UK markets.
           </p>
@@ -160,7 +160,7 @@ export const BusinessPage: React.FC = () => {
           </ul>
           <button
             onClick={() => setCurrentView('AUTH_ENROLL')}
-            className="w-full sm:w-auto px-5 py-2.5 rounded-lg bg-[#0a192f] dark:bg-[#112a4a] hover:bg-[#153459] text-white font-semibold text-xs uppercase tracking-wider border border-[#c5a880]/30 cursor-pointer"
+            className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-[#0a192f] dark:bg-[#112a4a] hover:bg-[#153459] text-white font-bold text-xs uppercase tracking-wider border border-[#c5a880]/30 cursor-pointer shadow-xs"
           >
             Connect with Loan Officer
           </button>
@@ -172,10 +172,10 @@ export const BusinessPage: React.FC = () => {
 
 export const WealthPage: React.FC = () => {
   return (
-    <div className="bg-[#f8fafc] dark:bg-[#07101e] text-slate-800 dark:text-slate-100 py-8 sm:py-12 px-4 sm:px-8 max-w-7xl mx-auto space-y-8 sm:space-y-12 transition-colors">
-      <div className="text-center max-w-3xl mx-auto space-y-2 sm:space-y-3">
-        <span className="text-[10px] sm:text-xs uppercase font-bold tracking-widest text-[#8c6d37] dark:text-[#c5a880]">Private Client &amp; Family Office</span>
-        <h1 className="text-2xl sm:text-4xl md:text-5xl font-bold font-serif text-slate-900 dark:text-white">
+    <div className="bg-[#f8fafc] dark:bg-[#07101e] text-slate-800 dark:text-slate-100 py-6 sm:py-10 px-4 sm:px-8 max-w-7xl mx-auto space-y-6 sm:space-y-10 transition-colors">
+      <div className="text-center max-w-3xl mx-auto space-y-1.5 sm:space-y-2">
+        <span className="text-[10px] sm:text-xs uppercase font-bold tracking-widest text-[#8c6d37] dark:text-[#c5a880] font-mono">Private Client &amp; Family Office</span>
+        <h1 className="text-xl sm:text-3xl md:text-4xl font-bold font-serif text-slate-900 dark:text-white">
           Stewardship Across Generations
         </h1>
         <p className="text-slate-600 dark:text-slate-300 text-xs sm:text-sm leading-relaxed">
@@ -184,8 +184,8 @@ export const WealthPage: React.FC = () => {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
-        <div className="bg-white dark:bg-[#0a192f] rounded-xl sm:rounded-2xl p-5 sm:p-7 border border-slate-200 dark:border-[#1e3656] shadow-sm space-y-3.5 sm:space-y-4 transition-colors">
-          <div className="w-10 h-10 rounded-lg bg-[#0a192f] dark:bg-[#112a4a] text-[#d4af37] flex items-center justify-center border border-[#c5a880]/30">
+        <div className="bg-white dark:bg-[#0a192f] rounded-xl sm:rounded-2xl p-5 sm:p-6 border border-slate-200 dark:border-[#1e3656] shadow-xs space-y-3 transition-colors">
+          <div className="w-10 h-10 rounded-xl bg-[#0a192f] dark:bg-[#112a4a] text-[#d4af37] flex items-center justify-center border border-[#c5a880]/30 shadow-xs">
             <Shield className="w-5 h-5" />
           </div>
           <h3 className="text-base sm:text-lg font-bold font-serif text-slate-900 dark:text-white">Fiduciary Trust Services</h3>
@@ -194,8 +194,8 @@ export const WealthPage: React.FC = () => {
           </p>
         </div>
 
-        <div className="bg-white dark:bg-[#0a192f] rounded-xl sm:rounded-2xl p-5 sm:p-7 border border-slate-200 dark:border-[#1e3656] shadow-sm space-y-3.5 sm:space-y-4 transition-colors">
-          <div className="w-10 h-10 rounded-lg bg-[#0a192f] dark:bg-[#112a4a] text-[#d4af37] flex items-center justify-center border border-[#c5a880]/30">
+        <div className="bg-white dark:bg-[#0a192f] rounded-xl sm:rounded-2xl p-5 sm:p-6 border border-slate-200 dark:border-[#1e3656] shadow-xs space-y-3 transition-colors">
+          <div className="w-10 h-10 rounded-xl bg-[#0a192f] dark:bg-[#112a4a] text-[#d4af37] flex items-center justify-center border border-[#c5a880]/30 shadow-xs">
             <Award className="w-5 h-5" />
           </div>
           <h3 className="text-base sm:text-lg font-bold font-serif text-slate-900 dark:text-white">Bespoke Lombard Credit</h3>
@@ -204,9 +204,9 @@ export const WealthPage: React.FC = () => {
           </p>
         </div>
 
-        <div className="bg-white dark:bg-[#0a192f] rounded-xl sm:rounded-2xl p-5 sm:p-7 border border-slate-200 dark:border-[#1e3656] shadow-sm space-y-3.5 sm:space-y-4 transition-colors">
-          <div className="w-10 h-10 rounded-lg bg-[#0a192f] dark:bg-[#112a4a] text-[#d4af37] flex items-center justify-center border border-[#c5a880]/30">
-            <Globe2 className="w-5 h-6" />
+        <div className="bg-white dark:bg-[#0a192f] rounded-xl sm:rounded-2xl p-5 sm:p-6 border border-slate-200 dark:border-[#1e3656] shadow-xs space-y-3 transition-colors">
+          <div className="w-10 h-10 rounded-xl bg-[#0a192f] dark:bg-[#112a4a] text-[#d4af37] flex items-center justify-center border border-[#c5a880]/30 shadow-xs">
+            <Globe2 className="w-5 h-5" />
           </div>
           <h3 className="text-base sm:text-lg font-bold font-serif text-slate-900 dark:text-white">Transatlantic Advisory</h3>
           <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
@@ -221,10 +221,10 @@ export const WealthPage: React.FC = () => {
 export const InternationalPage: React.FC = () => {
   const { setCurrentView } = useBank();
   return (
-    <div className="bg-[#f8fafc] dark:bg-[#07101e] text-slate-800 dark:text-slate-100 py-8 sm:py-12 px-4 sm:px-8 max-w-7xl mx-auto space-y-8 sm:space-y-12 transition-colors">
-      <div className="text-center max-w-3xl mx-auto space-y-2 sm:space-y-3">
-        <span className="text-[10px] sm:text-xs uppercase font-bold tracking-widest text-[#8c6d37] dark:text-[#c5a880]">Cross-Border Treasury</span>
-        <h1 className="text-2xl sm:text-4xl md:text-5xl font-bold font-serif text-slate-900 dark:text-white">
+    <div className="bg-[#f8fafc] dark:bg-[#07101e] text-slate-800 dark:text-slate-100 py-6 sm:py-10 px-4 sm:px-8 max-w-7xl mx-auto space-y-6 sm:space-y-10 transition-colors">
+      <div className="text-center max-w-3xl mx-auto space-y-1.5 sm:space-y-2">
+        <span className="text-[10px] sm:text-xs uppercase font-bold tracking-widest text-[#8c6d37] dark:text-[#c5a880] font-mono">Cross-Border Treasury</span>
+        <h1 className="text-xl sm:text-3xl md:text-4xl font-bold font-serif text-slate-900 dark:text-white">
           Global Multi-Currency Banking
         </h1>
         <p className="text-slate-600 dark:text-slate-300 text-xs sm:text-sm leading-relaxed">
@@ -232,31 +232,31 @@ export const InternationalPage: React.FC = () => {
         </p>
       </div>
 
-      <div className="bg-[#0a192f] text-white rounded-xl sm:rounded-2xl p-5 sm:p-10 md:p-12 border border-slate-800 shadow-xl space-y-6 sm:space-y-8">
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 text-center">
-          <div className="p-4 sm:p-6 rounded-xl bg-[#0e2746] border border-slate-700">
-            <span className="text-[10px] sm:text-xs uppercase font-bold text-[#c5a880] tracking-wider block mb-1">United States</span>
-            <div className="text-xl sm:text-2xl font-bold font-mono">USD ($)</div>
+      <div className="bg-[#0a192f] text-white rounded-xl sm:rounded-2xl p-5 sm:p-8 border border-slate-800 shadow-xl space-y-5 sm:space-y-6">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5 sm:gap-5 text-center">
+          <div className="p-4 sm:p-5 rounded-xl bg-[#0e2746] border border-slate-700/80">
+            <span className="text-[10px] sm:text-xs uppercase font-bold text-[#c5a880] tracking-wider block mb-1 font-mono">United States</span>
+            <div className="text-lg sm:text-xl font-bold font-mono">USD ($)</div>
             <p className="text-[10px] sm:text-[11px] text-slate-400 mt-1">ABA Routing: 021000089 (Fedwire &amp; ACH)</p>
           </div>
 
-          <div className="p-4 sm:p-6 rounded-xl bg-[#0e2746] border border-slate-700">
-            <span className="text-[10px] sm:text-xs uppercase font-bold text-[#c5a880] tracking-wider block mb-1">United Kingdom</span>
-            <div className="text-xl sm:text-2xl font-bold font-mono">GBP (£)</div>
+          <div className="p-4 sm:p-5 rounded-xl bg-[#0e2746] border border-slate-700/80">
+            <span className="text-[10px] sm:text-xs uppercase font-bold text-[#c5a880] tracking-wider block mb-1 font-mono">United Kingdom</span>
+            <div className="text-lg sm:text-xl font-bold font-mono">GBP (£)</div>
             <p className="text-[10px] sm:text-[11px] text-slate-400 mt-1">Sort Code: 40-12-88 (FPS &amp; CHAPS)</p>
           </div>
 
-          <div className="p-4 sm:p-6 rounded-xl bg-[#0e2746] border border-slate-700">
-            <span className="text-[10px] sm:text-xs uppercase font-bold text-[#c5a880] tracking-wider block mb-1">European Union</span>
-            <div className="text-xl sm:text-2xl font-bold font-mono">EUR (€)</div>
+          <div className="p-4 sm:p-5 rounded-xl bg-[#0e2746] border border-slate-700/80">
+            <span className="text-[10px] sm:text-xs uppercase font-bold text-[#c5a880] tracking-wider block mb-1 font-mono">European Union</span>
+            <div className="text-lg sm:text-xl font-bold font-mono">EUR (€)</div>
             <p className="text-[10px] sm:text-[11px] text-slate-400 mt-1">IBAN &amp; SEPA Instant Network</p>
           </div>
         </div>
 
-        <div className="text-center pt-2 sm:pt-4">
+        <div className="text-center pt-2">
           <button
             onClick={() => setCurrentView('AUTH_ENROLL')}
-            className="w-full sm:w-auto px-6 py-3 rounded-lg bg-[#c5a880] hover:bg-[#d4af37] text-slate-950 font-bold text-xs uppercase tracking-wider shadow-md transition-all cursor-pointer"
+            className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-gradient-to-r from-[#c5a880] to-[#b39366] hover:brightness-105 text-slate-950 font-bold text-xs uppercase tracking-wider shadow-md transition-all cursor-pointer"
           >
             Open Multi-Currency Account
           </button>
@@ -268,10 +268,10 @@ export const InternationalPage: React.FC = () => {
 
 export const LocationsPage: React.FC = () => {
   return (
-    <div className="bg-[#f8fafc] dark:bg-[#07101e] text-slate-800 dark:text-slate-100 py-8 sm:py-12 px-4 sm:px-8 max-w-7xl mx-auto space-y-8 sm:space-y-12 transition-colors">
-      <div className="text-center max-w-3xl mx-auto space-y-2 sm:space-y-3">
-        <span className="text-[10px] sm:text-xs uppercase font-bold tracking-widest text-[#8c6d37] dark:text-[#c5a880]">Global Advisory Footprint</span>
-        <h1 className="text-2xl sm:text-4xl md:text-5xl font-bold font-serif text-slate-900 dark:text-white">
+    <div className="bg-[#f8fafc] dark:bg-[#07101e] text-slate-800 dark:text-slate-100 py-6 sm:py-10 px-4 sm:px-8 max-w-7xl mx-auto space-y-6 sm:space-y-10 transition-colors">
+      <div className="text-center max-w-3xl mx-auto space-y-1.5 sm:space-y-2">
+        <span className="text-[10px] sm:text-xs uppercase font-bold tracking-widest text-[#8c6d37] dark:text-[#c5a880] font-mono">Global Advisory Footprint</span>
+        <h1 className="text-xl sm:text-3xl md:text-4xl font-bold font-serif text-slate-900 dark:text-white">
           Executive Lounges &amp; Offices
         </h1>
         <p className="text-slate-600 dark:text-slate-300 text-xs sm:text-sm leading-relaxed">
@@ -280,89 +280,89 @@ export const LocationsPage: React.FC = () => {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-        <div className="bg-white dark:bg-[#0a192f] rounded-xl sm:rounded-2xl p-5 sm:p-7 border border-slate-200 dark:border-[#1e3656] shadow-sm space-y-3 transition-colors">
+        <div className="bg-white dark:bg-[#0a192f] rounded-xl sm:rounded-2xl p-4 sm:p-6 border border-slate-200 dark:border-[#1e3656] shadow-xs space-y-2.5 transition-colors">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-[#0a192f] dark:bg-[#112a4a] text-[#d4af37] flex items-center justify-center border border-[#c5a880]/30">
+            <div className="w-10 h-10 rounded-xl bg-[#0a192f] dark:bg-[#112a4a] text-[#d4af37] flex items-center justify-center border border-[#c5a880]/30 shadow-xs">
               <MapPin className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="text-base font-bold font-serif text-slate-900 dark:text-white">Frankfurt am Main Hub</h3>
-              <p className="text-xs text-[#8c6d37] dark:text-[#c5a880] font-semibold">Headquarters (European Union)</p>
+              <h3 className="text-sm sm:text-base font-bold font-serif text-slate-900 dark:text-white">Frankfurt am Main Hub</h3>
+              <p className="text-xs text-[#8c6d37] dark:text-[#c5a880] font-semibold font-mono">Headquarters (European Union)</p>
             </div>
           </div>
           <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
             Mainzer Landstraße 180, 60327 Frankfurt am Main, Germany<br />
             Phone: +49 69 9000 8800 • Email: frankfurt.client@firstatlanticbank.com
           </p>
-          <div className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-2">
+          <div className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-2 pt-1 border-t border-slate-100 dark:border-slate-800">
             <Clock className="w-3.5 h-3.5" /> Monday – Friday: 8:30 AM – 5:30 PM CET
           </div>
         </div>
 
-        <div className="bg-white dark:bg-[#0a192f] rounded-xl sm:rounded-2xl p-5 sm:p-7 border border-slate-200 dark:border-[#1e3656] shadow-sm space-y-3 transition-colors">
+        <div className="bg-white dark:bg-[#0a192f] rounded-xl sm:rounded-2xl p-4 sm:p-6 border border-slate-200 dark:border-[#1e3656] shadow-xs space-y-2.5 transition-colors">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-[#0a192f] dark:bg-[#112a4a] text-[#d4af37] flex items-center justify-center border border-[#c5a880]/30">
+            <div className="w-10 h-10 rounded-xl bg-[#0a192f] dark:bg-[#112a4a] text-[#d4af37] flex items-center justify-center border border-[#c5a880]/30 shadow-xs">
               <MapPin className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="text-base font-bold font-serif text-slate-900 dark:text-white">Zurich Wealth Centre</h3>
-              <p className="text-xs text-[#8c6d37] dark:text-[#c5a880] font-semibold">Private Client &amp; Asset Management</p>
+              <h3 className="text-sm sm:text-base font-bold font-serif text-slate-900 dark:text-white">Zurich Wealth Centre</h3>
+              <p className="text-xs text-[#8c6d37] dark:text-[#c5a880] font-semibold font-mono">Private Client &amp; Asset Management</p>
             </div>
           </div>
           <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
             Bahnhofstrasse 45, 8001 Zürich, Switzerland<br />
             Phone: +41 44 215 9000 • Email: zurich.private@firstatlanticbank.com
           </p>
-          <div className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-2">
+          <div className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-2 pt-1 border-t border-slate-100 dark:border-slate-800">
             <Clock className="w-3.5 h-3.5" /> Monday – Friday: 8:30 AM – 5:00 PM CET
           </div>
         </div>
 
-        <div className="bg-white dark:bg-[#0a192f] rounded-xl sm:rounded-2xl p-5 sm:p-7 border border-slate-200 dark:border-[#1e3656] shadow-sm space-y-3 transition-colors">
+        <div className="bg-white dark:bg-[#0a192f] rounded-xl sm:rounded-2xl p-4 sm:p-6 border border-slate-200 dark:border-[#1e3656] shadow-xs space-y-2.5 transition-colors">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-[#0a192f] dark:bg-[#112a4a] text-[#d4af37] flex items-center justify-center border border-[#c5a880]/30">
+            <div className="w-10 h-10 rounded-xl bg-[#0a192f] dark:bg-[#112a4a] text-[#d4af37] flex items-center justify-center border border-[#c5a880]/30 shadow-xs">
               <MapPin className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="text-base font-bold font-serif text-slate-900 dark:text-white">London Mayfair Advisory</h3>
-              <p className="text-xs text-[#8c6d37] dark:text-[#c5a880] font-semibold">Headquarters (United Kingdom)</p>
+              <h3 className="text-sm sm:text-base font-bold font-serif text-slate-900 dark:text-white">London Mayfair Advisory</h3>
+              <p className="text-xs text-[#8c6d37] dark:text-[#c5a880] font-semibold font-mono">Headquarters (United Kingdom)</p>
             </div>
           </div>
           <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
             14 Berkeley Square, Mayfair, London W1J 6BQ, UK<br />
             Phone: +44 20 7946 0912 • Email: london.private@firstatlanticbank.com
           </p>
-          <div className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-2">
+          <div className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-2 pt-1 border-t border-slate-100 dark:border-slate-800">
             <Clock className="w-3.5 h-3.5" /> Monday – Friday: 8:30 AM – 5:30 PM GMT
           </div>
         </div>
 
-        <div className="bg-white dark:bg-[#0a192f] rounded-xl sm:rounded-2xl p-5 sm:p-7 border border-slate-200 dark:border-[#1e3656] shadow-sm space-y-3 transition-colors">
+        <div className="bg-white dark:bg-[#0a192f] rounded-xl sm:rounded-2xl p-4 sm:p-6 border border-slate-200 dark:border-[#1e3656] shadow-xs space-y-2.5 transition-colors">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-[#0a192f] dark:bg-[#112a4a] text-[#d4af37] flex items-center justify-center border border-[#c5a880]/30">
+            <div className="w-10 h-10 rounded-xl bg-[#0a192f] dark:bg-[#112a4a] text-[#d4af37] flex items-center justify-center border border-[#c5a880]/30 shadow-xs">
               <MapPin className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="text-base font-bold font-serif text-slate-900 dark:text-white">New York Flagship &amp; Treasury</h3>
-              <p className="text-xs text-[#8c6d37] dark:text-[#c5a880] font-semibold">Headquarters (Americas)</p>
+              <h3 className="text-sm sm:text-base font-bold font-serif text-slate-900 dark:text-white">New York Flagship &amp; Treasury</h3>
+              <p className="text-xs text-[#8c6d37] dark:text-[#c5a880] font-semibold font-mono">Headquarters (Americas)</p>
             </div>
           </div>
           <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
             740 Park Avenue, 18th Floor, New York, NY 10021, USA<br />
             Phone: +1 (212) 555-0190 • Email: contact@firstatlanticbank.com
           </p>
-          <div className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-2">
+          <div className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-2 pt-1 border-t border-slate-100 dark:border-slate-800">
             <Clock className="w-3.5 h-3.5" /> Monday – Friday: 8:00 AM – 6:00 PM EST
           </div>
         </div>
       </div>
 
       {/* Global Inquiries & Support Desk Box */}
-      <div className="bg-[#0a192f] rounded-xl sm:rounded-2xl p-5 sm:p-8 text-white border border-[#c5a880]/40 shadow-xl space-y-5 sm:space-y-6">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 sm:gap-4 border-b border-slate-700/80 pb-4 sm:pb-6">
+      <div className="bg-[#0a192f] rounded-xl sm:rounded-2xl p-5 sm:p-7 text-white border border-[#c5a880]/40 shadow-xl space-y-4 sm:space-y-5">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-slate-700/80 pb-3 sm:pb-4">
           <div>
-            <span className="text-[10px] sm:text-xs uppercase font-bold tracking-widest text-[#d4af37]">24/7 Global Client Services</span>
-            <h2 className="text-xl sm:text-2xl font-bold font-serif pt-1">Direct Correspondence Channels</h2>
+            <span className="text-[10px] sm:text-xs uppercase font-bold tracking-widest text-[#d4af37] font-mono">24/7 Global Client Services</span>
+            <h2 className="text-lg sm:text-xl font-bold font-serif pt-0.5">Direct Correspondence Channels</h2>
           </div>
           <div className="flex items-center gap-2 text-xs text-emerald-400 font-mono">
             <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
@@ -370,28 +370,28 @@ export const LocationsPage: React.FC = () => {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
-          <div className="p-4 sm:p-5 rounded-xl bg-slate-900/80 border border-slate-700/60 space-y-2">
-            <h4 className="text-xs sm:text-sm font-bold text-[#d4af37] uppercase tracking-wider">Client &amp; Technical Support</h4>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 sm:gap-5">
+          <div className="p-3.5 sm:p-4 rounded-xl bg-slate-900/80 border border-slate-700/60 space-y-1.5">
+            <h4 className="text-xs sm:text-sm font-bold text-[#d4af37] uppercase tracking-wider font-mono">Client &amp; Technical Support</h4>
             <p className="text-xs text-slate-300 leading-relaxed">
               For online banking access, password assistance, debit cards, transfer queries, and mobile banking:
             </p>
             <a
               href="mailto:support@firstatlanticbank.com"
-              className="inline-block pt-1 text-xs sm:text-sm font-mono font-bold text-white hover:text-[#d4af37] underline transition-colors break-all"
+              className="inline-block pt-0.5 text-xs sm:text-sm font-mono font-bold text-white hover:text-[#d4af37] underline transition-colors break-all"
             >
               support@firstatlanticbank.com
             </a>
           </div>
 
-          <div className="p-4 sm:p-5 rounded-xl bg-slate-900/80 border border-slate-700/60 space-y-2">
-            <h4 className="text-xs sm:text-sm font-bold text-[#d4af37] uppercase tracking-wider">General Inquiries &amp; Corporate</h4>
+          <div className="p-3.5 sm:p-4 rounded-xl bg-slate-900/80 border border-slate-700/60 space-y-1.5">
+            <h4 className="text-xs sm:text-sm font-bold text-[#d4af37] uppercase tracking-wider font-mono">General Inquiries &amp; Corporate</h4>
             <p className="text-xs text-slate-300 leading-relaxed">
               For institutional onboarding, private wealth consultation, regulatory compliance, and media relations:
             </p>
             <a
               href="mailto:contact@firstatlanticbank.com"
-              className="inline-block pt-1 text-xs sm:text-sm font-mono font-bold text-white hover:text-[#d4af37] underline transition-colors break-all"
+              className="inline-block pt-0.5 text-xs sm:text-sm font-mono font-bold text-white hover:text-[#d4af37] underline transition-colors break-all"
             >
               contact@firstatlanticbank.com
             </a>
@@ -544,10 +544,10 @@ export const SecurityPublicPage: React.FC = () => {
     : reviews.filter((r) => r.category === reviewFilter);
 
   return (
-    <div className="bg-[#f8fafc] dark:bg-[#07101e] text-slate-800 dark:text-slate-100 py-8 sm:py-12 px-4 sm:px-8 max-w-7xl mx-auto space-y-8 sm:space-y-12 transition-colors">
-      <div className="text-center max-w-3xl mx-auto space-y-2 sm:space-y-3">
-        <span className="text-[10px] sm:text-xs uppercase font-bold tracking-widest text-[#8c6d37] dark:text-[#c5a880]">Institutional Cyber Resilience &amp; Trust</span>
-        <h1 className="text-2xl sm:text-4xl md:text-5xl font-bold font-serif text-slate-900 dark:text-white">
+    <div className="bg-[#f8fafc] dark:bg-[#07101e] text-slate-800 dark:text-slate-100 py-6 sm:py-10 px-4 sm:px-8 max-w-7xl mx-auto space-y-6 sm:space-y-10 transition-colors">
+      <div className="text-center max-w-3xl mx-auto space-y-1.5 sm:space-y-2">
+        <span className="text-[10px] sm:text-xs uppercase font-bold tracking-widest text-[#8c6d37] dark:text-[#c5a880] font-mono">Institutional Cyber Resilience &amp; Trust</span>
+        <h1 className="text-xl sm:text-3xl md:text-4xl font-bold font-serif text-slate-900 dark:text-white">
           Security Architecture &amp; Trust Ratings
         </h1>
         <p className="text-slate-600 dark:text-slate-300 text-xs sm:text-sm leading-relaxed">

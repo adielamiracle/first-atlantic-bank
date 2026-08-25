@@ -28,7 +28,19 @@ import {
   Key,
   Shield,
   Check,
-  Sparkles
+  Sparkles,
+  Award,
+  Copy,
+  ExternalLink,
+  QrCode,
+  Globe,
+  Building,
+  FileCheck,
+  Cpu,
+  Layers,
+  Zap,
+  CreditCard,
+  X
 } from 'lucide-react';
 
 export const DepositCheckPage: React.FC = () => {
@@ -848,471 +860,883 @@ export const ProfilePage: React.FC = () => {
     biometricState,
     toggleBiometrics,
     updateBiometricSettings,
-    openBiometricPrompt
+    openBiometricPrompt,
+    accounts
   } = useBank();
 
+  const [activeTab, setActiveTab] = useState<'personal' | 'routing' | 'security' | 'preferences'>('personal');
   const [firstName, setFirstName] = useState(currentUser?.firstName || 'Jonathan');
   const [lastName, setLastName] = useState(currentUser?.lastName || 'Sterling');
   const [email, setEmail] = useState(currentUser?.email || 'sterling.private@firstatlantic.com');
-  const [phone, setPhone] = useState(currentUser?.phone || '+1 (212) 849-2000');
+  const [phone, setPhone] = useState(currentUser?.phone || '(212) 849-2000');
+  const [address, setAddress] = useState('740 Park Avenue, Apt 14B, New York, NY 10021');
+  const [showCertificateModal, setShowCertificateModal] = useState(false);
+  const [showDirectDepositModal, setShowDirectDepositModal] = useState(false);
+  const [copiedCode, setCopiedCode] = useState<string | null>(null);
+
+  // Preference switches
+  const [paperlessEnrolled, setPaperlessEnrolled] = useState(true);
+  const [smsAlerts, setSmsAlerts] = useState(true);
+  const [emailAlerts, setEmailAlerts] = useState(true);
+  const [fraudShieldEnabled, setFraudShieldEnabled] = useState(true);
+
+  const handleCopy = (text: string, label: string) => {
+    navigator.clipboard.writeText(text);
+    setCopiedCode(label);
+    showToast('SUCCESS', 'Copied to Clipboard', `${label} copied: ${text}`);
+    setTimeout(() => setCopiedCode(null), 2500);
+  };
 
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
-    showToast('SUCCESS', 'Profile Updated', 'KYC and communication preferences saved.');
+    showToast('SUCCESS', 'Profile & Settings Saved', 'Your personal contact information and delivery preferences have been updated.');
   };
 
+  const primaryAccount = accounts.find(a => a.type === 'CHECKING_PREMIER') || accounts[0];
+  const totalVaultBalance = accounts.reduce((acc, a) => acc + a.balance, 0);
+
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
-      {/* Page Header */}
-      <div className="bg-white dark:bg-[#0a192f] rounded-2xl p-6 border border-slate-200 dark:border-[#1e3656] shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-colors">
-        <div>
-          <h1 className="text-xl font-bold font-serif text-slate-900 dark:text-white">
-            Client Profile &amp; Security Settings
-          </h1>
-          <p className="text-xs text-slate-500 dark:text-slate-400">
-            Configure biometric hardware credentials, interface display themes, and regulatory KYC records.
-          </p>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">Theme:</span>
-          <button
-            onClick={toggleDarkMode}
-            className={`px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer border ${
-              darkMode 
-                ? 'bg-[#112a4a] border-[#c5a880] text-[#e5ca95]' 
-                : 'bg-slate-100 border-slate-300 text-slate-700'
-            }`}
-          >
-            {darkMode ? <Moon className="w-3.5 h-3.5 text-[#c5a880]" /> : <Sun className="w-3.5 h-3.5 text-amber-500" />}
-            <span>{darkMode ? 'Obsidian Dark' : 'Daylight Light'}</span>
-          </button>
-        </div>
-      </div>
-
-      {/* 1. Biometric Authentication & Hardware Enclave Setting */}
-      <div className="bg-white dark:bg-[#0a192f] rounded-2xl p-6 sm:p-7 border border-slate-200 dark:border-[#1e3656] shadow-sm space-y-6 transition-colors">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100 dark:border-slate-800">
-          <div className="flex items-start gap-3.5">
-            <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 border ${
-              biometricState.enabled 
-                ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30' 
-                : 'bg-slate-100 dark:bg-slate-900 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-800'
-            }`}>
-              <Fingerprint className="w-6 h-6" />
+    <div className="max-w-6xl mx-auto space-y-6 pb-12 font-boa">
+      {/* 1. Bank of America Signature Profile Header Banner */}
+      <div className="bg-[#012169] text-white rounded-lg shadow-sm border border-[#00174a] overflow-hidden">
+        {/* Top Red Heritage Stripe */}
+        <div className="h-1 bg-[#d4001a] w-full" />
+        
+        <div className="p-6 sm:p-7 flex flex-col md:flex-row md:items-center justify-between gap-6">
+          <div className="flex items-start sm:items-center gap-4">
+            <div className="w-16 h-16 sm:w-18 sm:h-18 rounded-lg overflow-hidden border-2 border-white/80 bg-slate-900 shrink-0 shadow-md">
+              <img
+                src={currentUser?.passportPhoto || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&auto=format&fit=crop&q=80'}
+                alt="Profile photo"
+                className="w-full h-full object-cover"
+                referrerPolicy="no-referrer"
+              />
             </div>
-            <div>
+
+            <div className="space-y-1">
               <div className="flex items-center gap-2">
-                <h3 className="text-base font-bold text-slate-900 dark:text-white font-serif">
-                  Biometric Authentication (Face ID / Touch ID)
-                </h3>
-                {biometricState.enabled && (
-                  <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-400 border border-emerald-300 dark:border-emerald-800">
-                    ENROLLED
-                  </span>
-                )}
+                <span className="text-[11px] font-semibold uppercase tracking-wider bg-white/15 px-2.5 py-0.5 rounded text-white border border-white/20">
+                  {currentUser?.kycTier ? String(currentUser.kycTier).replace(/_/g, ' ') : 'Preferred Rewards Member'}
+                </span>
+                <span className="text-[11px] font-semibold text-emerald-300 flex items-center gap-1 bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-500/40">
+                  <ShieldCheck className="w-3.5 h-3.5" /> FDIC Insured
+                </span>
               </div>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                Simulate mobile-native biometric sensors (Apple Touch ID, Face ID, Windows Hello) via W3C WebAuthn hardware key enclave.
-              </p>
+
+              <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-white">
+                {currentUser?.firstName || 'Jonathan'} {currentUser?.lastName || 'Sterling'}
+              </h1>
+
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-200">
+                <span>Online ID: <strong className="text-white font-mono">{currentUser?.username || 'jsterling'}</strong></span>
+                <span>•</span>
+                <span>Customer Since: <strong className="text-white">2018</strong></span>
+                <span>•</span>
+                <span>Primary Bank: <strong className="text-white">First Atlantic &amp; Bank of America Member</strong></span>
+              </div>
             </div>
           </div>
 
-          {/* Interactive Hardware Toggle Switch */}
-          <div className="flex items-center gap-3">
-            <span className="text-xs font-bold font-mono text-slate-700 dark:text-slate-300">
-              {biometricState.enabled ? 'ENABLED' : 'DISABLED'}
-            </span>
+          {/* Header Action Buttons */}
+          <div className="flex flex-wrap md:flex-col gap-2 shrink-0">
             <button
-              type="button"
-              role="switch"
-              aria-checked={biometricState.enabled}
-              onClick={() => toggleBiometrics()}
-              className={`w-14 h-8 rounded-full p-1 transition-colors duration-300 focus:outline-none cursor-pointer relative shadow-inner ${
-                biometricState.enabled ? 'bg-emerald-500' : 'bg-slate-300 dark:bg-slate-700'
-              }`}
+              onClick={() => setShowDirectDepositModal(true)}
+              className="px-4 py-2 rounded bg-[#d4001a] hover:bg-[#b30016] text-white text-xs font-semibold uppercase tracking-wider flex items-center justify-center gap-1.5 transition-colors cursor-pointer shadow-xs"
             >
-              <div
-                className={`w-6 h-6 rounded-full bg-white shadow-md transform transition-transform duration-300 flex items-center justify-center ${
-                  biometricState.enabled ? 'translate-x-6' : 'translate-x-0'
-                }`}
-              >
-                {biometricState.enabled ? (
-                  <Check className="w-3.5 h-3.5 text-emerald-600" />
-                ) : (
-                  <Lock className="w-3.5 h-3.5 text-slate-400" />
-                )}
-              </div>
+              <FileText className="w-3.5 h-3.5" />
+              <span>Direct Deposit Form</span>
+            </button>
+
+            <button
+              onClick={() => setShowCertificateModal(true)}
+              className="px-4 py-2 rounded bg-white hover:bg-slate-100 text-[#012169] text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer shadow-xs"
+            >
+              <Award className="w-3.5 h-3.5 text-[#012169]" />
+              <span>Proof of Standing</span>
             </button>
           </div>
         </div>
 
-        {/* Biometric Details & Policy Parameters */}
-        <div className={`p-4 rounded-xl border text-xs space-y-4 ${
-          biometricState.enabled 
-            ? 'bg-emerald-50/50 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-900/60' 
-            : 'bg-slate-50 dark:bg-slate-900/50 border-slate-200 dark:border-slate-800'
-        }`}>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 font-mono">
-            <div>
-              <span className="text-[10px] text-slate-400 uppercase block">Enclave Hardware:</span>
-              <span className="font-bold text-slate-800 dark:text-slate-200">{biometricState.deviceName}</span>
+        {/* Bank of America Tab Bar */}
+        <div className="bg-[#00174a] px-6 border-t border-white/10 flex overflow-x-auto gap-1 text-xs font-semibold">
+          <button
+            onClick={() => setActiveTab('personal')}
+            className={`py-3 px-4 border-b-2 transition-colors cursor-pointer whitespace-nowrap ${
+              activeTab === 'personal'
+                ? 'border-[#d4001a] text-white font-bold'
+                : 'border-transparent text-slate-300 hover:text-white'
+            }`}
+          >
+            Personal &amp; Contact Info
+          </button>
+
+          <button
+            onClick={() => setActiveTab('routing')}
+            className={`py-3 px-4 border-b-2 transition-colors cursor-pointer whitespace-nowrap ${
+              activeTab === 'routing'
+                ? 'border-[#d4001a] text-white font-bold'
+                : 'border-transparent text-slate-300 hover:text-white'
+            }`}
+          >
+            Routing &amp; Direct Deposit
+          </button>
+
+          <button
+            onClick={() => setActiveTab('security')}
+            className={`py-3 px-4 border-b-2 transition-colors cursor-pointer whitespace-nowrap ${
+              activeTab === 'security'
+                ? 'border-[#d4001a] text-white font-bold'
+                : 'border-transparent text-slate-300 hover:text-white'
+            }`}
+          >
+            Security &amp; Biometrics
+          </button>
+
+          <button
+            onClick={() => setActiveTab('preferences')}
+            className={`py-3 px-4 border-b-2 transition-colors cursor-pointer whitespace-nowrap ${
+              activeTab === 'preferences'
+                ? 'border-[#d4001a] text-white font-bold'
+                : 'border-transparent text-slate-300 hover:text-white'
+            }`}
+          >
+            Paperless &amp; Alerts
+          </button>
+        </div>
+      </div>
+
+      {/* 2. TAB: Personal & Contact Information */}
+      {activeTab === 'personal' && (
+        <div className="space-y-6">
+          <form onSubmit={handleSave} className="boa-card p-6 sm:p-7 space-y-6">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-800">
+              <div>
+                <h2 className="boa-title-md">Personal Information &amp; Primary Identification</h2>
+                <p className="boa-caption mt-0.5">
+                  Keep your personal contact details current to ensure you receive essential security alerts and account notices.
+                </p>
+              </div>
+              <span className="px-2.5 py-1 rounded text-xs font-semibold bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800">
+                KYC Level 3 Verified
+              </span>
             </div>
-            <div>
-              <span className="text-[10px] text-slate-400 uppercase block">Credential Digest:</span>
-              <span className="font-bold text-[#c5a880] truncate block">{biometricState.credentialId || 'None registered'}</span>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                  Legal First Name
+                </label>
+                <input
+                  type="text"
+                  value={firstName}
+                  onChange={(e) => setFirstName(e.target.value)}
+                  className="w-full px-3.5 py-2 text-sm bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-md text-slate-900 dark:text-slate-100 focus:outline-none focus:border-[#012169]"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                  Legal Last Name
+                </label>
+                <input
+                  type="text"
+                  value={lastName}
+                  onChange={(e) => setLastName(e.target.value)}
+                  className="w-full px-3.5 py-2 text-sm bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-md text-slate-900 dark:text-slate-100 focus:outline-none focus:border-[#012169]"
+                />
+              </div>
             </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                  Primary Email Address (Security Alerts)
+                </label>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="w-full px-3.5 py-2 text-sm bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-md text-slate-900 dark:text-slate-100 focus:outline-none focus:border-[#012169]"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                  Primary Mobile Phone (SMS 2-Step Verification)
+                </label>
+                <input
+                  type="tel"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  className="w-full px-3.5 py-2 text-sm bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-md text-slate-900 dark:text-slate-100 focus:outline-none focus:border-[#012169]"
+                />
+              </div>
+            </div>
+
             <div>
-              <span className="text-[10px] text-slate-400 uppercase block">Biometric Security Standard:</span>
-              <span className="font-bold text-slate-800 dark:text-slate-200">FIDO2 ECDSA-P256</span>
+              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                Residential &amp; Mailing Street Address
+              </label>
+              <input
+                type="text"
+                value={address}
+                onChange={(e) => setAddress(e.target.value)}
+                className="w-full px-3.5 py-2 text-sm bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-md text-slate-900 dark:text-slate-100 focus:outline-none focus:border-[#012169]"
+              />
+            </div>
+
+            {/* Readonly Identity Card Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
+              <div className="p-3 bg-slate-50 dark:bg-slate-900/60 rounded border border-slate-200 dark:border-slate-800">
+                <span className="text-[11px] font-semibold text-slate-500 uppercase block">Tax Identification (SSN / TIN)</span>
+                <span className="text-sm font-semibold font-mono text-slate-900 dark:text-slate-100">***-**-8492</span>
+                <span className="text-[10px] text-emerald-600 dark:text-emerald-400 block mt-0.5">W-9 Certified On File</span>
+              </div>
+
+              <div className="p-3 bg-slate-50 dark:bg-slate-900/60 rounded border border-slate-200 dark:border-slate-800">
+                <span className="text-[11px] font-semibold text-slate-500 uppercase block">Passport / Sovereign Doc</span>
+                <span className="text-sm font-semibold font-mono text-slate-900 dark:text-slate-100">{currentUser?.passportNumber || 'P98420193'}</span>
+                <span className="text-[10px] text-slate-500 block mt-0.5">Nationality: {currentUser?.nationality || 'United States'}</span>
+              </div>
+
+              <div className="p-3 bg-slate-50 dark:bg-slate-900/60 rounded border border-slate-200 dark:border-slate-800">
+                <span className="text-[11px] font-semibold text-slate-500 uppercase block">Relationship Officer</span>
+                <span className="text-sm font-semibold text-slate-900 dark:text-slate-100">Lord Alistair Sterling</span>
+                <span className="text-[10px] text-slate-500 block mt-0.5">Private Wealth Desk: ext. 4901</span>
+              </div>
+            </div>
+
+            <div className="flex justify-end pt-2">
+              <button
+                type="submit"
+                className="boa-btn-primary cursor-pointer shadow-xs"
+              >
+                Save Contact Changes
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {/* 3. TAB: Routing & Direct Deposit */}
+      {activeTab === 'routing' && (
+        <div className="space-y-6">
+          <div className="boa-card p-6 sm:p-7 space-y-5">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-200 dark:border-slate-800">
+              <div>
+                <h2 className="boa-title-md">Direct Deposit &amp; Bank Routing Information</h2>
+                <p className="boa-caption mt-0.5">
+                  Use these numbers to set up electronic direct deposit of payroll, pensions, tax refunds, or domestic and international wire transfers.
+                </p>
+              </div>
+
+              <button
+                onClick={() => setShowDirectDepositModal(true)}
+                className="boa-btn-red cursor-pointer flex items-center gap-1.5 text-xs self-start sm:self-auto"
+              >
+                <Download className="w-3.5 h-3.5" />
+                <span>Download Pre-Filled Direct Deposit Form (PDF)</span>
+              </button>
+            </div>
+
+            {/* Bank of America Official Table Style */}
+            <div className="overflow-x-auto border border-slate-200 dark:border-slate-800 rounded-md">
+              <table className="w-full text-left text-sm">
+                <thead className="bg-slate-50 dark:bg-slate-900 text-xs font-semibold text-slate-600 dark:text-slate-400 border-b border-slate-200 dark:border-slate-800">
+                  <tr>
+                    <th className="py-3 px-4">Transfer / Clearing Type</th>
+                    <th className="py-3 px-4">Routing / Code</th>
+                    <th className="py-3 px-4">Bank Name &amp; Address</th>
+                    <th className="py-3 px-4 text-right">Action</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-200 dark:divide-slate-800 text-slate-800 dark:text-slate-200">
+                  <tr className="hover:bg-slate-50/70 dark:hover:bg-slate-900/40">
+                    <td className="py-3 px-4 font-semibold text-slate-900 dark:text-slate-100">
+                      <div>Paper &amp; Electronic (ACH)</div>
+                      <span className="text-xs text-slate-500 font-normal">Direct Deposit, Payroll &amp; Bill Pay</span>
+                    </td>
+                    <td className="py-3 px-4 font-mono font-bold text-sm text-[#012169] dark:text-[#93c5fd]">
+                      021000089
+                    </td>
+                    <td className="py-3 px-4 text-xs text-slate-600 dark:text-slate-400">
+                      First Atlantic Bank &amp; Trust, N.A. (100 Wall St, New York, NY)
+                    </td>
+                    <td className="py-3 px-4 text-right">
+                      <button
+                        onClick={() => handleCopy('021000089', 'ACH Routing')}
+                        className="px-3 py-1 text-xs font-semibold rounded border border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                      >
+                        {copiedCode === 'ACH Routing' ? 'Copied' : 'Copy'}
+                      </button>
+                    </td>
+                  </tr>
+
+                  <tr className="hover:bg-slate-50/70 dark:hover:bg-slate-900/40">
+                    <td className="py-3 px-4 font-semibold text-slate-900 dark:text-slate-100">
+                      <div>Domestic Wire Transfers (Fedwire)</div>
+                      <span className="text-xs text-slate-500 font-normal">Same-day incoming bank wire transfer</span>
+                    </td>
+                    <td className="py-3 px-4 font-mono font-bold text-sm text-[#012169] dark:text-[#93c5fd]">
+                      021000089
+                    </td>
+                    <td className="py-3 px-4 text-xs text-slate-600 dark:text-slate-400">
+                      Federal Reserve Bank of New York (Fedwire Clearing Member)
+                    </td>
+                    <td className="py-3 px-4 text-right">
+                      <button
+                        onClick={() => handleCopy('021000089', 'Fedwire Routing')}
+                        className="px-3 py-1 text-xs font-semibold rounded border border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                      >
+                        {copiedCode === 'Fedwire Routing' ? 'Copied' : 'Copy'}
+                      </button>
+                    </td>
+                  </tr>
+
+                  <tr className="hover:bg-slate-50/70 dark:hover:bg-slate-900/40">
+                    <td className="py-3 px-4 font-semibold text-slate-900 dark:text-slate-100">
+                      <div>United Kingdom Sort Code (CHAPS / Faster Payments)</div>
+                      <span className="text-xs text-slate-500 font-normal">Direct BACS / Faster Payments settlement</span>
+                    </td>
+                    <td className="py-3 px-4 font-mono font-bold text-sm text-[#012169] dark:text-[#93c5fd]">
+                      40-05-18
+                    </td>
+                    <td className="py-3 px-4 text-xs text-slate-600 dark:text-slate-400">
+                      Bank of England Clearing, 1 Canada Square, London E14 5AA
+                    </td>
+                    <td className="py-3 px-4 text-right">
+                      <button
+                        onClick={() => handleCopy('400518', 'UK Sort Code')}
+                        className="px-3 py-1 text-xs font-semibold rounded border border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                      >
+                        {copiedCode === 'UK Sort Code' ? 'Copied' : 'Copy'}
+                      </button>
+                    </td>
+                  </tr>
+
+                  <tr className="hover:bg-slate-50/70 dark:hover:bg-slate-900/40">
+                    <td className="py-3 px-4 font-semibold text-slate-900 dark:text-slate-100">
+                      <div>International SWIFT / BIC</div>
+                      <span className="text-xs text-slate-500 font-normal">Cross-border foreign wire settlement</span>
+                    </td>
+                    <td className="py-3 px-4 font-mono font-bold text-sm text-[#012169] dark:text-[#93c5fd]">
+                      FABKUS33
+                    </td>
+                    <td className="py-3 px-4 text-xs text-slate-600 dark:text-slate-400">
+                      SWIFT Interbank Messaging System
+                    </td>
+                    <td className="py-3 px-4 text-right">
+                      <button
+                        onClick={() => handleCopy('FABKUS33', 'SWIFT BIC')}
+                        className="px-3 py-1 text-xs font-semibold rounded border border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                      >
+                        {copiedCode === 'SWIFT BIC' ? 'Copied' : 'Copy'}
+                      </button>
+                    </td>
+                  </tr>
+
+                  <tr className="hover:bg-slate-50/70 dark:hover:bg-slate-900/40">
+                    <td className="py-3 px-4 font-semibold text-slate-900 dark:text-slate-100">
+                      <div>International IBAN Number</div>
+                      <span className="text-xs text-slate-500 font-normal">Multi-Currency Global Vault Account</span>
+                    </td>
+                    <td className="py-3 px-4 font-mono font-bold text-xs text-[#012169] dark:text-[#93c5fd]">
+                      GB29FABK40051888492019
+                    </td>
+                    <td className="py-3 px-4 text-xs text-slate-600 dark:text-slate-400">
+                      First Atlantic London Custody
+                    </td>
+                    <td className="py-3 px-4 text-right">
+                      <button
+                        onClick={() => handleCopy('GB29FABK40051888492019', 'IBAN')}
+                        className="px-3 py-1 text-xs font-semibold rounded border border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                      >
+                        {copiedCode === 'IBAN' ? 'Copied' : 'Copy'}
+                      </button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            {/* Note & Direct Deposit Instructions */}
+            <div className="p-4 bg-slate-50 dark:bg-slate-900/60 rounded border border-slate-200 dark:border-slate-800 text-xs text-slate-600 dark:text-slate-400 space-y-1">
+              <div className="font-semibold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+                <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                <span>Employer &amp; Payroll Authorization Notice</span>
+              </div>
+              <p>
+                When providing your account details to an employer or payroll provider, provide your full legal name, account number <strong>{primaryAccount?.accountNumber || '•••• 8819'}</strong>, and routing number <strong>021000089</strong>.
+              </p>
             </div>
           </div>
+        </div>
+      )}
 
-          {/* Granular Biometric Trigger Policies */}
-          <div className="pt-3 border-t border-slate-200/80 dark:border-slate-800/80 space-y-2.5">
-            <h4 className="text-xs font-bold text-slate-800 dark:text-slate-200 font-sans">
-              Enforced Biometric Verification Triggers
-            </h4>
+      {/* 4. TAB: Security & Biometrics */}
+      {activeTab === 'security' && (
+        <div className="space-y-6">
+          {/* Biometrics & FIDO2 Card */}
+          <div className="boa-card p-6 sm:p-7 space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-3 border-b border-slate-200 dark:border-slate-800">
+              <div className="flex items-start gap-3.5">
+                <div className="w-11 h-11 rounded-lg bg-[#012169] text-white flex items-center justify-center shrink-0 shadow-xs">
+                  <Fingerprint className="w-6 h-6" />
+                </div>
+                <div>
+                  <h2 className="boa-title-md">Touch ID / Face ID &amp; Biometric Sign-In</h2>
+                  <p className="boa-caption mt-0.5">
+                    Enable Apple Touch ID, Face ID, or Windows Hello for instant, passwordless sign-in and wire transaction approvals.
+                  </p>
+                </div>
+              </div>
 
+              {/* Hardware Switch */}
+              <div className="flex items-center gap-3">
+                <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                  {biometricState.enabled ? 'Enabled' : 'Disabled'}
+                </span>
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={biometricState.enabled}
+                  onClick={() => toggleBiometrics()}
+                  className={`w-12 h-6 rounded-full p-0.5 transition-colors cursor-pointer relative ${
+                    biometricState.enabled ? 'bg-[#012169]' : 'bg-slate-300 dark:bg-slate-700'
+                  }`}
+                >
+                  <div
+                    className={`w-5 h-5 rounded-full bg-white shadow-md transform transition-transform ${
+                      biometricState.enabled ? 'translate-x-6' : 'translate-x-0'
+                    }`}
+                  />
+                </button>
+              </div>
+            </div>
+
+            {/* Biometric Configuration Options */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              <label className="flex items-center gap-2 p-2.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 cursor-pointer">
+              <label className="flex items-start gap-2.5 p-3 rounded bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 cursor-pointer">
                 <input
                   type="checkbox"
                   checked={biometricState.requireForLogin}
                   onChange={(e) => updateBiometricSettings({ requireForLogin: e.target.checked })}
                   disabled={!biometricState.enabled}
-                  className="rounded text-[#c5a880] focus:ring-0 cursor-pointer"
+                  className="mt-0.5 rounded text-[#012169] focus:ring-0 cursor-pointer"
                 />
-                <span className="text-[11px] text-slate-700 dark:text-slate-300 font-medium">Quick Sign-In Login</span>
+                <div>
+                  <span className="text-xs font-semibold text-slate-900 dark:text-slate-100 block">Sign-In Biometrics</span>
+                  <span className="text-[11px] text-slate-500">Require fingerprint/face scan upon login</span>
+                </div>
               </label>
 
-              <label className="flex items-center gap-2 p-2.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 cursor-pointer">
+              <label className="flex items-start gap-2.5 p-3 rounded bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 cursor-pointer">
                 <input
                   type="checkbox"
                   checked={biometricState.requireForWires}
                   onChange={(e) => updateBiometricSettings({ requireForWires: e.target.checked })}
                   disabled={!biometricState.enabled}
-                  className="rounded text-[#c5a880] focus:ring-0 cursor-pointer"
+                  className="mt-0.5 rounded text-[#012169] focus:ring-0 cursor-pointer"
                 />
-                <span className="text-[11px] text-slate-700 dark:text-slate-300 font-medium">Wires &gt; $5,000</span>
+                <div>
+                  <span className="text-xs font-semibold text-slate-900 dark:text-slate-100 block">Wire Transfer Authorization</span>
+                  <span className="text-[11px] text-slate-500">Biometric sign-off for transfers &gt; $5,000</span>
+                </div>
               </label>
 
-              <label className="flex items-center gap-2 p-2.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 cursor-pointer">
+              <label className="flex items-start gap-2.5 p-3 rounded bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 cursor-pointer">
                 <input
                   type="checkbox"
                   checked={biometricState.requireForCardUnfreeze}
                   onChange={(e) => updateBiometricSettings({ requireForCardUnfreeze: e.target.checked })}
                   disabled={!biometricState.enabled}
-                  className="rounded text-[#c5a880] focus:ring-0 cursor-pointer"
+                  className="mt-0.5 rounded text-[#012169] focus:ring-0 cursor-pointer"
                 />
-                <span className="text-[11px] text-slate-700 dark:text-slate-300 font-medium">Card Unfreeze</span>
+                <div>
+                  <span className="text-xs font-semibold text-slate-900 dark:text-slate-100 block">Card Unfreeze Verification</span>
+                  <span className="text-[11px] text-slate-500">Require sensor scan before unfreezing debit card</span>
+                </div>
               </label>
             </div>
+
+            {biometricState.enabled && (
+              <div className="flex justify-end pt-1">
+                <button
+                  type="button"
+                  onClick={() => openBiometricPrompt({ 
+                    mode: 'VERIFY', 
+                    title: 'Test Native Biometric Hardware Scan', 
+                    subtitle: 'Simulating on-device biometric sensor hardware verification.' 
+                  })}
+                  className="boa-btn-secondary text-xs flex items-center gap-1.5 cursor-pointer"
+                >
+                  <Scan className="w-3.5 h-3.5" />
+                  <span>Test Biometric Sensor</span>
+                </button>
+              </div>
+            )}
           </div>
 
-          {/* Test Scanner Button */}
-          {biometricState.enabled && (
-            <div className="pt-2 flex justify-end">
-              <button
-                type="button"
-                onClick={() => openBiometricPrompt({ 
-                  mode: 'VERIFY', 
-                  title: 'Test Native Biometric Hardware Scan', 
-                  subtitle: 'Simulate on-device biometric sensor hardware verification.' 
-                })}
-                className="px-3.5 py-1.5 rounded-lg bg-[#0a192f] dark:bg-[#112a4a] text-white hover:bg-[#163863] text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 cursor-pointer border border-[#c5a880]/30"
-              >
-                <Scan className="w-3.5 h-3.5 text-[#d4af37]" />
-                <span>Test Biometric Verification</span>
-              </button>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* 2. Theme & Visual Experience Setting */}
-      <div className="bg-white dark:bg-[#0a192f] rounded-2xl p-6 sm:p-7 border border-slate-200 dark:border-[#1e3656] shadow-sm space-y-4 transition-colors">
-        <div>
-          <h3 className="text-base font-bold text-slate-900 dark:text-white font-serif">
-            Interface Theme &amp; Eye-Strain Reduction
-          </h3>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-            Select your preferred display mode optimized for First Atlantic Bank &amp; Trust high-frequency institutional trading and ledger review.
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
-          {/* Obsidian Dark Option */}
-          <div
-            onClick={() => setDarkMode(true)}
-            className={`p-4 rounded-xl border-2 transition-all cursor-pointer flex items-center justify-between ${
-              darkMode 
-                ? 'border-[#c5a880] bg-[#071322] text-white shadow-md' 
-                : 'border-slate-200 dark:border-slate-800 bg-slate-900/60 text-slate-300 hover:border-slate-400'
-            }`}
-          >
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-[#0a192f] text-[#c5a880] flex items-center justify-center border border-[#c5a880]/30">
-                <Moon className="w-5 h-5" />
+          {/* 4-Digit Security PIN Card */}
+          <div className="boa-card p-6 sm:p-7 space-y-5">
+            <div className="flex items-center gap-3 pb-3 border-b border-slate-200 dark:border-slate-800">
+              <div className="w-10 h-10 rounded-lg bg-[#012169] text-white flex items-center justify-center">
+                <Key className="w-5 h-5" />
               </div>
               <div>
-                <h4 className="text-xs font-bold text-white">Institutional Dark Theme</h4>
-                <p className="text-[11px] text-slate-400">Obsidian Navy &amp; Gold • Low Eye Strain</p>
+                <h2 className="boa-title-md">4-Digit Security PIN &amp; Checkpoint Passkey</h2>
+                <p className="boa-caption mt-0.5">
+                  Used for wire verification and high-security account adjustments.
+                </p>
               </div>
             </div>
-            {darkMode && <CheckCircle2 className="w-5 h-5 text-[#c5a880]" />}
+
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                const form = e.currentTarget;
+                const newPin = (form.elements.namedItem('newPin') as HTMLInputElement).value;
+                const confirmPin = (form.elements.namedItem('confirmPin') as HTMLInputElement).value;
+                if (newPin.length !== 4 || !/^\d{4}$/.test(newPin)) {
+                  showToast('ERROR', 'Invalid PIN', 'PIN must be exactly 4 numeric digits.');
+                  return;
+                }
+                if (newPin !== confirmPin) {
+                  showToast('ERROR', 'Mismatch', 'New PIN and confirmation do not match.');
+                  return;
+                }
+                showToast('SUCCESS', 'Security PIN Updated', 'Your new 4-digit PIN is now active.');
+                form.reset();
+              }}
+              className="space-y-4"
+            >
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                    New 4-Digit PIN
+                  </label>
+                  <input
+                    name="newPin"
+                    type="password"
+                    maxLength={4}
+                    required
+                    placeholder="••••"
+                    className="w-full px-3.5 py-2 text-sm font-mono text-center tracking-[0.5em] bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-md text-slate-900 dark:text-slate-100 focus:outline-none focus:border-[#012169]"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                    Confirm New 4-Digit PIN
+                  </label>
+                  <input
+                    name="confirmPin"
+                    type="password"
+                    maxLength={4}
+                    required
+                    placeholder="••••"
+                    className="w-full px-3.5 py-2 text-sm font-mono text-center tracking-[0.5em] bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-md text-slate-900 dark:text-slate-100 focus:outline-none focus:border-[#012169]"
+                  />
+                </div>
+              </div>
+
+              <div className="flex justify-end pt-1">
+                <button
+                  type="submit"
+                  className="boa-btn-primary cursor-pointer"
+                >
+                  Update Security PIN
+                </button>
+              </div>
+            </form>
           </div>
 
-          {/* Daylight Light Option */}
-          <div
-            onClick={() => setDarkMode(false)}
-            className={`p-4 rounded-xl border-2 transition-all cursor-pointer flex items-center justify-between ${
-              !darkMode 
-                ? 'border-[#0a192f] bg-slate-50 text-slate-900 shadow-md' 
-                : 'border-slate-200 dark:border-slate-800 bg-slate-900/40 text-slate-400 hover:border-slate-700'
-            }`}
-          >
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-slate-200 text-slate-800 flex items-center justify-center">
-                <Sun className="w-5 h-5" />
+          {/* Active Sessions & Security Telemetry */}
+          <div className="boa-card p-6 sm:p-7 space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-800">
+              <h2 className="boa-title-md">Connected Devices &amp; Active Sessions</h2>
+              <span className="text-xs font-semibold text-emerald-600 flex items-center gap-1">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                TLS 1.3 Active Encryption
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+              <div className="p-3 bg-slate-50 dark:bg-slate-900/60 rounded border border-slate-200 dark:border-slate-800">
+                <span className="text-[11px] text-slate-500 font-semibold uppercase block">Current Device</span>
+                <span className="text-sm font-semibold text-slate-800 dark:text-slate-200">Apple Silicon / Chrome Browser</span>
+                <span className="text-[10px] text-slate-500 block mt-0.5">Session ID: sess_8f92a10</span>
               </div>
-              <div>
-                <h4 className="text-xs font-bold text-slate-900 dark:text-slate-200">Daylight Classic Light</h4>
-                <p className="text-[11px] text-slate-500 dark:text-slate-400">High-Contrast White &amp; Slate</p>
+
+              <div className="p-3 bg-slate-50 dark:bg-slate-900/60 rounded border border-slate-200 dark:border-slate-800">
+                <span className="text-[11px] text-slate-500 font-semibold uppercase block">Location &amp; IP</span>
+                <span className="text-sm font-semibold text-slate-800 dark:text-slate-200">New York, NY (194.73.12.82)</span>
+                <span className="text-[10px] text-slate-500 block mt-0.5">Zero-Trust Telemetry OK</span>
+              </div>
+
+              <div className="p-3 bg-slate-50 dark:bg-slate-900/60 rounded border border-slate-200 dark:border-slate-800">
+                <span className="text-[11px] text-slate-500 font-semibold uppercase block">Inactivity Auto-Lock</span>
+                <span className="text-sm font-semibold text-emerald-600 dark:text-emerald-400">10 Minutes (Enforced)</span>
+                <span className="text-[10px] text-slate-500 block mt-0.5">FIPS 140-2 Level 3</span>
               </div>
             </div>
-            {!darkMode && <CheckCircle2 className="w-5 h-5 text-[#0a192f]" />}
           </div>
         </div>
-      </div>
+      )}
 
-      {/* 3. Verified Sovereign Passport & Identification Section */}
-      <div className="bg-white dark:bg-[#0a192f] rounded-2xl p-6 sm:p-7 border border-slate-200 dark:border-[#1e3656] shadow-sm space-y-6 transition-colors">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-100 dark:border-slate-800">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-amber-50 dark:bg-amber-950/40 text-[#c5a880] flex items-center justify-center border border-amber-200 dark:border-amber-900/60">
-              <FileText className="w-5 h-5" />
-            </div>
-            <div>
-              <h3 className="text-base font-bold text-slate-900 dark:text-white font-serif flex items-center gap-2">
-                <span>Verified Passport &amp; Sovereign Identification</span>
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-400 border border-emerald-300 dark:border-emerald-800">
-                  KYC VERIFIED
-                </span>
-              </h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400">
-                Statutory biometric identity document on file for international multi-currency settlement and checkpoint login.
+      {/* 5. TAB: Paperless & Alerts Preferences */}
+      {activeTab === 'preferences' && (
+        <div className="space-y-6">
+          <div className="boa-card p-6 sm:p-7 space-y-6">
+            <div className="pb-3 border-b border-slate-200 dark:border-slate-800">
+              <h2 className="boa-title-md">Paperless Statements &amp; Electronic Delivery</h2>
+              <p className="boa-caption mt-0.5">
+                Go green and receive statements, notices, and tax forms online. Fast, secure, and available for 7 years.
               </p>
             </div>
-          </div>
-        </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-center">
-          {/* Passport Photo Preview / Card */}
-          <div className="md:col-span-1 flex flex-col items-center justify-center p-4 rounded-xl bg-slate-50 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 text-center space-y-3">
-            <div className="relative w-28 h-36 rounded-xl overflow-hidden border-2 border-[#c5a880] shadow-md bg-slate-200 dark:bg-slate-800">
-              <img
-                src={currentUser?.passportPhoto || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&auto=format&fit=crop&q=80'}
-                alt="Client Passport"
-                className="w-full h-full object-cover"
-                referrerPolicy="no-referrer"
-              />
-              <div className="absolute bottom-0 inset-x-0 bg-slate-950/80 text-[#e5ca95] text-[9px] font-mono py-0.5 uppercase tracking-wider">
-                Biometric ID
+            <div className="space-y-4">
+              <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-900/60 rounded border border-slate-200 dark:border-slate-800">
+                <div>
+                  <div className="text-sm font-semibold text-slate-900 dark:text-slate-100">Paperless Statements (e-Delivery)</div>
+                  <div className="text-xs text-slate-500">Receive digital statements for Checking, Savings, and Credit Cards</div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setPaperlessEnrolled(!paperlessEnrolled);
+                    showToast('SUCCESS', 'Paperless Setting Updated', paperlessEnrolled ? 'Enrolled in paper statements.' : 'Enrolled in Paperless e-Delivery.');
+                  }}
+                  className={`px-4 py-1.5 rounded text-xs font-semibold cursor-pointer transition-colors ${
+                    paperlessEnrolled 
+                      ? 'bg-emerald-600 text-white' 
+                      : 'bg-slate-200 text-slate-700'
+                  }`}
+                >
+                  {paperlessEnrolled ? 'Enrolled (Paperless)' : 'Paper Mail'}
+                </button>
+              </div>
+
+              <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-900/60 rounded border border-slate-200 dark:border-slate-800">
+                <div>
+                  <div className="text-sm font-semibold text-slate-900 dark:text-slate-100">Fraud &amp; High-Risk Activity Alerts</div>
+                  <div className="text-xs text-slate-500">Instant SMS text and email for unexpected charges or login attempts</div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setFraudShieldEnabled(!fraudShieldEnabled)}
+                  className={`px-4 py-1.5 rounded text-xs font-semibold cursor-pointer transition-colors ${
+                    fraudShieldEnabled 
+                      ? 'bg-[#012169] text-white' 
+                      : 'bg-slate-200 text-slate-700'
+                  }`}
+                >
+                  {fraudShieldEnabled ? 'Active' : 'Disabled'}
+                </button>
+              </div>
+
+              <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-900/60 rounded border border-slate-200 dark:border-slate-800">
+                <div>
+                  <div className="text-sm font-semibold text-slate-900 dark:text-slate-100">Dark / Daylight Display Mode</div>
+                  <div className="text-xs text-slate-500">Switch between Bank of America daylight white and obsidian night mode</div>
+                </div>
+                <button
+                  type="button"
+                  onClick={toggleDarkMode}
+                  className="px-4 py-1.5 rounded bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 text-xs font-semibold flex items-center gap-1.5 cursor-pointer"
+                >
+                  {darkMode ? <Sun className="w-3.5 h-3.5 text-amber-500" /> : <Moon className="w-3.5 h-3.5 text-slate-600" />}
+                  <span>{darkMode ? 'Daylight Light' : 'Obsidian Dark'}</span>
+                </button>
               </div>
             </div>
-            <div className="text-xs">
-              <div className="font-bold text-slate-800 dark:text-slate-200">{currentUser?.firstName} {currentUser?.lastName}</div>
-              <div className="text-[11px] text-slate-500 font-mono">Doc: {currentUser?.passportNumber || 'P98420193'}</div>
-            </div>
           </div>
+        </div>
+      )}
 
-          {/* Document Details */}
-          <div className="md:col-span-2 space-y-4 text-xs">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 font-mono">
-              <div className="p-3 bg-slate-50 dark:bg-slate-900/60 rounded-xl border border-slate-200 dark:border-slate-800">
-                <span className="text-[10px] text-slate-400 uppercase block font-sans">Passport Document Number:</span>
-                <span className="font-bold text-slate-900 dark:text-slate-100 text-sm">{currentUser?.passportNumber || 'P98420193'}</span>
+      {/* 6. Bank of America Pre-Filled Direct Deposit Form Modal */}
+      {showDirectDepositModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-xs">
+          <div className="bg-white dark:bg-[#0d1b30] w-full max-w-2xl rounded-lg border border-slate-300 dark:border-slate-700 shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+            {/* Modal Header */}
+            <div className="p-5 bg-[#012169] text-white flex items-center justify-between border-b border-[#00174a]">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded bg-white text-[#012169] font-bold flex items-center justify-center text-sm">
+                  FAB
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-white">Direct Deposit Enrollment Form</h3>
+                  <p className="text-xs text-slate-200">First Atlantic Bank &amp; Trust / Bank of America Partner Rails</p>
+                </div>
               </div>
-              <div className="p-3 bg-slate-50 dark:bg-slate-900/60 rounded-xl border border-slate-200 dark:border-slate-800">
-                <span className="text-[10px] text-slate-400 uppercase block font-sans">Nationality / Citizenship:</span>
-                <span className="font-bold text-slate-900 dark:text-slate-100 text-sm">{currentUser?.nationality || 'German / European Union'}</span>
+              <button
+                onClick={() => setShowDirectDepositModal(false)}
+                className="text-slate-300 hover:text-white p-1 rounded cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Printable Form */}
+            <div className="p-6 space-y-5 overflow-y-auto text-sm text-slate-800 dark:text-slate-200">
+              <div className="p-4 border-2 border-slate-300 dark:border-slate-700 rounded bg-slate-50 dark:bg-slate-900/60 space-y-4">
+                <div className="text-center pb-3 border-b border-slate-200 dark:border-slate-800">
+                  <div className="text-xs font-bold uppercase tracking-wider text-[#d4001a]">Official Banking Document</div>
+                  <h4 className="text-lg font-bold text-[#012169] dark:text-white">Authorization for Direct Deposit (ACH Credit)</h4>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4 text-xs">
+                  <div>
+                    <span className="text-slate-500 uppercase block text-[10px]">Employee / Account Holder:</span>
+                    <strong className="text-sm font-semibold">{currentUser?.firstName || 'Jonathan'} {currentUser?.lastName || 'Sterling'}</strong>
+                  </div>
+                  <div>
+                    <span className="text-slate-500 uppercase block text-[10px]">Account Number:</span>
+                    <strong className="text-sm font-mono">{primaryAccount?.accountNumber || '•••• 8819'}</strong>
+                  </div>
+                  <div>
+                    <span className="text-slate-500 uppercase block text-[10px]">Bank Name:</span>
+                    <strong>First Atlantic Bank &amp; Trust, N.A.</strong>
+                  </div>
+                  <div>
+                    <span className="text-slate-500 uppercase block text-[10px]">Routing Transit Number (ABA):</span>
+                    <strong className="text-sm font-mono text-[#012169] dark:text-[#93c5fd]">021000089</strong>
+                  </div>
+                  <div>
+                    <span className="text-slate-500 uppercase block text-[10px]">Account Type:</span>
+                    <strong>Checking / Demand Deposit</strong>
+                  </div>
+                  <div>
+                    <span className="text-slate-500 uppercase block text-[10px]">Direct Deposit Allocation:</span>
+                    <strong>100% of Net Pay</strong>
+                  </div>
+                </div>
+
+                <div className="pt-3 border-t border-slate-200 dark:border-slate-800 text-[11px] text-slate-500 leading-relaxed">
+                  I hereby authorize my employer or payer to deposit funds directly into my designated First Atlantic checking account. This authorization remains in effect until written notification is provided.
+                </div>
               </div>
-              <div className="p-3 bg-slate-50 dark:bg-slate-900/60 rounded-xl border border-slate-200 dark:border-slate-800">
-                <span className="text-[10px] text-slate-400 uppercase block font-sans">Identity Verification Level:</span>
-                <span className="font-bold text-emerald-600 dark:text-emerald-400">Tier 3 (Institutional Qualified)</span>
+            </div>
+
+            {/* Modal Actions */}
+            <div className="p-4 bg-slate-100 dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 flex justify-end gap-3">
+              <button
+                onClick={() => {
+                  window.print();
+                  showToast('SUCCESS', 'Printing Form', 'Sent direct deposit authorization form to printer.');
+                }}
+                className="boa-btn-secondary text-xs flex items-center gap-1.5 cursor-pointer"
+              >
+                <Printer className="w-3.5 h-3.5" />
+                <span>Print Form</span>
+              </button>
+
+              <button
+                onClick={() => {
+                  setShowDirectDepositModal(false);
+                  showToast('SUCCESS', 'PDF Downloaded', 'Direct Deposit authorization form saved to downloads.');
+                }}
+                className="boa-btn-red text-xs flex items-center gap-1.5 cursor-pointer"
+              >
+                <Download className="w-3.5 h-3.5" />
+                <span>Download Official PDF</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 7. Certificate of Banking Standing Modal */}
+      {showCertificateModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-xs">
+          <div className="bg-white dark:bg-[#0d1b30] w-full max-w-2xl rounded-lg border border-slate-300 dark:border-slate-700 shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+            <div className="p-5 bg-[#012169] text-white flex items-center justify-between border-b border-[#00174a]">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded bg-white text-[#012169] font-bold flex items-center justify-center text-sm">
+                  <Award className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-white">Certificate of Banking Standing</h3>
+                  <p className="text-xs text-slate-200">First Atlantic Bank &amp; Trust Institutional Custody</p>
+                </div>
               </div>
-              <div className="p-3 bg-slate-50 dark:bg-slate-900/60 rounded-xl border border-slate-200 dark:border-slate-800">
-                <span className="text-[10px] text-slate-400 uppercase block font-sans">Biometric Checkpoint:</span>
-                <span className="font-bold text-emerald-600 dark:text-emerald-400">Active &amp; Enforced</span>
+              <button
+                onClick={() => setShowCertificateModal(false)}
+                className="text-slate-300 hover:text-white p-1 rounded cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="p-6 space-y-5 overflow-y-auto text-sm text-slate-800 dark:text-slate-200">
+              <div className="p-5 border-2 border-dashed border-[#012169]/30 dark:border-slate-700 rounded bg-slate-50 dark:bg-slate-900/60 space-y-4">
+                <div className="text-center space-y-1">
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-[#d4001a]">
+                    Official Certification of Account Standing
+                  </span>
+                  <h4 className="text-xl font-bold text-[#012169] dark:text-white">
+                    First Atlantic Bank &amp; Trust (Member FDIC)
+                  </h4>
+                  <p className="text-xs text-slate-500">
+                    Regulated by the Federal Reserve Bank of New York &amp; Financial Conduct Authority
+                  </p>
+                </div>
+
+                <div className="text-xs leading-relaxed text-slate-700 dark:text-slate-300 text-justify">
+                  This letter confirms that <strong>{currentUser?.firstName || 'Jonathan'} {currentUser?.lastName || 'Sterling'}</strong> has maintained deposit accounts in good and exemplary standing with First Atlantic Bank &amp; Trust. All funds are held in compliant, insured custodial accounts.
+                </div>
+
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-xs bg-white dark:bg-slate-900 p-3 rounded border border-slate-200 dark:border-slate-800 font-mono">
+                  <div>
+                    <span className="text-[10px] text-slate-400 block font-sans">Account ID:</span>
+                    <strong className="text-slate-900 dark:text-slate-100">FA-{currentUser?.id ? currentUser.id.slice(-6).toUpperCase() : '849201'}</strong>
+                  </div>
+                  <div>
+                    <span className="text-[10px] text-slate-400 block font-sans">Liquid Balance:</span>
+                    <strong className="text-[#012169] dark:text-[#93c5fd]">${totalVaultBalance.toLocaleString('en-US', { minimumFractionDigits: 2 })}</strong>
+                  </div>
+                  <div>
+                    <span className="text-[10px] text-slate-400 block font-sans">Fedwire / ABA:</span>
+                    <strong className="text-slate-900 dark:text-slate-100">021000089</strong>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between pt-3 border-t border-slate-200 dark:border-slate-800 text-[11px] text-slate-500">
+                  <div>
+                    <span>Issued: {new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+                  </div>
+                  <div className="text-right">
+                    <span className="font-bold text-[#012169] dark:text-white block">Lord Alistair Sterling</span>
+                    <span className="text-[10px]">Comptroller of Accounts</span>
+                  </div>
+                </div>
               </div>
             </div>
 
-            <div className="p-3.5 rounded-xl bg-blue-50/60 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-900/50 text-slate-700 dark:text-slate-300 text-[11px] leading-relaxed">
-              <span className="font-bold text-blue-900 dark:text-blue-300 block mb-1">Passport Login Checkpoint Guarantee:</span>
-              Whenever you sign in, your verified passport identity is presented alongside your secure 4-Digit PIN to ensure uninterrupted sovereign protection against unauthorized terminal access.
+            <div className="p-4 bg-slate-100 dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 flex justify-end gap-3">
+              <button
+                onClick={() => {
+                  window.print();
+                  showToast('SUCCESS', 'Certificate Exported', 'Print voucher sent to printer.');
+                }}
+                className="boa-btn-secondary text-xs flex items-center gap-1.5 cursor-pointer"
+              >
+                <Printer className="w-3.5 h-3.5" />
+                <span>Print</span>
+              </button>
+              <button
+                onClick={() => {
+                  setShowCertificateModal(false);
+                  showToast('SUCCESS', 'Certificate Saved', 'PDF Certificate saved to downloads.');
+                }}
+                className="boa-btn-primary text-xs flex items-center gap-1.5 cursor-pointer"
+              >
+                <Download className="w-3.5 h-3.5" />
+                <span>Download Certified PDF</span>
+              </button>
             </div>
           </div>
         </div>
-      </div>
-
-      {/* 4. 4-Digit Private Banking PIN Management */}
-      <div className="bg-white dark:bg-[#0a192f] rounded-2xl p-6 sm:p-7 border border-slate-200 dark:border-[#1e3656] shadow-sm space-y-5 transition-colors">
-        <div className="flex items-center gap-3 pb-3 border-b border-slate-100 dark:border-slate-800">
-          <div className="w-10 h-10 rounded-xl bg-[#0a192f] dark:bg-[#112a4a] text-[#c5a880] flex items-center justify-center border border-[#c5a880]/30">
-            <Key className="w-5 h-5" />
-          </div>
-          <div>
-            <h3 className="text-base font-bold text-slate-900 dark:text-white font-serif">
-              4-Digit Private Banking PIN
-            </h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400">
-              Used for the Passport Sign-In Checkpoint and authorizing outbound interbank wires.
-            </p>
-          </div>
-        </div>
-
-        <form
-          onSubmit={async (e) => {
-            e.preventDefault();
-            const form = e.currentTarget;
-            const newPin = (form.elements.namedItem('newPin') as HTMLInputElement).value;
-            const confirmPin = (form.elements.namedItem('confirmPin') as HTMLInputElement).value;
-            if (newPin.length !== 4 || !/^\d{4}$/.test(newPin)) {
-              showToast('ERROR', 'Invalid PIN', 'PIN must be exactly 4 numeric digits.');
-              return;
-            }
-            if (newPin !== confirmPin) {
-              showToast('ERROR', 'Mismatch', 'New PIN and confirmation do not match.');
-              return;
-            }
-            showToast('SUCCESS', '4-Digit PIN Updated', 'Your new private banking PIN is active.');
-            form.reset();
-          }}
-          className="space-y-4"
-        >
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs font-bold uppercase text-slate-700 dark:text-slate-300 mb-1">
-                New 4-Digit PIN *
-              </label>
-              <input
-                name="newPin"
-                type="password"
-                maxLength={4}
-                required
-                placeholder="••••"
-                className="w-full px-3.5 py-2 text-sm font-mono text-center tracking-[0.5em] bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-800 rounded-lg text-slate-900 dark:text-slate-100 focus:outline-none focus:border-[#8c6d37]"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-bold uppercase text-slate-700 dark:text-slate-300 mb-1">
-                Confirm New 4-Digit PIN *
-              </label>
-              <input
-                name="confirmPin"
-                type="password"
-                maxLength={4}
-                required
-                placeholder="••••"
-                className="w-full px-3.5 py-2 text-sm font-mono text-center tracking-[0.5em] bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-800 rounded-lg text-slate-900 dark:text-slate-100 focus:outline-none focus:border-[#8c6d37]"
-              />
-            </div>
-          </div>
-
-          <div className="flex justify-end pt-1">
-            <button
-              type="submit"
-              className="px-5 py-2.5 rounded-xl bg-[#0a192f] dark:bg-[#112a4a] hover:bg-[#15345d] text-white font-bold text-xs uppercase tracking-wider cursor-pointer border border-[#c5a880]/30 shadow-sm"
-            >
-              Update 4-Digit PIN
-            </button>
-          </div>
-        </form>
-      </div>
-
-      {/* 5. KYC Records & Personal Identity Profile */}
-      <form onSubmit={handleSave} className="bg-white dark:bg-[#0a192f] rounded-2xl p-6 sm:p-7 border border-slate-200 dark:border-[#1e3656] shadow-sm space-y-6 transition-colors">
-        <div className="flex items-center gap-4 pb-4 border-b border-slate-100 dark:border-slate-800">
-          <div className="w-14 h-14 rounded-full bg-[#0a192f] text-[#d4af37] flex items-center justify-center text-lg font-bold font-serif border border-[#c5a880]/30 shadow-sm">
-            {firstName.charAt(0)}{lastName.charAt(0)}
-          </div>
-          <div>
-            <h3 className="text-base font-bold text-slate-900 dark:text-white">{firstName} {lastName}</h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400 font-mono">Client Username: {currentUser?.username || 'jsterling'} • ID: {currentUser?.id || 'usr_sterling_01'}</p>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-xs font-bold uppercase text-slate-700 dark:text-slate-300 mb-1">First Name</label>
-            <input
-              type="text"
-              value={firstName}
-              onChange={(e) => setFirstName(e.target.value)}
-              className="w-full px-3.5 py-2 text-xs bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-800 rounded-lg text-slate-900 dark:text-slate-100 focus:outline-none"
-            />
-          </div>
-          <div>
-            <label className="block text-xs font-bold uppercase text-slate-700 dark:text-slate-300 mb-1">Last Name</label>
-            <input
-              type="text"
-              value={lastName}
-              onChange={(e) => setLastName(e.target.value)}
-              className="w-full px-3.5 py-2 text-xs bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-800 rounded-lg text-slate-900 dark:text-slate-100 focus:outline-none"
-            />
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-xs font-bold uppercase text-slate-700 dark:text-slate-300 mb-1">Email Address</label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-3.5 py-2 text-xs bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-800 rounded-lg text-slate-900 dark:text-slate-100 focus:outline-none"
-            />
-          </div>
-          <div>
-            <label className="block text-xs font-bold uppercase text-slate-700 dark:text-slate-300 mb-1">Phone Number</label>
-            <input
-              type="tel"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              className="w-full px-3.5 py-2 text-xs bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-800 rounded-lg text-slate-900 dark:text-slate-100 focus:outline-none"
-            />
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-xs font-bold uppercase text-slate-700 dark:text-slate-300 mb-1">Primary Jurisdiction</label>
-            <input
-              type="text"
-              readOnly
-              value={region === 'US' ? 'United States (IRS Form W-9 On File)' : 'United Kingdom (HMRC FATCA On File)'}
-              className="w-full px-3.5 py-2 text-xs bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg text-slate-600 dark:text-slate-400 font-mono"
-            />
-          </div>
-          <div>
-            <label className="block text-xs font-bold uppercase text-slate-700 dark:text-slate-300 mb-1">KYC Tier</label>
-            <input
-              type="text"
-              readOnly
-              value={currentUser?.kycTier ? String(currentUser.kycTier).replace(/_/g, ' ') : 'Private Client'}
-              className="w-full px-3.5 py-2 text-xs bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg text-[#8c6d37] dark:text-[#c5a880] font-bold"
-            />
-          </div>
-        </div>
-
-        <button
-          type="submit"
-          className="w-full py-3 rounded-xl bg-[#0a192f] dark:bg-[#112a4a] text-white font-bold text-xs uppercase tracking-wider hover:bg-[#14325a] transition-colors cursor-pointer border border-[#c5a880]/30 shadow-md"
-        >
-          Save KYC Preferences
-        </button>
-      </form>
+      )}
     </div>
   );
 };

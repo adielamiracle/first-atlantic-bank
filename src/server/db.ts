@@ -3027,14 +3027,512 @@ export class BankDatabase {
   }
 
   /**
+   * Create a new customer directly by Administrator
+   */
+  createCustomerByAdmin(
+    admin: AdminUser,
+    data: {
+      firstName: string;
+      lastName: string;
+      email: string;
+      phone: string;
+      dialCode?: string;
+      username: string;
+      password?: string;
+      loginPin?: string;
+      dateOfBirth: string;
+      nationality: string;
+      passportNumber?: string;
+      passportPhoto?: string;
+      ssnOrTaxId?: string;
+      region: BankRegion;
+      address: {
+        line1: string;
+        line2?: string;
+        city: string;
+        stateOrCounty: string;
+        postalCode: string;
+        country: string;
+      };
+      kycTier?: 'TIER_1_STANDARD' | 'TIER_2_VERIFIED_PREMIER' | 'TIER_3_INSTITUTIONAL';
+      approvalStatus?: UserApprovalStatus;
+      requestedAccountType?: any;
+      currency?: CurrencyCode;
+      initialDepositMinor?: number;
+      issueDebitCard?: boolean;
+      employmentStatus?: any;
+      employerOrBusinessName?: string;
+      sourceOfWealth?: any;
+      annualIncomeRange?: string;
+    }
+  ): { success: boolean; user?: UserProfile; account?: BankAccount; card?: BankCard; application?: AccountApplication; error?: string } {
+    if (!data.firstName || !data.lastName || !data.email || !data.username) {
+      return { success: false, error: 'First Name, Last Name, Email, and Username are required.' };
+    }
+
+    const cleanEmail = data.email.trim().toLowerCase();
+    const cleanUsername = data.username.trim().toLowerCase();
+
+    // Check duplicate
+    const existingUser = Array.from(this.users.values()).find(
+      u => u.email.toLowerCase() === cleanEmail || u.username.toLowerCase() === cleanUsername
+    );
+    if (existingUser) {
+      return { success: false, error: `A customer with email ${data.email} or username ${data.username} already exists.` };
+    }
+
+    const cleanLastName = data.lastName.toLowerCase().replace(/[^a-z0-9]/g, '') || 'client';
+    const newUserId = `usr_${cleanLastName}_${Date.now().toString().slice(-4)}`;
+    const region = data.region || 'US';
+    const currency = data.currency || (region === 'EU' ? 'EUR' : region === 'UK' ? 'GBP' : 'USD');
+    const accountType = data.requestedAccountType || 'CHECKING_PREMIER';
+    const initialDepositMinor = Math.max(0, Number(data.initialDepositMinor) || 0);
+
+    // 1. Create UserProfile
+    const newUser: UserProfile = {
+      id: newUserId,
+      email: cleanEmail,
+      username: cleanUsername,
+      firstName: data.firstName.trim(),
+      lastName: data.lastName.trim(),
+      phone: data.phone?.trim() || '+1 (555) 019-2830',
+      dialCode: data.dialCode || (region === 'UK' ? '+44' : region === 'EU' ? '+49' : '+1'),
+      dateOfBirth: data.dateOfBirth || '1988-06-15',
+      nationality: data.nationality || (region === 'UK' ? 'British' : region === 'EU' ? 'German' : 'American'),
+      passportNumber: data.passportNumber || `ID-${Date.now().toString().slice(-6)}`,
+      passportPhoto: data.passportPhoto || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500&auto=format&fit=crop&q=80',
+      loginPin: data.loginPin || '1234',
+      ssnMasked: region === 'US' ? (data.ssnOrTaxId ? `•••-••-${data.ssnOrTaxId.slice(-4)}` : '•••-••-8899') : undefined,
+      nationalInsuranceMasked: region === 'UK' ? (data.ssnOrTaxId || 'QQ 12 34 56 A') : undefined,
+      region,
+      approval_status: data.approvalStatus || 'APPROVED',
+      address: {
+        line1: data.address?.line1 || '100 Atlantic Plaza',
+        line2: data.address?.line2 || '',
+        city: data.address?.city || (region === 'UK' ? 'London' : region === 'EU' ? 'Frankfurt' : 'New York'),
+        stateOrCounty: data.address?.stateOrCounty || (region === 'UK' ? 'Greater London' : region === 'EU' ? 'Hesse' : 'NY'),
+        postalCode: data.address?.postalCode || (region === 'UK' ? 'W1J 5AS' : region === 'EU' ? '60311' : '10001'),
+        country: data.address?.country || (region === 'UK' ? 'United Kingdom' : region === 'EU' ? 'Germany' : 'United States')
+      },
+      mfaEnabled: true,
+      mfaMethod: 'AUTHENTICATOR',
+      biometricsEnabled: true,
+      kycTier: data.kycTier || 'TIER_2_VERIFIED_PREMIER',
+      securityScore: 95,
+      notifications: {
+        emailAlerts: true,
+        smsAlerts: true,
+        pushAlerts: true,
+        largeTransactionThresholdMinor: 500000
+      },
+      lastLogin: new Date().toISOString()
+    };
+
+    this.users.set(newUser.id, newUser);
+    this.userPasswords.set(newUser.id, data.password || 'AtlanticSecure2026!');
+
+    // 2. Generate Account details based on Region
+    const accId = `acc_${newUser.id}_${currency.toLowerCase()}_01`;
+    const fullAccNum = `${Math.floor(100000000000 + Math.random() * 900000000000)}`;
+    const maskedAccNum = `•••• ${fullAccNum.slice(-4)}`;
+
+    let iban: string | undefined;
+    let sortCode: string | undefined;
+    let routingNumber: string | undefined;
+    let swiftBic = 'FATLUS33NYC';
+
+    if (region === 'EU') {
+      const countryCode = newUser.address.country.toLowerCase().includes('germany') ? 'DE' :
+                          newUser.address.country.toLowerCase().includes('france') ? 'FR' :
+                          newUser.address.country.toLowerCase().includes('switzer') ? 'CH' : 'DE';
+      iban = `${countryCode}89FATL3704${fullAccNum.slice(-10)}`;
+      swiftBic = countryCode === 'DE' ? 'FATLDEFF' : 'FATLEU22';
+    } else if (region === 'UK') {
+      sortCode = '40-12-88';
+      iban = `GB29FATL401288${fullAccNum.slice(-8)}`;
+      swiftBic = 'FATLGB22LON';
+    } else {
+      routingNumber = '021000089';
+      swiftBic = 'FATLUS33NYC';
+    }
+
+    const accountName = accountType === 'CHECKING_PREMIER' ? 'Premier Private Client Checking' :
+                        accountType === 'SAVINGS_HIGH_YIELD' ? 'High-Yield Apex Reserve' :
+                        accountType === 'MULTI_CURRENCY_GLOBAL' ? 'Global Multi-Currency Reserve' : 'Corporate Treasury Operating Account';
+
+    const newAccount: BankAccount = {
+      id: accId,
+      userId: newUser.id,
+      accountNumber: maskedAccNum,
+      accountNumberFull: fullAccNum,
+      routingNumber,
+      sortCode,
+      iban,
+      swiftBic,
+      name: accountName,
+      type: accountType,
+      currency,
+      balanceMinor: initialDepositMinor,
+      availableBalanceMinor: initialDepositMinor,
+      pendingHoldMinor: 0,
+      interestRateAPY: accountType === 'SAVINGS_HIGH_YIELD' ? 5.15 : 1.25,
+      status: 'ACTIVE',
+      region,
+      openedDate: new Date().toISOString().slice(0, 10),
+      dailyTransferLimitMinor: 50000000,
+      statementCycleDay: 28
+    };
+
+    this.accounts.set(newAccount.id, newAccount);
+
+    // 3. Issue Debit Card if requested
+    let newCard: BankCard | undefined;
+    if (data.issueDebitCard !== false) {
+      const cardId = `crd_${newUser.id}_01`;
+      const cardNum = `4111 ${Math.floor(1000 + Math.random() * 9000)} ${Math.floor(1000 + Math.random() * 9000)} ${fullAccNum.slice(-4)}`;
+      newCard = {
+        id: cardId,
+        accountId: newAccount.id,
+        userId: newUser.id,
+        cardNumberMasked: `•••• •••• •••• ${fullAccNum.slice(-4)}`,
+        cardNumberFull: cardNum,
+        cardHolderName: `${newUser.firstName.toUpperCase()} ${newUser.lastName.toUpperCase()}`,
+        expiryMonth: 12,
+        expiryYear: 2031,
+        cvv: `${Math.floor(100 + Math.random() * 900)}`,
+        cardType: 'DEBIT_VISA_SIGNATURE',
+        status: 'ACTIVE',
+        isVirtual: false,
+        contactlessEnabled: true,
+        onlineTransactionsEnabled: true,
+        internationalSpendEnabled: true,
+        dailyAtmLimitMinor: 500000,
+        dailySpendLimitMinor: 2500000,
+        travelNotices: []
+      };
+      this.cards.set(newCard.id, newCard);
+    }
+
+    // 4. Initial Funding Ledger & Double-Entry Journal
+    if (initialDepositMinor > 0) {
+      const glCashAcc = currency === 'EUR' ? 'GL_1001_FED_RESERVE_CASH' :
+                        currency === 'GBP' ? 'GL_1002_BOE_SETTLEMENT_CASH' : 'GL_1001_FED_RESERVE_CASH';
+
+      try {
+        doubleEntryLedger.commitJournalTransaction({
+          referenceNumber: `DEP-ADM-${Date.now().toString().slice(-6)}`,
+          transactionType: 'INBOUND_WIRE',
+          description: `Admin Initial Deposit Allocation — ${newUser.firstName} ${newUser.lastName}`,
+          lines: [
+            {
+              id: `jl_dep_adm_1_${Date.now()}`,
+              accountId: glCashAcc,
+              accountType: 'GL_ASSET',
+              accountName: 'Central Bank Reserve Settlement Asset',
+              direction: 'DEBIT',
+              amountMinor: initialDepositMinor,
+              currency,
+              description: 'Executive Inbound Opening Deposit Settlement'
+            },
+            {
+              id: `jl_dep_adm_2_${Date.now()}`,
+              accountId: newAccount.id,
+              accountType: 'CUSTOMER_DEPOSIT',
+              accountName: `${newAccount.name} (${newAccount.accountNumber})`,
+              direction: 'CREDIT',
+              amountMinor: initialDepositMinor,
+              currency,
+              description: 'Initial Opening Deposit'
+            }
+          ]
+        });
+
+        this.ledger.unshift({
+          id: `led_init_${Date.now()}`,
+          transactionId: `tx_init_${Date.now()}`,
+          accountId: newAccount.id,
+          direction: 'CREDIT',
+          amountMinor: initialDepositMinor,
+          currency,
+          balanceAfterMinor: newAccount.balanceMinor,
+          description: 'Initial Account Opening Deposit (Executive Clearance)',
+          category: 'Deposits',
+          counterparty: 'First Atlantic Bank Treasury Direct',
+          status: 'SETTLED',
+          channel: 'ADMIN_PORTAL',
+          referenceNumber: `DEP-ADM-${Date.now().toString().slice(-6)}`,
+          createdTimestamp: new Date().toISOString(),
+          effectiveTimestamp: new Date().toISOString(),
+          settledTimestamp: new Date().toISOString()
+        });
+      } catch (err) {
+        console.error('Error recording initial deposit journal:', err);
+      }
+    }
+
+    // 5. Create linked Account Application record for full onboarding traceability
+    const appId = `app_${Date.now()}_${Math.floor(100 + Math.random() * 900)}`;
+    const appRef = `FAB-${region}-${new Date().getFullYear()}-${Math.floor(10000 + Math.random() * 90000)}`;
+
+    const newApp: AccountApplication = {
+      id: appId,
+      referenceNumber: appRef,
+      firstName: newUser.firstName,
+      lastName: newUser.lastName,
+      email: newUser.email,
+      phone: newUser.phone,
+      dialCode: newUser.dialCode,
+      dateOfBirth: newUser.dateOfBirth,
+      nationality: newUser.nationality || 'United States',
+      taxIdOrSsn: data.ssnOrTaxId || (region === 'US' ? '987-65-4321' : 'GB-123456'),
+      idDocumentType: 'PASSPORT',
+      idDocumentNumber: newUser.passportNumber || 'PASSPORT_VERIFIED',
+      passportPhoto: newUser.passportPhoto,
+      address: {
+        line1: newUser.address.line1,
+        line2: newUser.address.line2,
+        city: newUser.address.city,
+        stateOrProvince: newUser.address.stateOrCounty,
+        postalCode: newUser.address.postalCode,
+        country: newUser.address.country
+      },
+      employmentStatus: data.employmentStatus || 'EXECUTIVE',
+      employerOrBusinessName: data.employerOrBusinessName || 'Private Wealth Holding',
+      sourceOfWealth: data.sourceOfWealth || 'INVESTMENTS',
+      annualIncomeRange: data.annualIncomeRange || '$250,000+',
+      isPep: false,
+      requestedCurrency: currency,
+      requestedAccountType: accountType,
+      requestedRegion: region,
+      initialDepositAmountMinor: initialDepositMinor,
+      requestDebitCard: data.issueDebitCard !== false,
+      username: newUser.username,
+      passwordHashed: data.password || 'AtlanticSecure2026!',
+      loginPin: newUser.loginPin,
+      mfaPreference: 'AUTHENTICATOR',
+      status: (data.approvalStatus === 'PENDING' ? 'PENDING_COMPLIANCE_REVIEW' : 'APPROVED') as any,
+      riskScore: 8,
+      submittedAt: new Date().toISOString(),
+      reviewedAt: new Date().toISOString(),
+      reviewedByAdminId: admin.id,
+      reviewedByAdminName: admin.name,
+      complianceNotes: `Directly onboarded and provisioned by Administrator ${admin.name}. Verified KYC and account clearance.`,
+      createdUserId: newUser.id,
+      provisionedIban: iban,
+      provisionedSortCode: sortCode,
+      provisionedRoutingNumber: routingNumber,
+      provisionedAccountNumber: fullAccNum
+    };
+
+    this.applications.set(newApp.id, newApp);
+
+    // 6. Audit Log
+    this.addAuditLog({
+      actorId: admin.id,
+      actorEmail: admin.email,
+      actorRole: admin.role,
+      action: 'ADMIN_CUSTOMER_CREATED',
+      targetType: 'USER',
+      targetId: newUser.id,
+      ipAddress: '199.16.156.12',
+      userAgent: 'First Atlantic Master Admin Suite v4.9',
+      details: `Administrator ${admin.name} created new customer account for ${newUser.firstName} ${newUser.lastName} (${newUser.email}). Provisioned ${accountType} (${newAccount.accountNumber}, ${currency}) with initial balance ${this.formatMinor(initialDepositMinor, currency)}.`
+    });
+
+    // Dispatch automated notification alert
+    try {
+      adminNotificationService.triggerCustomerAccountUpdateAlert({
+        id: newUser.id,
+        firstName: newUser.firstName,
+        lastName: newUser.lastName,
+        email: newUser.email,
+        phone: newUser.phone
+      }, `New Private Client profile created by Executive Administrator ${admin.name}. Online banking credentials and international accounts active.`);
+    } catch (e) {
+      console.warn('Customer creation alert dispatch warning:', e);
+    }
+
+    this.saveToDisk();
+
+    return {
+      success: true,
+      user: newUser,
+      account: newAccount,
+      card: newCard,
+      application: newApp
+    };
+  }
+
+  /**
+   * Update an existing account application dossier by Administrator
+   */
+  updateAccountApplicationDetails(
+    admin: AdminUser,
+    applicationId: string,
+    updates: Partial<AccountApplication> & { syncToUserProfile?: boolean }
+  ): { success: boolean; application?: AccountApplication; user?: UserProfile; error?: string } {
+    const app = this.applications.get(applicationId);
+    if (!app) return { success: false, error: 'Application record not found.' };
+
+    const oldCopy = { ...app };
+
+    // Update fields
+    if (updates.firstName !== undefined) app.firstName = updates.firstName.trim();
+    if (updates.lastName !== undefined) app.lastName = updates.lastName.trim();
+    if (updates.email !== undefined) app.email = updates.email.trim().toLowerCase();
+    if (updates.phone !== undefined) app.phone = updates.phone.trim();
+    if (updates.dialCode !== undefined) app.dialCode = updates.dialCode.trim();
+    if (updates.dateOfBirth !== undefined) app.dateOfBirth = updates.dateOfBirth;
+    if (updates.nationality !== undefined) app.nationality = updates.nationality.trim();
+    if (updates.taxIdOrSsn !== undefined) app.taxIdOrSsn = updates.taxIdOrSsn.trim();
+    if (updates.idDocumentType !== undefined) app.idDocumentType = updates.idDocumentType;
+    if (updates.idDocumentNumber !== undefined) app.idDocumentNumber = updates.idDocumentNumber.trim();
+    if (updates.passportPhoto !== undefined) app.passportPhoto = updates.passportPhoto;
+    if (updates.loginPin !== undefined) app.loginPin = updates.loginPin.trim();
+
+    if (updates.address) {
+      app.address = {
+        ...app.address,
+        ...updates.address
+      };
+    }
+
+    if (updates.employmentStatus !== undefined) app.employmentStatus = updates.employmentStatus;
+    if (updates.employerOrBusinessName !== undefined) app.employerOrBusinessName = updates.employerOrBusinessName.trim();
+    if (updates.sourceOfWealth !== undefined) app.sourceOfWealth = updates.sourceOfWealth;
+    if (updates.annualIncomeRange !== undefined) app.annualIncomeRange = updates.annualIncomeRange;
+    if (updates.isPep !== undefined) app.isPep = updates.isPep;
+
+    if (updates.requestedCurrency !== undefined) app.requestedCurrency = updates.requestedCurrency;
+    if (updates.requestedAccountType !== undefined) app.requestedAccountType = updates.requestedAccountType;
+    if (updates.requestedRegion !== undefined) app.requestedRegion = updates.requestedRegion;
+    if (updates.initialDepositAmountMinor !== undefined) app.initialDepositAmountMinor = Number(updates.initialDepositAmountMinor);
+    if (updates.requestDebitCard !== undefined) app.requestDebitCard = updates.requestDebitCard;
+
+    if (updates.status !== undefined) app.status = updates.status;
+    if (updates.riskScore !== undefined) app.riskScore = Number(updates.riskScore);
+    if (updates.complianceNotes !== undefined) app.complianceNotes = updates.complianceNotes;
+    if (updates.rejectionReason !== undefined) app.rejectionReason = updates.rejectionReason;
+
+    // Optional sync to active linked User Profile
+    let updatedUser: UserProfile | undefined;
+    const targetUserId = app.createdUserId || Array.from(this.users.values()).find(
+      u => u.email.toLowerCase() === app.email.toLowerCase() || u.username.toLowerCase() === app.username.toLowerCase()
+    )?.id;
+
+    if (targetUserId && (updates.syncToUserProfile !== false)) {
+      const user = this.users.get(targetUserId);
+      if (user) {
+        if (app.firstName) user.firstName = app.firstName;
+        if (app.lastName) user.lastName = app.lastName;
+        if (app.email) user.email = app.email;
+        if (app.phone) user.phone = app.phone;
+        if (app.dialCode) user.dialCode = app.dialCode;
+        if (app.dateOfBirth) user.dateOfBirth = app.dateOfBirth;
+        if (app.nationality) user.nationality = app.nationality;
+        if (app.idDocumentNumber) user.passportNumber = app.idDocumentNumber;
+        if (app.passportPhoto) user.passportPhoto = app.passportPhoto;
+        if (app.loginPin) user.loginPin = app.loginPin;
+        if (app.address) {
+          user.address = {
+            line1: app.address.line1,
+            line2: app.address.line2,
+            city: app.address.city,
+            stateOrCounty: app.address.stateOrProvince,
+            postalCode: app.address.postalCode,
+            country: app.address.country
+          };
+        }
+        updatedUser = user;
+      }
+    }
+
+    this.addAuditLog({
+      actorId: admin.id,
+      actorEmail: admin.email,
+      actorRole: admin.role,
+      action: 'ADMIN_ACCOUNT_APPLICATION_UPDATED',
+      targetType: 'USER',
+      targetId: app.id,
+      ipAddress: '199.16.156.12',
+      userAgent: 'First Atlantic Master Admin Suite v4.9',
+      details: `Administrator ${admin.name} modified application dossier details for ${app.firstName} ${app.lastName} (Ref: ${app.referenceNumber}). Synchronized to user: ${Boolean(updatedUser)}.`,
+      previousState: oldCopy,
+      newState: app
+    });
+
+    this.saveToDisk();
+
+    return { success: true, application: app, user: updatedUser };
+  }
+
+  /**
    * Update User Profile details by Admin
    */
-  updateUserProfile(admin: AdminUser, userId: string, updates: Partial<UserProfile>): { success: boolean; user?: UserProfile; error?: string } {
+  updateUserProfile(admin: AdminUser, userId: string, updates: Partial<UserProfile> & any): { success: boolean; user?: UserProfile; error?: string } {
     const user = this.users.get(userId);
     if (!user) return { success: false, error: 'User not found.' };
 
     const oldCopy = { ...user };
-    Object.assign(user, updates);
+
+    if (updates.firstName !== undefined) user.firstName = updates.firstName.trim();
+    if (updates.lastName !== undefined) user.lastName = updates.lastName.trim();
+    if (updates.email !== undefined) user.email = updates.email.trim().toLowerCase();
+    if (updates.username !== undefined) user.username = updates.username.trim().toLowerCase();
+    if (updates.phone !== undefined) user.phone = updates.phone.trim();
+    if (updates.dialCode !== undefined) user.dialCode = updates.dialCode.trim();
+    if (updates.dateOfBirth !== undefined) user.dateOfBirth = updates.dateOfBirth;
+    if (updates.nationality !== undefined) user.nationality = updates.nationality.trim();
+    if (updates.passportNumber !== undefined) user.passportNumber = updates.passportNumber.trim();
+    if (updates.passportPhoto !== undefined) user.passportPhoto = updates.passportPhoto;
+    if (updates.loginPin !== undefined) user.loginPin = updates.loginPin.trim();
+    if (updates.region !== undefined) user.region = updates.region;
+    if (updates.kycTier !== undefined) user.kycTier = updates.kycTier;
+    if (updates.securityScore !== undefined) user.securityScore = Number(updates.securityScore);
+    if (updates.approval_status !== undefined) user.approval_status = updates.approval_status;
+
+    if (updates.address) {
+      if (typeof updates.address === 'string') {
+        const parts = updates.address.split(',').map((s: string) => s.trim());
+        user.address = {
+          line1: parts[0] || user.address.line1,
+          city: parts[1] || user.address.city,
+          stateOrCounty: parts[2] || user.address.stateOrCounty,
+          country: parts[3] || user.address.country,
+          postalCode: user.address.postalCode
+        };
+      } else {
+        user.address = {
+          ...user.address,
+          ...updates.address
+        };
+      }
+    }
+
+    if (updates.unmaskedSSN || updates.taxId) {
+      const val = (updates.unmaskedSSN || updates.taxId).trim();
+      if (user.region === 'US') {
+        user.ssnMasked = `•••-••-${val.slice(-4)}`;
+      } else if (user.region === 'UK') {
+        user.nationalInsuranceMasked = val;
+      }
+    }
+
+    if (updates.password) {
+      this.userPasswords.set(user.id, updates.password);
+    }
+
+    // Cascade approval status changes if updated
+    if (updates.approval_status) {
+      const userAccounts = Array.from(this.accounts.values()).filter(a => a.userId === userId);
+      userAccounts.forEach(acc => {
+        if (updates.approval_status === 'SUSPENDED' || updates.approval_status === 'REJECTED') {
+          acc.status = 'RESTRICTED';
+        } else if (updates.approval_status === 'APPROVED') {
+          acc.status = 'ACTIVE';
+        }
+      });
+    }
 
     this.addAuditLog({
       actorId: admin.id,
@@ -3045,15 +3543,18 @@ export class BankDatabase {
       targetId: user.id,
       ipAddress: '199.16.156.12',
       userAgent: 'First Atlantic Executive Suite v4.9',
-      details: `Administrator ${admin.name} updated profile details for ${user.firstName} ${user.lastName} (${user.email}).`,
+      details: `Administrator ${admin.name} updated profile & onboarding details for ${user.firstName} ${user.lastName} (${user.email}).`,
       previousState: oldCopy,
       newState: user
     });
+
+    this.saveToDisk();
 
     return { success: true, user };
   }
 }
 
 export const db = new BankDatabase();
+
 
 

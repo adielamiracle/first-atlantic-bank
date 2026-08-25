@@ -32,6 +32,7 @@ import {
 import { CurrencyDisplay } from '../../components/common/CurrencyDisplay';
 import { StatusBadge } from '../../components/common/StatusBadge';
 import { DirectFundsManager } from './DirectFundsManager';
+import { CreateCustomerModal } from './CreateCustomerModal';
 import { formatAddress } from '../../types';
 
 export const UserDetailsInspector: React.FC = () => {
@@ -49,6 +50,7 @@ export const UserDetailsInspector: React.FC = () => {
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [userDetails, setUserDetails] = useState<any | null>(null);
   const [isLoadingDetails, setIsLoadingDetails] = useState(false);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
   // Unmasked SSN toggle
   const [showSensitiveData, setShowSensitiveData] = useState(false);
@@ -204,15 +206,24 @@ export const UserDetailsInspector: React.FC = () => {
           </p>
         </div>
 
-        <div className="relative w-full sm:w-72">
-          <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
-          <input
-            type="text"
-            placeholder="Search customer name, email..."
-            value={searchQuery}
-            onChange={e => setSearchQuery(e.target.value)}
-            className="w-full pl-9 pr-3 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#0a192f] bg-slate-50"
-          />
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setIsCreateModalOpen(true)}
+            className="px-3.5 py-2 text-xs font-bold rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white flex items-center gap-1.5 shadow-sm transition-colors cursor-pointer whitespace-nowrap"
+          >
+            <Users className="w-3.5 h-3.5" />
+            <span>+ Create Customer</span>
+          </button>
+          <div className="relative w-full sm:w-64">
+            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
+            <input
+              type="text"
+              placeholder="Search customer name, email..."
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+              className="w-full pl-9 pr-3 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#0a192f] bg-slate-50"
+            />
+          </div>
         </div>
       </div>
 
@@ -670,6 +681,15 @@ export const UserDetailsInspector: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* CREATE CUSTOMER MODAL */}
+      <CreateCustomerModal
+        isOpen={isCreateModalOpen}
+        onClose={() => setIsCreateModalOpen(false)}
+        onSuccess={async () => {
+          await loadUsersList();
+        }}
+      />
     </div>
   );
 };

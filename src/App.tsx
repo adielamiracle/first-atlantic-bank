@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
 import { BankProvider, useBank } from './context/BankContext';
 import { ToastContainer } from './components/common/ToastContainer';
 import { BiometricPromptModal } from './components/common/BiometricPromptModal';
@@ -71,7 +72,7 @@ const MainAppRouter: React.FC = () => {
 
     const handleHashAndPath = () => {
       const hash = window.location.hash.toLowerCase();
-      if (hash === '#admin' || hash === '#/admin' || hash === '#admin-secure-portal') {
+      if (hash === '#admin' || hash === '#/admin' || hash === '#admin-secure-portal' || hash === '#portal-admin') {
         if (currentRole === 'ADMIN') {
           setCurrentView('ADMIN_DASHBOARD');
         } else {
@@ -79,6 +80,11 @@ const MainAppRouter: React.FC = () => {
         }
       }
     };
+
+    // Check if entered directly via hash
+    if (!isPageReload() && (window.location.hash.toLowerCase().includes('admin'))) {
+      handleHashAndPath();
+    }
 
     window.addEventListener('hashchange', handleHashAndPath);
 
@@ -128,17 +134,28 @@ const MainAppRouter: React.FC = () => {
         {/* Main Content Pane */}
         <div className="flex-1 flex flex-col min-w-0 pb-16 md:pb-0">
           <CustomerHeader />
-          <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto">
-            {currentView === 'DASHBOARD_OVERVIEW' && <DashboardOverview />}
-            {currentView === 'DASHBOARD_ACCOUNT_DETAIL' && <AccountDetailPage />}
-            {currentView === 'DASHBOARD_TRANSFERS' && <TransfersPage />}
-            {currentView === 'DASHBOARD_BILLPAY' && <BillPayPage />}
-            {currentView === 'DASHBOARD_CARDS' && <CardsPage />}
-            {currentView === 'DASHBOARD_DEPOSIT' && <DepositCheckPage />}
-            {currentView === 'DASHBOARD_STATEMENTS' && <StatementsPage />}
-            {currentView === 'DASHBOARD_SECURITY' && <SecurityCenterPage />}
-            {currentView === 'DASHBOARD_MESSAGES' && <MessagesPage />}
-            {currentView === 'DASHBOARD_PROFILE' && <ProfilePage />}
+          <main className="flex-1 p-3 sm:p-5 lg:p-6 max-w-7xl w-full mx-auto overflow-hidden">
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={currentView}
+                initial={{ opacity: 0, y: 10, filter: 'blur(2px)' }}
+                animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+                exit={{ opacity: 0, y: -8, filter: 'blur(2px)' }}
+                transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
+                className="w-full"
+              >
+                {currentView === 'DASHBOARD_OVERVIEW' && <DashboardOverview />}
+                {currentView === 'DASHBOARD_ACCOUNT_DETAIL' && <AccountDetailPage />}
+                {currentView === 'DASHBOARD_TRANSFERS' && <TransfersPage />}
+                {currentView === 'DASHBOARD_BILLPAY' && <BillPayPage />}
+                {currentView === 'DASHBOARD_CARDS' && <CardsPage />}
+                {currentView === 'DASHBOARD_DEPOSIT' && <DepositCheckPage />}
+                {currentView === 'DASHBOARD_STATEMENTS' && <StatementsPage />}
+                {currentView === 'DASHBOARD_SECURITY' && <SecurityCenterPage />}
+                {currentView === 'DASHBOARD_MESSAGES' && <MessagesPage />}
+                {currentView === 'DASHBOARD_PROFILE' && <ProfilePage />}
+              </motion.div>
+            </AnimatePresence>
           </main>
         </div>
 
@@ -153,15 +170,26 @@ const MainAppRouter: React.FC = () => {
     <div className="min-h-screen bg-[#f8fafc] dark:bg-[#07101e] text-slate-800 dark:text-slate-100 flex flex-col transition-colors duration-200">
       <PublicNavbar />
       <main className="flex-1">
-        {currentView === 'PUBLIC_HOME' && <HomePage />}
-        {currentView === 'PUBLIC_PERSONAL' && <PersonalPage />}
-        {currentView === 'PUBLIC_BUSINESS' && <BusinessPage />}
-        {currentView === 'PUBLIC_WEALTH' && <WealthPage />}
-        {currentView === 'PUBLIC_INTERNATIONAL' && <InternationalPage />}
-        {currentView === 'PUBLIC_LOCATIONS' && <LocationsPage />}
-        {currentView === 'PUBLIC_SECURITY' && <SecurityPublicPage />}
-        {currentView === 'AUTH_LOGIN' && <LoginPage />}
-        {currentView === 'AUTH_ENROLL' && <EnrollPage />}
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={currentView}
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -6 }}
+            transition={{ duration: 0.2, ease: 'easeOut' }}
+            className="w-full"
+          >
+            {currentView === 'PUBLIC_HOME' && <HomePage />}
+            {currentView === 'PUBLIC_PERSONAL' && <PersonalPage />}
+            {currentView === 'PUBLIC_BUSINESS' && <BusinessPage />}
+            {currentView === 'PUBLIC_WEALTH' && <WealthPage />}
+            {currentView === 'PUBLIC_INTERNATIONAL' && <InternationalPage />}
+            {currentView === 'PUBLIC_LOCATIONS' && <LocationsPage />}
+            {currentView === 'PUBLIC_SECURITY' && <SecurityPublicPage />}
+            {currentView === 'AUTH_LOGIN' && <LoginPage />}
+            {currentView === 'AUTH_ENROLL' && <EnrollPage />}
+          </motion.div>
+        </AnimatePresence>
       </main>
       <PublicFooter />
     </div>

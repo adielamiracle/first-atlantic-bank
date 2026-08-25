@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Bell,
   Search,
@@ -13,10 +13,12 @@ import {
   Lock,
   Sun,
   Moon,
-  Fingerprint
+  Fingerprint,
+  ShieldCheck
 } from 'lucide-react';
 import { useBank } from '../../context/BankContext';
 import { InstitutionalCrest } from '../common/InstitutionalCrest';
+import { GlobalSearchModal } from '../common/GlobalSearchModal';
 
 export const CustomerHeader: React.FC = () => {
   const {
@@ -35,28 +37,48 @@ export const CustomerHeader: React.FC = () => {
 
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
+  const [searchModalOpen, setSearchModalOpen] = useState(false);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        setSearchModalOpen(true);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   return (
-    <header className="bg-white dark:bg-[#0a192f] border-b border-slate-200 dark:border-[#1e3656] sticky top-0 z-20 shadow-xs transition-colors duration-200">
-      <div className="px-4 sm:px-8 py-3 flex items-center justify-between gap-4">
-        {/* Mobile brand header or search */}
-        <div className="flex items-center gap-3">
-          <div className="lg:hidden">
-            <button onClick={() => setCurrentView('DASHBOARD_OVERVIEW')} className="cursor-pointer">
-              <InstitutionalCrest size="sm" variant={darkMode ? "dark" : "light"} showSubtitle={false} />
+    <>
+      <GlobalSearchModal isOpen={searchModalOpen} onClose={() => setSearchModalOpen(false)} />
+
+      <header className="bg-white dark:bg-[#0a192f] border-b border-slate-200 dark:border-[#1e3656] sticky top-0 z-20 shadow-xs transition-colors duration-200">
+        <div className="px-4 sm:px-8 py-3 flex items-center justify-between gap-4">
+          {/* Mobile brand header or search */}
+          <div className="flex items-center gap-3">
+            <div className="lg:hidden">
+              <button onClick={() => setCurrentView('DASHBOARD_OVERVIEW')} className="cursor-pointer">
+                <InstitutionalCrest size="sm" variant={darkMode ? "dark" : "light"} showSubtitle={false} />
+              </button>
+            </div>
+
+            <button
+              onClick={() => setSearchModalOpen(true)}
+              className="flex items-center justify-between gap-2 px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400 text-xs w-60 md:w-80 cursor-pointer hover:border-slate-300 dark:hover:border-slate-700 transition-colors text-left"
+            >
+              <div className="flex items-center gap-2 overflow-hidden">
+                <Search className="w-3.5 h-3.5 text-[#d4af37] shrink-0" />
+                <span className="text-slate-500 dark:text-slate-400 truncate">
+                  Search banks, routing codes, wires...
+                </span>
+              </div>
+              <kbd className="hidden sm:inline-block px-1.5 py-0.5 text-[10px] font-mono bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded border border-slate-300 dark:border-slate-700 shrink-0">
+                ⌘K
+              </kbd>
             </button>
           </div>
-
-          <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400 text-xs w-64 md:w-80">
-            <Search className="w-3.5 h-3.5 text-slate-400" />
-            <input
-              type="text"
-              placeholder="Search transactions, payees, reference #"
-              className="bg-transparent focus:outline-none text-slate-800 dark:text-slate-200 placeholder-slate-400 w-full text-xs"
-              onFocus={() => setCurrentView('DASHBOARD_ACCOUNT_DETAIL')}
-            />
-          </div>
-        </div>
 
         {/* Right Tools & Profile */}
         <div className="flex items-center gap-2 sm:gap-4">
@@ -243,5 +265,7 @@ export const CustomerHeader: React.FC = () => {
         </div>
       </div>
     </header>
+  </>
   );
 };
+

@@ -36,6 +36,8 @@ import { TreasuryReceivingAccountsTab } from './TreasuryReceivingAccountsTab';
 import { AccountActivationTab } from './AccountActivationTab';
 import { AdminNotificationsTab } from './AdminNotificationsTab';
 import { EnrollmentTrendWidget } from './EnrollmentTrendWidget';
+import { CreateCustomerModal } from './CreateCustomerModal';
+import { EditApplicationModal } from './EditApplicationModal';
 import { AccountApplication, formatAddress } from '../../types';
 
 export const AdminDashboard: React.FC = () => {
@@ -63,6 +65,8 @@ export const AdminDashboard: React.FC = () => {
   >('FUNDS');
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isCreateCustomerOpen, setIsCreateCustomerOpen] = useState(false);
+  const [editingApplication, setEditingApplication] = useState<AccountApplication | null>(null);
 
   // Application Dossier Review State
   const [selectedAppDossier, setSelectedAppDossier] = useState<AccountApplication | null>(null);
@@ -193,6 +197,14 @@ export const AdminDashboard: React.FC = () => {
 
           {/* Right Controls */}
           <div className="flex items-center gap-2 sm:gap-3">
+            <button
+              onClick={() => setIsCreateCustomerOpen(true)}
+              className="px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-sm transition-all flex items-center gap-1.5 cursor-pointer whitespace-nowrap"
+            >
+              <Users className="w-3.5 h-3.5" />
+              <span>+ Create Customer</span>
+            </button>
+
             <button
               onClick={() => {
                 fetchAdminStats();
@@ -448,6 +460,12 @@ export const AdminDashboard: React.FC = () => {
 
                         <div className="flex items-center gap-2">
                           <button
+                            onClick={() => setEditingApplication(app)}
+                            className="px-2.5 py-1.5 rounded-lg border border-slate-300 hover:bg-slate-100 text-slate-700 text-xs font-bold transition-colors cursor-pointer"
+                          >
+                            Edit Dossier
+                          </button>
+                          <button
                             onClick={() => setSelectedAppDossier(app)}
                             className="px-3 py-1.5 rounded-lg bg-[#0a192f] hover:bg-[#153459] text-white text-xs font-bold transition-colors cursor-pointer"
                           >
@@ -532,12 +550,24 @@ export const AdminDashboard: React.FC = () => {
                 <h3 className="text-base font-bold font-serif">Customer Onboarding Dossier</h3>
                 <p className="text-[11px] text-slate-300 font-mono">Ref: {selectedAppDossier.referenceNumber}</p>
               </div>
-              <button
-                onClick={() => setSelectedAppDossier(null)}
-                className="text-slate-400 hover:text-white"
-              >
-                <X className="w-5 h-5" />
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => {
+                    const app = selectedAppDossier;
+                    setSelectedAppDossier(null);
+                    setEditingApplication(app);
+                  }}
+                  className="px-2.5 py-1 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition-colors cursor-pointer"
+                >
+                  Edit Details
+                </button>
+                <button
+                  onClick={() => setSelectedAppDossier(null)}
+                  className="text-slate-400 hover:text-white"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
             </div>
 
             <div className="p-6 space-y-4 max-h-[80vh] overflow-y-auto text-xs">
@@ -619,6 +649,25 @@ export const AdminDashboard: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* CREATE NEW CUSTOMER MODAL */}
+      <CreateCustomerModal
+        isOpen={isCreateCustomerOpen}
+        onClose={() => setIsCreateCustomerOpen(false)}
+        onSuccess={async () => {
+          await Promise.all([fetchApplications(), fetchAdminStats()]);
+        }}
+      />
+
+      {/* EDIT APPLICATION DOSSIER MODAL */}
+      <EditApplicationModal
+        isOpen={!!editingApplication}
+        application={editingApplication}
+        onClose={() => setEditingApplication(null)}
+        onSuccess={async () => {
+          await Promise.all([fetchApplications(), fetchAdminStats()]);
+        }}
+      />
     </div>
   );
 };
