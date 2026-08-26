@@ -138,9 +138,10 @@ interface BankContextType {
   saveBankReceivingAccount: (data: Partial<BankReceivingAccount>) => Promise<{ success: boolean; account?: BankReceivingAccount; error?: string }>;
   deleteBankReceivingAccount: (id: string) => Promise<{ success: boolean; error?: string }>;
 
-  // User Passport & 4-Digit Security PIN
+  // User Passport & 4-Digit Security PIN & Profile Info
   updatePassportDetails: (data: { passportPhoto?: string; passportNumber?: string; nationality?: string }) => Promise<{ success: boolean; error?: string }>;
   updateLoginPin: (currentPin: string, newPin: string) => Promise<{ success: boolean; error?: string }>;
+  updateCurrentCustomerProfile: (data: { firstName?: string; lastName?: string; email?: string; phone?: string; address?: string }) => Promise<{ success: boolean; error?: string }>;
   validateTransferPin: (pin: string) => Promise<{ valid: boolean; error?: string }>;
 
   // Loading & State
@@ -1434,6 +1435,32 @@ export const BankProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
+  const updateCurrentCustomerProfile = async (data: { firstName?: string; lastName?: string; email?: string; phone?: string; address?: string }) => {
+    try {
+      const res = await fetch('/api/user/profile', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          ...getAuthHeader()
+        },
+        body: JSON.stringify(data)
+      });
+      const resData = await res.json();
+      if (!res.ok) {
+        showToast('ERROR', 'Profile Update Failed', resData.error || 'Could not update profile information.');
+        return { success: false, error: resData.error };
+      }
+      if (resData.user) {
+        setCurrentUser(resData.user);
+      }
+      showToast('SUCCESS', 'Profile Updated', 'Your profile details have been saved successfully.');
+      return { success: true };
+    } catch (err: any) {
+      showToast('ERROR', 'System Error', err.message);
+      return { success: false, error: err.message };
+    }
+  };
+
   const validateTransferPin = async (pin: string) => {
     try {
       const res = await fetch('/api/auth/validate-transfer-pin', {
@@ -1532,6 +1559,7 @@ export const BankProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         deleteBankReceivingAccount,
         updatePassportDetails,
         updateLoginPin,
+        updateCurrentCustomerProfile,
         validateTransferPin,
         isLoading,
         isInitialSplash,

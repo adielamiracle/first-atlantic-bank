@@ -454,6 +454,144 @@ async function startServer() {
     res.json({ user });
   });
 
+  app.put('/api/user/profile', (req, res) => {
+    const userId = getUserIdFromHeader(req);
+    const user = db.users.get(userId);
+    if (!user) return res.status(404).json({ error: 'User not found or session invalid.' });
+
+    const {
+      firstName,
+      lastName,
+      email,
+      phone,
+      passportPhoto,
+      passportNumber,
+      nationality,
+      loginPin,
+      address,
+      notifications
+    } = req.body;
+
+    if (firstName) user.firstName = firstName;
+    if (lastName) user.lastName = lastName;
+    if (email) user.email = email;
+    if (phone) user.phone = phone;
+    if (passportPhoto !== undefined) {
+      user.passportPhoto = passportPhoto;
+    }
+    if (passportNumber) user.passportNumber = passportNumber;
+    if (nationality) user.nationality = nationality;
+    if (loginPin) user.loginPin = loginPin;
+    if (address) {
+      user.address = {
+        ...user.address,
+        ...address
+      };
+    }
+    if (notifications) {
+      user.notifications = {
+        ...user.notifications,
+        ...notifications
+      };
+    }
+
+    // Also synchronize corresponding application record if present
+    const application = Array.from(db.applications.values()).find(
+      a => a.email.toLowerCase() === user.email.toLowerCase() || (user.username && a.username.toLowerCase() === user.username.toLowerCase())
+    );
+    if (application) {
+      if (firstName) application.firstName = firstName;
+      if (lastName) application.lastName = lastName;
+      if (email) application.email = email;
+      if (phone) application.phone = phone;
+      if (passportPhoto) application.passportPhoto = passportPhoto;
+      if (passportNumber) application.idDocumentNumber = passportNumber;
+      if (nationality) application.nationality = nationality;
+      if (loginPin) application.loginPin = loginPin;
+    }
+
+    db.addAuditLog({
+      actorId: userId,
+      actorEmail: user.email,
+      actorRole: 'CUSTOMER',
+      action: 'PROFILE_UPDATED',
+      targetType: 'USER',
+      targetId: user.id,
+      ipAddress: '108.45.192.8',
+      userAgent: req.headers['user-agent'] || 'First Atlantic Web Client',
+      details: `Profile details and passport identity photo updated.`
+    });
+
+    res.json({ success: true, user, message: 'Profile updated successfully.' });
+  });
+
+  app.put('/api/user/passport', (req, res) => {
+    const userId = getUserIdFromHeader(req);
+    const user = db.users.get(userId);
+    if (!user) return res.status(404).json({ error: 'User not found or session invalid.' });
+
+    const { passportPhoto, passportNumber, nationality } = req.body;
+    if (passportPhoto !== undefined) {
+      user.passportPhoto = passportPhoto;
+    }
+    if (passportNumber) user.passportNumber = passportNumber;
+    if (nationality) user.nationality = nationality;
+
+    // Sync with application if exists
+    const appRecord = Array.from(db.applications.values()).find(
+      a => a.email.toLowerCase() === user.email.toLowerCase()
+    );
+    if (appRecord) {
+      if (passportPhoto) appRecord.passportPhoto = passportPhoto;
+      if (passportNumber) appRecord.idDocumentNumber = passportNumber;
+      if (nationality) appRecord.nationality = nationality;
+    }
+
+    db.addAuditLog({
+      actorId: userId,
+      actorEmail: user.email,
+      actorRole: 'CUSTOMER',
+      action: 'PASSPORT_UPDATED',
+      targetType: 'USER',
+      targetId: user.id,
+      ipAddress: '108.45.192.8',
+      userAgent: req.headers['user-agent'] || 'First Atlantic Web Client',
+      details: `Customer updated verified passport photo and credentials.`
+    });
+
+    res.json({ success: true, user, message: 'Passport identity profile updated.' });
+  });
+
+  app.put('/api/user/pin', (req, res) => {
+    const userId = getUserIdFromHeader(req);
+    const user = db.users.get(userId);
+    if (!user) return res.status(404).json({ error: 'User not found or session invalid.' });
+
+    const { currentPin, newPin } = req.body;
+    if (user.loginPin && user.loginPin !== currentPin) {
+      return res.status(400).json({ error: 'Current security PIN is incorrect.' });
+    }
+    if (!newPin || newPin.length !== 4 || !/^\d{4}$/.test(newPin)) {
+      return res.status(400).json({ error: 'New PIN must be exactly 4 numeric digits.' });
+    }
+
+    user.loginPin = newPin;
+
+    db.addAuditLog({
+      actorId: userId,
+      actorEmail: user.email,
+      actorRole: 'CUSTOMER',
+      action: 'SECURITY_PIN_CHANGED',
+      targetType: 'USER',
+      targetId: user.id,
+      ipAddress: '108.45.192.8',
+      userAgent: req.headers['user-agent'] || 'First Atlantic Web Client',
+      details: `Customer changed 4-digit security PIN.`
+    });
+
+    res.json({ success: true, message: 'Security PIN updated successfully.' });
+  });
+
   app.post('/api/auth/switch-demo-user', (req, res) => {
     const { userId } = req.body;
     const user = db.users.get(userId);

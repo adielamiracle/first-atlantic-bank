@@ -4,12 +4,16 @@
 
 :root {
   color-scheme: light;
-  /* Bank of America Connections / Roboto / Open Sans font stack */
-  font-family: "Connections", "Connections Sans", "Roboto", "Open Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  /* Single clean unified modern typography font stack */
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11', 'tnum';
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
+  --bank-blue: #004281;
+  --bank-blue-hover: #003366;
+  --fintech-green: #00A651;
+  --fintech-green-hover: #008f45;
 }
 
 html.dark {
@@ -17,40 +21,38 @@ html.dark {
 }
 
 body {
-  font-family: "Connections", "Connections Sans", "Roboto", "Open Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   font-size: 14px;
   line-height: 1.5;
-  letter-spacing: 0;
-  color: #333333;
+  letter-spacing: -0.01em;
+  color: #1e293b;
+  background-color: #f8fafc;
 }
 
 .dark body {
-  color: #e2e8f0;
+  color: #f1f5f9;
+  background-color: #0b1322;
 }
 
-/* Bank of America Typography Classes */
-.font-boa {
-  font-family: "Connections", "Connections Sans", "Roboto", "Open Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
-}
-
-.font-serif {
-  font-family: "Connections", "Connections Sans", "Roboto", "Open Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
-}
-
+/* Single Unified Font Class */
+.font-sans,
+.font-boa,
+.font-serif,
 .font-cinzel {
-  font-family: "Connections", "Connections Sans", "Roboto", "Open Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
 }
 
 .font-mono {
   font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 }
 
-/* Bank of America Exact Font Sizes */
+/* Typography Hierarchy */
 .boa-title-xl {
   font-size: 28px;
   line-height: 1.25;
   font-weight: 700;
-  color: #012169;
+  color: #004281;
+  letter-spacing: -0.02em;
 }
 .dark .boa-title-xl {
   color: #ffffff;
@@ -60,27 +62,29 @@ body {
   font-size: 22px;
   line-height: 1.3;
   font-weight: 600;
-  color: #012169;
+  color: #004281;
+  letter-spacing: -0.015em;
 }
 .dark .boa-title-lg {
   color: #ffffff;
 }
 
 .boa-title-md {
-  font-size: 18px;
+  font-size: 17px;
   line-height: 1.35;
   font-weight: 600;
-  color: #012169;
+  color: #004281;
+  letter-spacing: -0.01em;
 }
 .dark .boa-title-md {
   color: #ffffff;
 }
 
 .boa-title-sm {
-  font-size: 15px;
+  font-size: 14px;
   line-height: 1.4;
   font-weight: 600;
-  color: #111827;
+  color: #0f172a;
 }
 .dark .boa-title-sm {
   color: #f1f5f9;
@@ -89,7 +93,7 @@ body {
 .boa-body {
   font-size: 14px;
   line-height: 1.5;
-  color: #374151;
+  color: #334155;
 }
 .dark .boa-body {
   color: #cbd5e1;
@@ -98,7 +102,7 @@ body {
 .boa-body-sm {
   font-size: 13px;
   line-height: 1.45;
-  color: #4b5563;
+  color: #475569;
 }
 .dark .boa-body-sm {
   color: #94a3b8;
@@ -107,7 +111,7 @@ body {
 .boa-caption {
   font-size: 12px;
   line-height: 1.4;
-  color: #6b7280;
+  color: #64748b;
 }
 .dark .boa-caption {
   color: #94a3b8;
@@ -120,45 +124,73 @@ body {
 }
 
 .boa-balance {
-  font-size: 28px;
-  line-height: 1.2;
-  font-weight: 600;
+  font-size: 32px;
+  line-height: 1.15;
+  font-weight: 700;
   font-variant-numeric: tabular-nums;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.03em;
+  color: #004281;
 }
 
-/* Bank of America Card & Form Styling */
+/* Clean Minimal Card - Eliminates Box-in-Box clutter */
 .boa-card {
   background-color: #ffffff;
-  border: 1px solid #d1d5db;
-  border-radius: 8px;
-  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.03);
 }
 .dark .boa-card {
-  background-color: #0d1b30;
-  border-color: #1e365d;
-  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.4);
+  background-color: #0f172a;
+  border-color: #1e293b;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.2);
 }
 
-.boa-btn-primary {
-  background-color: #012169;
-  color: #ffffff;
-  font-size: 14px;
-  font-weight: 600;
-  border-radius: 6px;
-  padding: 8px 16px;
-  transition: background-color 0.15s ease;
+.paystack-card {
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.04);
 }
-.boa-btn-primary:hover {
-  background-color: #00174a;
+.dark .paystack-card {
+  background-color: #0f172a;
+  border-color: #1e293b;
+}
+
+/* Action Buttons */
+.boa-btn-primary,
+.btn-bank-blue {
+  background-color: #004281;
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 600;
+  border-radius: 8px;
+  padding: 8px 16px;
+  transition: all 0.15s ease;
+}
+.boa-btn-primary:hover,
+.btn-bank-blue:hover {
+  background-color: #003366;
+}
+
+.btn-fintech-green {
+  background-color: #00A651;
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 600;
+  border-radius: 8px;
+  padding: 8px 16px;
+  transition: all 0.15s ease;
+}
+.btn-fintech-green:hover {
+  background-color: #008f45;
 }
 
 .boa-btn-red {
   background-color: #d4001a;
   color: #ffffff;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 600;
-  border-radius: 6px;
+  border-radius: 8px;
   padding: 8px 16px;
   transition: background-color 0.15s ease;
 }
@@ -168,24 +200,25 @@ body {
 
 .boa-btn-secondary {
   background-color: #ffffff;
-  color: #012169;
-  border: 1px solid #012169;
-  font-size: 14px;
+  color: #004281;
+  border: 1px solid #cbd5e1;
+  font-size: 13px;
   font-weight: 600;
-  border-radius: 6px;
+  border-radius: 8px;
   padding: 8px 16px;
   transition: all 0.15s ease;
 }
 .boa-btn-secondary:hover {
-  background-color: #f0f4fa;
+  background-color: #f1f5f9;
+  border-color: #004281;
 }
 .dark .boa-btn-secondary {
-  background-color: transparent;
+  background-color: #1e293b;
   color: #93c5fd;
-  border-color: #3b82f6;
+  border-color: #334155;
 }
 .dark .boa-btn-secondary:hover {
-  background-color: rgba(59, 130, 246, 0.1);
+  background-color: #334155;
 }
 
 @keyframes marquee {

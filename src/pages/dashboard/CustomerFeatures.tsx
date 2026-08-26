@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useBank } from '../../context/BankContext';
 import { CurrencyDisplay } from '../../components/common/CurrencyDisplay';
 import { StatusBadge } from '../../components/common/StatusBadge';
+import { PassportPhotoUploader } from '../../components/common/PassportPhotoUploader';
 import {
   Camera,
   CheckCircle2,
@@ -40,7 +41,10 @@ import {
   Layers,
   Zap,
   CreditCard,
-  X
+  X,
+  Upload,
+  UserCheck,
+  BadgeCheck
 } from 'lucide-react';
 
 export const DepositCheckPage: React.FC = () => {
@@ -861,7 +865,10 @@ export const ProfilePage: React.FC = () => {
     toggleBiometrics,
     updateBiometricSettings,
     openBiometricPrompt,
-    accounts
+    accounts,
+    updatePassportDetails,
+    updateLoginPin,
+    updateCurrentCustomerProfile
   } = useBank();
 
   const [activeTab, setActiveTab] = useState<'personal' | 'routing' | 'security' | 'preferences'>('personal');
@@ -869,7 +876,22 @@ export const ProfilePage: React.FC = () => {
   const [lastName, setLastName] = useState(currentUser?.lastName || 'Sterling');
   const [email, setEmail] = useState(currentUser?.email || 'sterling.private@firstatlantic.com');
   const [phone, setPhone] = useState(currentUser?.phone || '(212) 849-2000');
-  const [address, setAddress] = useState('740 Park Avenue, Apt 14B, New York, NY 10021');
+  const [address, setAddress] = useState(currentUser?.address || '740 Park Avenue, Apt 14B, New York, NY 10021');
+  
+  // Passport Identity Details
+  const [passportPhoto, setPassportPhoto] = useState(currentUser?.passportPhoto || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&auto=format&fit=crop&q=80');
+  const [passportNumber, setPassportNumber] = useState(currentUser?.passportNumber || 'P98420193');
+  const [nationality, setNationality] = useState(currentUser?.nationality || 'United States');
+  const [isSavingPassport, setIsSavingPassport] = useState(false);
+  const [isSavingProfile, setIsSavingProfile] = useState(false);
+  const [showPassportModal, setShowPassportModal] = useState(false);
+
+  // Security PIN states
+  const [currentPin, setCurrentPin] = useState('');
+  const [newPin, setNewPin] = useState('');
+  const [confirmPin, setConfirmPin] = useState('');
+  const [isUpdatingPin, setIsUpdatingPin] = useState(false);
+
   const [showCertificateModal, setShowCertificateModal] = useState(false);
   const [showDirectDepositModal, setShowDirectDepositModal] = useState(false);
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
@@ -880,6 +902,20 @@ export const ProfilePage: React.FC = () => {
   const [emailAlerts, setEmailAlerts] = useState(true);
   const [fraudShieldEnabled, setFraudShieldEnabled] = useState(true);
 
+  // Sync state if currentUser changes
+  React.useEffect(() => {
+    if (currentUser) {
+      if (currentUser.firstName) setFirstName(currentUser.firstName);
+      if (currentUser.lastName) setLastName(currentUser.lastName);
+      if (currentUser.email) setEmail(currentUser.email);
+      if (currentUser.phone) setPhone(currentUser.phone);
+      if (currentUser.address) setAddress(currentUser.address);
+      if (currentUser.passportPhoto) setPassportPhoto(currentUser.passportPhoto);
+      if (currentUser.passportNumber) setPassportNumber(currentUser.passportNumber);
+      if (currentUser.nationality) setNationality(currentUser.nationality);
+    }
+  }, [currentUser]);
+
   const handleCopy = (text: string, label: string) => {
     navigator.clipboard.writeText(text);
     setCopiedCode(label);
@@ -887,9 +923,55 @@ export const ProfilePage: React.FC = () => {
     setTimeout(() => setCopiedCode(null), 2500);
   };
 
-  const handleSave = (e: React.FormEvent) => {
+  const handleSaveContact = async (e: React.FormEvent) => {
     e.preventDefault();
-    showToast('SUCCESS', 'Profile & Settings Saved', 'Your personal contact information and delivery preferences have been updated.');
+    setIsSavingProfile(true);
+    const res = await updateCurrentCustomerProfile({
+      firstName,
+      lastName,
+      email,
+      phone,
+      address
+    });
+    setIsSavingProfile(false);
+  };
+
+  const handleSavePassport = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSavingPassport(true);
+    const res = await updatePassportDetails({
+      passportPhoto,
+      passportNumber,
+      nationality
+    });
+    setIsSavingPassport(false);
+    if (res.success) {
+      setShowPassportModal(false);
+    }
+  };
+
+  const handlePinSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!currentPin || currentPin.length !== 4) {
+      showToast('ERROR', 'PIN Error', 'Please enter your current 4-digit PIN.');
+      return;
+    }
+    if (newPin.length !== 4 || !/^\d{4}$/.test(newPin)) {
+      showToast('ERROR', 'Invalid PIN', 'New PIN must be exactly 4 numeric digits.');
+      return;
+    }
+    if (newPin !== confirmPin) {
+      showToast('ERROR', 'Mismatch', 'New PIN and confirmation do not match.');
+      return;
+    }
+    setIsUpdatingPin(true);
+    const res = await updateLoginPin(currentPin, newPin);
+    setIsUpdatingPin(false);
+    if (res.success) {
+      setCurrentPin('');
+      setNewPin('');
+      setConfirmPin('');
+    }
   };
 
   const primaryAccount = accounts.find(a => a.type === 'CHECKING_PREMIER') || accounts[0];
@@ -902,66 +984,101 @@ export const ProfilePage: React.FC = () => {
         {/* Top Red Heritage Stripe */}
         <div className="h-1 bg-[#d4001a] w-full" />
         
-        <div className="p-6 sm:p-7 flex flex-col md:flex-row md:items-center justify-between gap-6">
-          <div className="flex items-start sm:items-center gap-4">
-            <div className="w-16 h-16 sm:w-18 sm:h-18 rounded-lg overflow-hidden border-2 border-white/80 bg-slate-900 shrink-0 shadow-md">
-              <img
-                src={currentUser?.passportPhoto || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&auto=format&fit=crop&q=80'}
-                alt="Profile photo"
-                className="w-full h-full object-cover"
-                referrerPolicy="no-referrer"
-              />
+        <div className="p-4 sm:p-6 flex flex-col md:flex-row md:items-center justify-between gap-5">
+          <div className="flex items-center gap-4">
+            {/* Interactive Avatar with Passport Quick Upload */}
+            <div className="relative group shrink-0">
+              <div 
+                onClick={() => setShowPassportModal(true)}
+                className="w-14 h-14 sm:w-16 sm:h-16 rounded-lg overflow-hidden border-2 border-white/80 bg-slate-900 shadow-md cursor-pointer relative hover:opacity-95 transition-opacity"
+                title="Click to change or upload passport photo"
+              >
+                <img
+                  src={passportPhoto || currentUser?.passportPhoto || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&auto=format&fit=crop&q=80'}
+                  alt="Profile photo"
+                  className="w-full h-full object-cover"
+                  referrerPolicy="no-referrer"
+                />
+                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white">
+                  <Camera className="w-4 h-4 text-white drop-shadow-xs" />
+                  <span className="text-[9px] font-semibold uppercase tracking-wider mt-0.5">Edit</span>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowPassportModal(true)}
+                className="absolute -bottom-1.5 -right-1.5 p-1 bg-[#d4001a] hover:bg-[#b30016] text-white rounded-full shadow-md border-2 border-[#012169] cursor-pointer transition-colors"
+                title="Upload/Take Passport Photo"
+              >
+                <Camera className="w-3 h-3" />
+              </button>
             </div>
 
             <div className="space-y-1">
-              <div className="flex items-center gap-2">
-                <span className="text-[11px] font-semibold uppercase tracking-wider bg-white/15 px-2.5 py-0.5 rounded text-white border border-white/20">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-wider bg-white/15 px-2 py-0.5 rounded text-white border border-white/20">
                   {currentUser?.kycTier ? String(currentUser.kycTier).replace(/_/g, ' ') : 'Preferred Rewards Member'}
                 </span>
-                <span className="text-[11px] font-semibold text-emerald-300 flex items-center gap-1 bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-500/40">
-                  <ShieldCheck className="w-3.5 h-3.5" /> FDIC Insured
+                <span className="text-[10px] sm:text-[11px] font-semibold text-emerald-300 flex items-center gap-1 bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-500/40">
+                  <ShieldCheck className="w-3 h-3" /> FDIC Insured
                 </span>
+                <button
+                  type="button"
+                  onClick={() => setShowPassportModal(true)}
+                  className="text-[10px] sm:text-[11px] font-medium text-amber-200 hover:text-white underline flex items-center gap-1 cursor-pointer transition-colors"
+                >
+                  <Upload className="w-2.5 h-2.5" />
+                  Change Passport Photo
+                </button>
               </div>
 
-              <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-white">
-                {currentUser?.firstName || 'Jonathan'} {currentUser?.lastName || 'Sterling'}
+              <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-white">
+                {currentUser?.firstName || firstName} {currentUser?.lastName || lastName}
               </h1>
 
-              <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-200">
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-slate-200">
                 <span>Online ID: <strong className="text-white font-mono">{currentUser?.username || 'jsterling'}</strong></span>
                 <span>•</span>
                 <span>Customer Since: <strong className="text-white">2018</strong></span>
                 <span>•</span>
-                <span>Primary Bank: <strong className="text-white">First Atlantic &amp; Bank of America Member</strong></span>
+                <span>Bank: <strong className="text-white">First Atlantic Bank</strong></span>
               </div>
             </div>
           </div>
 
           {/* Header Action Buttons */}
-          <div className="flex flex-wrap md:flex-col gap-2 shrink-0">
+          <div className="flex flex-wrap sm:flex-nowrap gap-2 shrink-0">
+            <button
+              onClick={() => setShowPassportModal(true)}
+              className="px-3 py-1.5 rounded bg-white/15 hover:bg-white/25 border border-white/30 text-white text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer shadow-xs"
+            >
+              <Camera className="w-3.5 h-3.5" />
+              <span>Update Photo</span>
+            </button>
+
             <button
               onClick={() => setShowDirectDepositModal(true)}
-              className="px-4 py-2 rounded bg-[#d4001a] hover:bg-[#b30016] text-white text-xs font-semibold uppercase tracking-wider flex items-center justify-center gap-1.5 transition-colors cursor-pointer shadow-xs"
+              className="px-3 py-1.5 rounded bg-[#d4001a] hover:bg-[#b30016] text-white text-xs font-semibold uppercase tracking-wider flex items-center justify-center gap-1.5 transition-colors cursor-pointer shadow-xs"
             >
               <FileText className="w-3.5 h-3.5" />
-              <span>Direct Deposit Form</span>
+              <span>Direct Deposit</span>
             </button>
 
             <button
               onClick={() => setShowCertificateModal(true)}
-              className="px-4 py-2 rounded bg-white hover:bg-slate-100 text-[#012169] text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer shadow-xs"
+              className="px-3 py-1.5 rounded bg-white hover:bg-slate-100 text-[#012169] text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer shadow-xs"
             >
               <Award className="w-3.5 h-3.5 text-[#012169]" />
-              <span>Proof of Standing</span>
+              <span>Standing</span>
             </button>
           </div>
         </div>
 
         {/* Bank of America Tab Bar */}
-        <div className="bg-[#00174a] px-6 border-t border-white/10 flex overflow-x-auto gap-1 text-xs font-semibold">
+        <div className="bg-[#00174a] px-4 sm:px-6 border-t border-white/10 flex overflow-x-auto gap-1 text-xs font-semibold no-scrollbar">
           <button
             onClick={() => setActiveTab('personal')}
-            className={`py-3 px-4 border-b-2 transition-colors cursor-pointer whitespace-nowrap ${
+            className={`py-2.5 px-3 sm:px-4 border-b-2 transition-colors cursor-pointer whitespace-nowrap ${
               activeTab === 'personal'
                 ? 'border-[#d4001a] text-white font-bold'
                 : 'border-transparent text-slate-300 hover:text-white'
@@ -972,7 +1089,7 @@ export const ProfilePage: React.FC = () => {
 
           <button
             onClick={() => setActiveTab('routing')}
-            className={`py-3 px-4 border-b-2 transition-colors cursor-pointer whitespace-nowrap ${
+            className={`py-2.5 px-3 sm:px-4 border-b-2 transition-colors cursor-pointer whitespace-nowrap ${
               activeTab === 'routing'
                 ? 'border-[#d4001a] text-white font-bold'
                 : 'border-transparent text-slate-300 hover:text-white'
@@ -983,7 +1100,7 @@ export const ProfilePage: React.FC = () => {
 
           <button
             onClick={() => setActiveTab('security')}
-            className={`py-3 px-4 border-b-2 transition-colors cursor-pointer whitespace-nowrap ${
+            className={`py-2.5 px-3 sm:px-4 border-b-2 transition-colors cursor-pointer whitespace-nowrap ${
               activeTab === 'security'
                 ? 'border-[#d4001a] text-white font-bold'
                 : 'border-transparent text-slate-300 hover:text-white'
@@ -994,7 +1111,7 @@ export const ProfilePage: React.FC = () => {
 
           <button
             onClick={() => setActiveTab('preferences')}
-            className={`py-3 px-4 border-b-2 transition-colors cursor-pointer whitespace-nowrap ${
+            className={`py-2.5 px-3 sm:px-4 border-b-2 transition-colors cursor-pointer whitespace-nowrap ${
               activeTab === 'preferences'
                 ? 'border-[#d4001a] text-white font-bold'
                 : 'border-transparent text-slate-300 hover:text-white'
@@ -1008,7 +1125,102 @@ export const ProfilePage: React.FC = () => {
       {/* 2. TAB: Personal & Contact Information */}
       {activeTab === 'personal' && (
         <div className="space-y-6">
-          <form onSubmit={handleSave} className="boa-card p-6 sm:p-7 space-y-6">
+          {/* PASSPORT & BIOMETRIC IDENTITY SECTION */}
+          <div className="boa-card p-5 sm:p-6 space-y-5">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-200 dark:border-slate-800">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded bg-[#012169] text-white flex items-center justify-center">
+                  <UserCheck className="w-5 h-5" />
+                </div>
+                <div>
+                  <h2 className="boa-title-md">Passport &amp; Official Photo Identification</h2>
+                  <p className="boa-caption mt-0.5">
+                    Your verified sovereign passport photograph and identity record on file with First Atlantic &amp; Bank of America.
+                  </p>
+                </div>
+              </div>
+              <span className="px-2.5 py-1 rounded text-xs font-semibold bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800 self-start sm:self-auto">
+                Biometrics Active
+              </span>
+            </div>
+
+            <form onSubmit={handleSavePassport} className="space-y-5">
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+                {/* Passport Photo Uploader Column */}
+                <div className="lg:col-span-6 bg-slate-50 dark:bg-slate-900/60 p-4 rounded-lg border border-slate-200 dark:border-slate-800">
+                  <label className="block text-xs font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider mb-2">
+                    Profile / Passport Photo
+                  </label>
+                  <PassportPhotoUploader
+                    currentPhoto={passportPhoto}
+                    onPhotoChange={(url) => {
+                      setPassportPhoto(url);
+                      showToast('SUCCESS', 'Photo Selected', 'New photo ready to save. Click "Save Passport & Photo" below.');
+                    }}
+                    title="Upload or Change Passport Photo"
+                    description="Upload your picture or take a live photo using your camera to update your profile."
+                  />
+                </div>
+
+                {/* Passport Number & Nationality Column */}
+                <div className="lg:col-span-6 space-y-4">
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                      Passport / Sovereign Document Number
+                    </label>
+                    <input
+                      type="text"
+                      value={passportNumber}
+                      onChange={(e) => setPassportNumber(e.target.value)}
+                      placeholder="e.g. P98420193"
+                      className="w-full px-3 py-2 text-sm font-mono bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-md text-slate-900 dark:text-slate-100 focus:outline-none focus:border-[#012169]"
+                    />
+                    <span className="text-[11px] text-slate-500 mt-1 block">
+                      Must match the document on file with compliance &amp; KYC verification.
+                    </span>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                      Issuing Country / Nationality
+                    </label>
+                    <input
+                      type="text"
+                      value={nationality}
+                      onChange={(e) => setNationality(e.target.value)}
+                      placeholder="e.g. United States"
+                      className="w-full px-3 py-2 text-sm bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-md text-slate-900 dark:text-slate-100 focus:outline-none focus:border-[#012169]"
+                    />
+                  </div>
+
+                  {/* Verification Badges */}
+                  <div className="p-3 bg-blue-50/70 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-md space-y-2 text-xs text-blue-900 dark:text-blue-200">
+                    <div className="flex items-center gap-2 font-semibold text-[#012169] dark:text-blue-300">
+                      <BadgeCheck className="w-4 h-4 text-emerald-600" />
+                      <span>Sovereign Identity Protection</span>
+                    </div>
+                    <p className="text-[11px] text-slate-600 dark:text-slate-300 leading-relaxed">
+                      Your passport photograph and document number are encrypted via AES-256 and matched against our biometrics vault for wire transfers and large transactions.
+                    </p>
+                  </div>
+
+                  <div className="flex justify-end pt-2">
+                    <button
+                      type="submit"
+                      disabled={isSavingPassport}
+                      className="boa-btn-red text-xs flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                    >
+                      {isSavingPassport ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
+                      <span>{isSavingPassport ? 'Saving Passport...' : 'Save Passport & Photo'}</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </form>
+          </div>
+
+          {/* CONTACT & RESIDENTIAL ADDRESS FORM */}
+          <form onSubmit={handleSaveContact} className="boa-card p-5 sm:p-6 space-y-5">
             <div className="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-800">
               <div>
                 <h2 className="boa-title-md">Personal Information &amp; Primary Identification</h2>
@@ -1030,7 +1242,7 @@ export const ProfilePage: React.FC = () => {
                   type="text"
                   value={firstName}
                   onChange={(e) => setFirstName(e.target.value)}
-                  className="w-full px-3.5 py-2 text-sm bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-md text-slate-900 dark:text-slate-100 focus:outline-none focus:border-[#012169]"
+                  className="w-full px-3 py-2 text-sm bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-md text-slate-900 dark:text-slate-100 focus:outline-none focus:border-[#012169]"
                 />
               </div>
 
@@ -1042,7 +1254,7 @@ export const ProfilePage: React.FC = () => {
                   type="text"
                   value={lastName}
                   onChange={(e) => setLastName(e.target.value)}
-                  className="w-full px-3.5 py-2 text-sm bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-md text-slate-900 dark:text-slate-100 focus:outline-none focus:border-[#012169]"
+                  className="w-full px-3 py-2 text-sm bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-md text-slate-900 dark:text-slate-100 focus:outline-none focus:border-[#012169]"
                 />
               </div>
             </div>
@@ -1056,7 +1268,7 @@ export const ProfilePage: React.FC = () => {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full px-3.5 py-2 text-sm bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-md text-slate-900 dark:text-slate-100 focus:outline-none focus:border-[#012169]"
+                  className="w-full px-3 py-2 text-sm bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-md text-slate-900 dark:text-slate-100 focus:outline-none focus:border-[#012169]"
                 />
               </div>
 
@@ -1068,7 +1280,7 @@ export const ProfilePage: React.FC = () => {
                   type="tel"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
-                  className="w-full px-3.5 py-2 text-sm bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-md text-slate-900 dark:text-slate-100 focus:outline-none focus:border-[#012169]"
+                  className="w-full px-3 py-2 text-sm bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-md text-slate-900 dark:text-slate-100 focus:outline-none focus:border-[#012169]"
                 />
               </div>
             </div>
@@ -1081,7 +1293,7 @@ export const ProfilePage: React.FC = () => {
                 type="text"
                 value={address}
                 onChange={(e) => setAddress(e.target.value)}
-                className="w-full px-3.5 py-2 text-sm bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-md text-slate-900 dark:text-slate-100 focus:outline-none focus:border-[#012169]"
+                className="w-full px-3 py-2 text-sm bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-md text-slate-900 dark:text-slate-100 focus:outline-none focus:border-[#012169]"
               />
             </div>
 
@@ -1095,8 +1307,8 @@ export const ProfilePage: React.FC = () => {
 
               <div className="p-3 bg-slate-50 dark:bg-slate-900/60 rounded border border-slate-200 dark:border-slate-800">
                 <span className="text-[11px] font-semibold text-slate-500 uppercase block">Passport / Sovereign Doc</span>
-                <span className="text-sm font-semibold font-mono text-slate-900 dark:text-slate-100">{currentUser?.passportNumber || 'P98420193'}</span>
-                <span className="text-[10px] text-slate-500 block mt-0.5">Nationality: {currentUser?.nationality || 'United States'}</span>
+                <span className="text-sm font-semibold font-mono text-slate-900 dark:text-slate-100">{passportNumber || currentUser?.passportNumber || 'P98420193'}</span>
+                <span className="text-[10px] text-slate-500 block mt-0.5">Nationality: {nationality || currentUser?.nationality || 'United States'}</span>
               </div>
 
               <div className="p-3 bg-slate-50 dark:bg-slate-900/60 rounded border border-slate-200 dark:border-slate-800">
@@ -1109,12 +1321,87 @@ export const ProfilePage: React.FC = () => {
             <div className="flex justify-end pt-2">
               <button
                 type="submit"
-                className="boa-btn-primary cursor-pointer shadow-xs"
+                disabled={isSavingProfile}
+                className="boa-btn-primary cursor-pointer shadow-xs text-xs flex items-center gap-1.5 disabled:opacity-50"
               >
-                Save Contact Changes
+                {isSavingProfile && <RefreshCw className="w-3.5 h-3.5 animate-spin" />}
+                <span>{isSavingProfile ? 'Saving...' : 'Save Contact Changes'}</span>
               </button>
             </div>
           </form>
+        </div>
+      )}
+
+      {/* QUICK PASSPORT MODAL */}
+      {showPassportModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-xs">
+          <div className="bg-white dark:bg-[#0d1b30] w-full max-w-lg rounded-lg border border-slate-300 dark:border-slate-700 shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+            <div className="p-4 bg-[#012169] text-white flex items-center justify-between border-b border-[#00174a]">
+              <div className="flex items-center gap-2.5">
+                <Camera className="w-5 h-5 text-amber-300" />
+                <h3 className="text-sm font-bold text-white">Update Passport &amp; Profile Picture</h3>
+              </div>
+              <button
+                onClick={() => setShowPassportModal(false)}
+                className="text-slate-300 hover:text-white p-1 rounded cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="p-5 space-y-4 overflow-y-auto">
+              <PassportPhotoUploader
+                currentPhoto={passportPhoto}
+                onPhotoChange={(url) => setPassportPhoto(url)}
+                title="Select or Capture Photo"
+                description="Upload an image from your device or use your camera."
+              />
+
+              <div className="grid grid-cols-2 gap-3 pt-2">
+                <div>
+                  <label className="block text-[11px] font-semibold text-slate-600 dark:text-slate-400 mb-1">
+                    Passport Number
+                  </label>
+                  <input
+                    type="text"
+                    value={passportNumber}
+                    onChange={(e) => setPassportNumber(e.target.value)}
+                    className="w-full px-2.5 py-1.5 text-xs font-mono bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded text-slate-900 dark:text-slate-100"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[11px] font-semibold text-slate-600 dark:text-slate-400 mb-1">
+                    Nationality
+                  </label>
+                  <input
+                    type="text"
+                    value={nationality}
+                    onChange={(e) => setNationality(e.target.value)}
+                    className="w-full px-2.5 py-1.5 text-xs bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded text-slate-900 dark:text-slate-100"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="p-3.5 bg-slate-100 dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setShowPassportModal(false)}
+                className="boa-btn-secondary text-xs cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleSavePassport}
+                disabled={isSavingPassport}
+                className="boa-btn-primary text-xs flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+              >
+                {isSavingPassport && <RefreshCw className="w-3.5 h-3.5 animate-spin" />}
+                <span>{isSavingPassport ? 'Saving...' : 'Apply Photo to Profile'}</span>
+              </button>
+            </div>
+          </div>
         </div>
       )}
 
@@ -1392,49 +1679,51 @@ export const ProfilePage: React.FC = () => {
             </div>
 
             <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                const form = e.currentTarget;
-                const newPin = (form.elements.namedItem('newPin') as HTMLInputElement).value;
-                const confirmPin = (form.elements.namedItem('confirmPin') as HTMLInputElement).value;
-                if (newPin.length !== 4 || !/^\d{4}$/.test(newPin)) {
-                  showToast('ERROR', 'Invalid PIN', 'PIN must be exactly 4 numeric digits.');
-                  return;
-                }
-                if (newPin !== confirmPin) {
-                  showToast('ERROR', 'Mismatch', 'New PIN and confirmation do not match.');
-                  return;
-                }
-                showToast('SUCCESS', 'Security PIN Updated', 'Your new 4-digit PIN is now active.');
-                form.reset();
-              }}
+              onSubmit={handlePinSubmit}
               className="space-y-4"
             >
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                    Current 4-Digit PIN
+                  </label>
+                  <input
+                    type="password"
+                    maxLength={4}
+                    required
+                    value={currentPin}
+                    onChange={(e) => setCurrentPin(e.target.value)}
+                    placeholder="••••"
+                    className="w-full px-3 py-2 text-sm font-mono text-center tracking-[0.4em] bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-md text-slate-900 dark:text-slate-100 focus:outline-none focus:border-[#012169]"
+                  />
+                  <span className="text-[10px] text-slate-500 mt-1 block">Default demo: 1234 or 8492</span>
+                </div>
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
                     New 4-Digit PIN
                   </label>
                   <input
-                    name="newPin"
                     type="password"
                     maxLength={4}
                     required
+                    value={newPin}
+                    onChange={(e) => setNewPin(e.target.value)}
                     placeholder="••••"
-                    className="w-full px-3.5 py-2 text-sm font-mono text-center tracking-[0.5em] bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-md text-slate-900 dark:text-slate-100 focus:outline-none focus:border-[#012169]"
+                    className="w-full px-3 py-2 text-sm font-mono text-center tracking-[0.4em] bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-md text-slate-900 dark:text-slate-100 focus:outline-none focus:border-[#012169]"
                   />
                 </div>
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                    Confirm New 4-Digit PIN
+                    Confirm New PIN
                   </label>
                   <input
-                    name="confirmPin"
                     type="password"
                     maxLength={4}
                     required
+                    value={confirmPin}
+                    onChange={(e) => setConfirmPin(e.target.value)}
                     placeholder="••••"
-                    className="w-full px-3.5 py-2 text-sm font-mono text-center tracking-[0.5em] bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-md text-slate-900 dark:text-slate-100 focus:outline-none focus:border-[#012169]"
+                    className="w-full px-3 py-2 text-sm font-mono text-center tracking-[0.4em] bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-md text-slate-900 dark:text-slate-100 focus:outline-none focus:border-[#012169]"
                   />
                 </div>
               </div>
@@ -1442,9 +1731,11 @@ export const ProfilePage: React.FC = () => {
               <div className="flex justify-end pt-1">
                 <button
                   type="submit"
-                  className="boa-btn-primary cursor-pointer"
+                  disabled={isUpdatingPin}
+                  className="boa-btn-primary cursor-pointer text-xs flex items-center gap-1.5 disabled:opacity-50"
                 >
-                  Update Security PIN
+                  {isUpdatingPin && <RefreshCw className="w-3.5 h-3.5 animate-spin" />}
+                  <span>{isUpdatingPin ? 'Updating PIN...' : 'Update Security PIN'}</span>
                 </button>
               </div>
             </form>

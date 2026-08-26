@@ -22,12 +22,17 @@ import {
   ChevronRight,
   Menu,
   X,
-  Sliders,
-  Send,
-  Building,
-  KeyRound,
+  Plus,
+  ArrowUpRight,
+  ArrowDownLeft,
+  Building2,
+  Check,
+  TrendingUp,
   FileCode,
-  Shield
+  SlidersHorizontal,
+  LogOut,
+  Sparkles,
+  BarChart2
 } from 'lucide-react';
 import { DirectFundsManager } from './DirectFundsManager';
 import { TransactionHistoryManager } from './TransactionHistoryManager';
@@ -56,15 +61,14 @@ export const AdminDashboard: React.FC = () => {
     accounts,
     setCurrentView,
     showToast,
-    adminSessionRole,
-    setAdminSessionRole
+    adminSessionRole
   } = useBank();
 
   const [activeTab, setActiveTab] = useState<
     'FUNDS' | 'USERS' | 'TRANSACTIONS' | 'RECEIVING_ACCOUNTS' | 'APPLICATIONS' | 'NOTIFICATIONS' | 'AUDIT_LOGS'
   >('FUNDS');
 
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isCreateCustomerOpen, setIsCreateCustomerOpen] = useState(false);
   const [editingApplication, setEditingApplication] = useState<AccountApplication | null>(null);
 
@@ -125,292 +129,309 @@ export const AdminDashboard: React.FC = () => {
     }
   };
 
-  const navItems = [
+  const navGroups = [
     {
-      id: 'FUNDS',
-      label: 'Add & Debit Funds',
-      icon: DollarSign,
-      badge: null
+      title: 'CORE BANKING',
+      items: [
+        { id: 'FUNDS', label: 'Add & Debit Funds', icon: DollarSign, badge: null },
+        { id: 'USERS', label: 'Customers & KYC', icon: Users, badge: null },
+        { id: 'TRANSACTIONS', label: 'Transaction Ledger', icon: FileText, badge: null }
+      ]
     },
     {
-      id: 'USERS',
-      label: 'User Details & KYC',
-      icon: Users,
-      badge: null
+      title: 'TREASURY & ONBOARDING',
+      items: [
+        { id: 'RECEIVING_ACCOUNTS', label: 'Treasury Accounts', icon: Landmark, badge: 'Active' },
+        {
+          id: 'APPLICATIONS',
+          label: 'Customer Applications',
+          icon: FileCheck2,
+          badge: adminStats?.pendingApplicationsCount ? `${adminStats.pendingApplicationsCount}` : null
+        }
+      ]
     },
     {
-      id: 'TRANSACTIONS',
-      label: 'Transaction History',
-      icon: FileText,
-      badge: null
-    },
-    {
-      id: 'RECEIVING_ACCOUNTS',
-      label: 'Bank Receiving Accounts',
-      icon: Landmark,
-      badge: 'Treasury'
-    },
-    {
-      id: 'APPLICATIONS',
-      label: 'Applications',
-      icon: FileCheck2,
-      badge: adminStats ? `${adminStats.pendingApplicationsCount}` : null
-    },
-    {
-      id: 'NOTIFICATIONS',
-      label: 'Alerts & Emails',
-      icon: Bell,
-      badge: unreadNotificationsCount > 0 ? `${unreadNotificationsCount}` : null
-    },
-    {
-      id: 'AUDIT_LOGS',
-      label: 'Security Audit Logs',
-      icon: ShieldCheck,
-      badge: null
+      title: 'SYSTEM & SECURITY',
+      items: [
+        {
+          id: 'NOTIFICATIONS',
+          label: 'Alerts & Messages',
+          icon: Bell,
+          badge: unreadNotificationsCount > 0 ? `${unreadNotificationsCount}` : null
+        },
+        { id: 'AUDIT_LOGS', label: 'Audit & Compliance', icon: ShieldCheck, badge: null }
+      ]
     }
   ];
 
   return (
-    <div className="min-h-screen bg-[#061222] text-slate-100 pb-16">
-      {/* Top Admin Navigation Bar */}
-      <header className="sticky top-0 z-40 bg-[#091b33]/95 backdrop-blur-md border-b border-slate-800 shadow-md">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between gap-4">
-          {/* Brand & Title */}
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#c5a880] to-[#8c6d37] text-slate-950 flex items-center justify-center font-bold font-serif shadow-sm">
-              FA
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h1 className="text-base sm:text-lg font-bold font-serif text-white tracking-wide">
-                  First Atlantic Executive Portal
-                </h1>
-                <span className="hidden sm:inline-block text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-mono">
-                  LIVE SECURE
+    <div className="min-h-screen bg-slate-50 dark:bg-[#09111e] text-slate-900 dark:text-slate-100 flex flex-col lg:flex-row">
+      {/* 1. PAYSTACK / FLUTTERWAVE STYLE SIDEBAR NAVIGATION */}
+      {/* Mobile Backdrop */}
+      {sidebarOpen && (
+        <div
+          onClick={() => setSidebarOpen(false)}
+          className="fixed inset-0 z-40 bg-slate-950/60 backdrop-blur-xs lg:hidden"
+        />
+      )}
+
+      {/* Sidebar Container */}
+      <aside
+        className={`fixed lg:sticky top-0 left-0 z-50 h-screen w-64 bg-white dark:bg-[#0f172a] border-r border-slate-200/80 dark:border-slate-800 flex flex-col justify-between transition-transform duration-200 ease-in-out ${
+          sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
+        }`}
+      >
+        {/* Top Brand / Logo */}
+        <div>
+          <div className="h-16 px-6 flex items-center justify-between border-b border-slate-100 dark:border-slate-800">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-lg bg-[#004281] text-white flex items-center justify-center font-bold text-sm shadow-xs">
+                FA
+              </div>
+              <div>
+                <span className="font-bold text-sm text-[#004281] dark:text-white tracking-tight block">
+                  First Atlantic
+                </span>
+                <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block">
+                  Admin Console
                 </span>
               </div>
-              <p className="text-[11px] text-slate-400 font-mono">
-                Admin Console • Super Admin Authority
-              </p>
+            </div>
+
+            <button
+              onClick={() => setSidebarOpen(false)}
+              className="p-1 rounded-lg text-slate-400 hover:text-slate-700 lg:hidden cursor-pointer"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+
+          {/* Quick Create Action in Sidebar */}
+          <div className="p-4">
+            <button
+              onClick={() => {
+                setIsCreateCustomerOpen(true);
+                setSidebarOpen(false);
+              }}
+              className="w-full py-2.5 px-3.5 rounded-xl bg-[#00A651] hover:bg-[#008f45] text-white font-bold text-xs shadow-xs transition-all flex items-center justify-center gap-2 cursor-pointer"
+            >
+              <Plus className="w-4 h-4" />
+              <span>+ Create Customer</span>
+            </button>
+          </div>
+
+          {/* Navigation Items Grouped */}
+          <nav className="px-3 space-y-5 overflow-y-auto max-h-[calc(100vh-210px)]">
+            {navGroups.map((group, gIdx) => (
+              <div key={gIdx} className="space-y-1">
+                <div className="px-3 text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">
+                  {group.title}
+                </div>
+                {group.items.map((item) => {
+                  const Icon = item.icon;
+                  const isActive = activeTab === item.id;
+                  return (
+                    <button
+                      key={item.id}
+                      onClick={() => {
+                        setActiveTab(item.id as any);
+                        setSidebarOpen(false);
+                      }}
+                      className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+                        isActive
+                          ? 'bg-[#004281] text-white shadow-xs'
+                          : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/60 hover:text-slate-900 dark:hover:text-white'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2.5">
+                        <Icon className={`w-4 h-4 ${isActive ? 'text-white' : 'text-slate-400'}`} />
+                        <span>{item.label}</span>
+                      </div>
+                      {item.badge && (
+                        <span
+                          className={`text-[10px] font-bold px-2 py-0.5 rounded-full font-mono ${
+                            isActive
+                              ? 'bg-white text-[#004281]'
+                              : 'bg-emerald-50 text-[#00A651] dark:bg-emerald-950/60 dark:text-emerald-300'
+                          }`}
+                        >
+                          {item.badge}
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            ))}
+          </nav>
+        </div>
+
+        {/* Sidebar Footer: Super Admin Profile & Exit */}
+        <div className="p-4 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/40">
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2 min-w-0">
+              <div className="w-8 h-8 rounded-full bg-[#004281]/10 dark:bg-blue-500/20 text-[#004281] dark:text-blue-400 flex items-center justify-center font-bold text-xs shrink-0">
+                SA
+              </div>
+              <div className="min-w-0">
+                <p className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate">
+                  Executive Admin
+                </p>
+                <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-mono truncate">
+                  Super Authority
+                </p>
+              </div>
+            </div>
+
+            <button
+              onClick={() => setCurrentView('AUTH_LOGIN')}
+              title="Exit Admin Console"
+              className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors cursor-pointer"
+            >
+              <LogOut className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      </aside>
+
+      {/* 2. MAIN CONTENT AREA */}
+      <div className="flex-1 flex flex-col min-w-0">
+        {/* Top Header Bar */}
+        <header className="sticky top-0 z-30 h-16 bg-white/90 dark:bg-[#0f172a]/90 backdrop-blur-md border-b border-slate-200/80 dark:border-slate-800 px-4 sm:px-8 flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setSidebarOpen(true)}
+              className="p-2 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 lg:hidden cursor-pointer"
+            >
+              <Menu className="w-5 h-5" />
+            </button>
+            <div>
+              <h1 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white tracking-tight">
+                {navGroups.flatMap(g => g.items).find(i => i.id === activeTab)?.label || 'Admin Portal'}
+              </h1>
+              <span className="text-[11px] text-slate-400 hidden sm:inline">
+                Live Clearing &amp; Institutional Ledger Controls
+              </span>
             </div>
           </div>
 
-          {/* Right Controls */}
           <div className="flex items-center gap-2 sm:gap-3">
-            <button
-              onClick={() => setIsCreateCustomerOpen(true)}
-              className="px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-sm transition-all flex items-center gap-1.5 cursor-pointer whitespace-nowrap"
-            >
-              <Users className="w-3.5 h-3.5" />
-              <span>+ Create Customer</span>
-            </button>
-
             <button
               onClick={() => {
                 fetchAdminStats();
                 fetchApplications();
                 fetchAuditLogs();
                 fetchAdminNotifications();
-                showToast('INFO', 'Data Refreshed', 'Admin console state synchronized.');
+                showToast('INFO', 'Synchronized', 'Live ledger data updated.');
               }}
-              className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 transition-colors"
-              title="Synchronize Live Ledger Data"
+              className="px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
+              title="Refresh Live Data"
             >
-              <RefreshCw className="w-4 h-4" />
+              <RefreshCw className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Sync Data</span>
             </button>
 
             <button
-              onClick={() => setCurrentView('AUTH_LOGIN')}
-              className="px-3 py-1.5 rounded-xl bg-[#c5a880] hover:bg-[#d4af37] text-slate-950 font-bold text-xs uppercase tracking-wider transition-all shadow-sm flex items-center gap-1.5"
+              onClick={() => setIsCreateCustomerOpen(true)}
+              className="px-3.5 py-1.5 rounded-lg bg-[#00A651] hover:bg-[#008f45] text-white font-bold text-xs flex items-center gap-1.5 shadow-xs transition-colors cursor-pointer"
             >
-              <Lock className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">Exit Admin</span>
-            </button>
-
-            {/* Mobile Hamburger Button */}
-            <button
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="lg:hidden p-2 rounded-xl bg-slate-800 text-white"
-            >
-              {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+              <Plus className="w-3.5 h-3.5" />
+              <span>+ New Customer</span>
             </button>
           </div>
-        </div>
+        </header>
 
-        {/* Mobile Navigation Drawer */}
-        {mobileMenuOpen && (
-          <div className="lg:hidden bg-[#0a1f3d] border-t border-slate-800 p-4 space-y-1.5 animate-in slide-in-from-top-2 duration-150">
-            {navItems.map(item => {
-              const Icon = item.icon;
-              const isActive = activeTab === item.id;
-              return (
-                <button
-                  key={item.id}
-                  onClick={() => {
-                    setActiveTab(item.id as any);
-                    setMobileMenuOpen(false);
-                  }}
-                  className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                    isActive
-                      ? 'bg-[#c5a880] text-slate-950 shadow-sm'
-                      : 'text-slate-300 hover:bg-slate-800/80 hover:text-white'
-                  }`}
-                >
-                  <div className="flex items-center gap-2.5">
-                    <Icon className="w-4 h-4" />
-                    <span>{item.label}</span>
-                  </div>
-                  {item.badge && (
-                    <span
-                      className={`text-[10px] font-bold px-2 py-0.5 rounded-full font-mono ${
-                        isActive ? 'bg-slate-950 text-white' : 'bg-slate-700 text-slate-200'
-                      }`}
-                    >
-                      {item.badge}
-                    </span>
-                  )}
-                </button>
-              );
-            })}
-          </div>
-        )}
-      </header>
-
-      {/* Main Container */}
-      <main className="max-w-7xl mx-auto px-3 sm:px-6 pt-4 sm:pt-6 space-y-4 sm:space-y-6">
-        {/* Streamlined Executive Stats Grid (Compact on Mobile) */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4">
-          <div className="p-3 sm:p-4 rounded-xl sm:rounded-2xl bg-[#091b33] border border-slate-800 shadow-sm space-y-0.5 sm:space-y-1">
-            <span className="text-[9px] sm:text-[10px] font-bold text-slate-300 uppercase tracking-wider block">
-              Managed Vault Capital
-            </span>
-            <div className="text-base sm:text-xl md:text-2xl font-bold font-mono text-[#d4af37]">
-              <CurrencyDisplay
-                amountMinor={adminStats?.totalManagedAssetsUsdMinor || 148200000}
-                currency="USD"
-                size="lg"
-                className="font-bold text-[#d4af37] font-mono text-sm sm:text-xl"
-              />
+        {/* Main Content Body */}
+        <main className="p-3 sm:p-6 lg:p-8 space-y-4 sm:space-y-6 max-w-7xl">
+          {/* 3. 4 STAT CARDS ON TOP (Compact, Fit, Mobile-First) */}
+          <section className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3.5">
+            {/* Stat Card 1: Total Managed Liquidity */}
+            <div className="bg-white dark:bg-[#0f172a] rounded-xl p-3 sm:p-3.5 border border-slate-200/80 dark:border-slate-800 shadow-xs space-y-0.5 sm:space-y-1">
+              <span className="text-[10px] sm:text-[11px] font-semibold text-slate-400 uppercase tracking-wider block truncate">
+                Managed Assets
+              </span>
+              <div className="text-sm sm:text-base md:text-lg font-bold font-mono text-[#004281] dark:text-blue-400 truncate">
+                <CurrencyDisplay
+                  amountMinor={adminStats?.totalManagedAssetsUsdMinor || 148200000}
+                  currency="USD"
+                  size="md"
+                  className="font-bold text-[#004281] dark:text-blue-400 font-mono text-xs sm:text-sm md:text-base"
+                />
+              </div>
+              <div className="flex items-center gap-1 text-[10px] text-[#00A651] font-semibold truncate">
+                <TrendingUp className="w-3 h-3 shrink-0" />
+                <span>+14.2% Growth</span>
+              </div>
             </div>
-            <span className="text-[9px] sm:text-[10px] text-emerald-400 font-mono block truncate">&uarr; Ledger Reserve</span>
-          </div>
 
-          <div className="p-3 sm:p-4 rounded-xl sm:rounded-2xl bg-[#091b33] border border-slate-800 shadow-sm space-y-0.5 sm:space-y-1">
-            <span className="text-[9px] sm:text-[10px] font-bold text-slate-300 uppercase tracking-wider block">
-              Customer Accounts
-            </span>
-            <div className="text-base sm:text-xl md:text-2xl font-bold font-mono text-white">
-              {accounts.length} Accounts
+            {/* Stat Card 2: Customer Accounts */}
+            <div className="bg-white dark:bg-[#0f172a] rounded-xl p-3 sm:p-3.5 border border-slate-200/80 dark:border-slate-800 shadow-xs space-y-0.5 sm:space-y-1">
+              <span className="text-[10px] sm:text-[11px] font-semibold text-slate-400 uppercase tracking-wider block truncate">
+                Accounts
+              </span>
+              <div className="text-sm sm:text-base md:text-lg font-bold font-mono text-slate-900 dark:text-white truncate">
+                {accounts.length} Custody
+              </div>
+              <div className="flex items-center gap-1 text-[10px] text-slate-500 font-mono truncate">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#00A651] shrink-0" />
+                <span>US • UK • EU</span>
+              </div>
             </div>
-            <span className="text-[9px] sm:text-[10px] text-slate-300 font-mono block truncate">US • UK • EU Vaults</span>
-          </div>
 
-          <div className="p-3 sm:p-4 rounded-xl sm:rounded-2xl bg-[#091b33] border border-slate-800 shadow-sm space-y-0.5 sm:space-y-1">
-            <span className="text-[9px] sm:text-[10px] font-bold text-slate-300 uppercase tracking-wider block">
-              Pending Onboarding
-            </span>
-            <div className="text-base sm:text-xl md:text-2xl font-bold font-mono text-amber-300">
-              {adminStats?.pendingApplicationsCount || 0} In Review
+            {/* Stat Card 3: Pending KYC Onboarding */}
+            <div className="bg-white dark:bg-[#0f172a] rounded-xl p-3 sm:p-3.5 border border-slate-200/80 dark:border-slate-800 shadow-xs space-y-0.5 sm:space-y-1">
+              <span className="text-[10px] sm:text-[11px] font-semibold text-slate-400 uppercase tracking-wider block truncate">
+                Pending KYC
+              </span>
+              <div className="text-sm sm:text-base md:text-lg font-bold font-mono text-[#004281] dark:text-blue-400 truncate">
+                {adminStats?.pendingApplicationsCount || 0} In Review
+              </div>
+              <div className="flex items-center gap-1 text-[10px] text-amber-600 dark:text-amber-400 font-semibold truncate">
+                <ShieldCheck className="w-3 h-3 shrink-0" />
+                <span>AML Clearance</span>
+              </div>
             </div>
-            <span className="text-[9px] sm:text-[10px] text-amber-300/90 font-mono block truncate">KYC/AML Clearance</span>
-          </div>
 
-          <div className="p-3 sm:p-4 rounded-xl sm:rounded-2xl bg-[#091b33] border border-slate-800 shadow-sm space-y-0.5 sm:space-y-1">
-            <span className="text-[9px] sm:text-[10px] font-bold text-slate-300 uppercase tracking-wider block">
-              Inbound Desks
-            </span>
-            <div className="text-base sm:text-xl md:text-2xl font-bold font-mono text-emerald-300">
-              Active Routing
+            {/* Stat Card 4: Clearing Desks */}
+            <div className="bg-white dark:bg-[#0f172a] rounded-xl p-3 sm:p-3.5 border border-slate-200/80 dark:border-slate-800 shadow-xs space-y-0.5 sm:space-y-1">
+              <span className="text-[10px] sm:text-[11px] font-semibold text-slate-400 uppercase tracking-wider block truncate">
+                Clearing Desks
+              </span>
+              <div className="text-sm sm:text-base md:text-lg font-bold font-mono text-[#00A651] dark:text-emerald-400 truncate">
+                Active &amp; Ready
+              </div>
+              <div className="flex items-center gap-1 text-[10px] text-slate-500 font-mono truncate">
+                <span>Fedwire • SEPA</span>
+              </div>
             </div>
-            <span className="text-[9px] sm:text-[10px] text-slate-300 font-mono block truncate">Fedwire • CHAPS • SEPA</span>
-          </div>
-        </div>
+          </section>
 
-        {/* Desktop Horizontal Navigation Tabs */}
-        <div className="hidden lg:flex items-center gap-1.5 p-1.5 rounded-2xl bg-[#091b33] border border-slate-800 overflow-x-auto">
-          {navItems.map(item => {
-            const Icon = item.icon;
-            const isActive = activeTab === item.id;
-            return (
-              <button
-                key={item.id}
-                onClick={() => setActiveTab(item.id as any)}
-                className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
-                  isActive
-                    ? 'bg-[#c5a880] text-slate-950 shadow-sm'
-                    : 'text-slate-200 hover:text-white hover:bg-slate-800/60'
-                }`}
-              >
-                <Icon className="w-4 h-4" />
-                <span>{item.label}</span>
-                {item.badge && (
-                  <span
-                    className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full font-mono ${
-                      isActive ? 'bg-slate-950 text-white' : 'bg-slate-800 text-slate-200'
-                    }`}
-                  >
-                    {item.badge}
-                  </span>
-                )}
-              </button>
-            );
-          })}
-        </div>
+          {/* 4. MAIN TAB VIEWS (Clean Tables, Grouped, More Whitespace) */}
+          <div className="animate-in fade-in duration-150">
+            {/* TAB 1: DIRECT FUNDS MANAGER */}
+            {activeTab === 'FUNDS' && (
+              <div className="space-y-6">
+                <DirectFundsManager />
+              </div>
+            )}
 
-        {/* Mobile Horizontal Pill Bar (Smooth touch scroll) */}
-        <div className="flex lg:hidden items-center gap-2 overflow-x-auto pb-1 no-scrollbar -mx-1 px-1">
-          {navItems.map(item => {
-            const Icon = item.icon;
-            const isActive = activeTab === item.id;
-            return (
-              <button
-                key={item.id}
-                onClick={() => setActiveTab(item.id as any)}
-                className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold shrink-0 transition-all cursor-pointer ${
-                  isActive
-                    ? 'bg-[#c5a880] text-slate-950 font-extrabold shadow-sm ring-1 ring-[#c5a880]'
-                    : 'bg-[#091b33] text-slate-200 border border-slate-700/80 active:bg-slate-800'
-                }`}
-              >
-                <Icon className="w-3.5 h-3.5" />
-                <span className="whitespace-nowrap">{item.label}</span>
-                {item.badge && (
-                  <span className="text-[9px] px-1.5 py-0.2 rounded-full bg-slate-900 text-white font-mono">
-                    {item.badge}
-                  </span>
-                )}
-              </button>
-            );
-          })}
-        </div>
+            {/* TAB 2: USER DETAILS & KYC */}
+            {activeTab === 'USERS' && <UserDetailsInspector />}
 
-        {/* TAB CONTENT VIEWS */}
-        <div className="animate-in fade-in duration-150">
-          {/* TAB 1: DIRECT FUNDS MANAGER (ADD & DEBIT MONEY) */}
-          {activeTab === 'FUNDS' && (
-            <div className="space-y-6">
-              <DirectFundsManager />
-            </div>
-          )}
+            {/* TAB 3: TRANSACTION HISTORY & LEDGER */}
+            {activeTab === 'TRANSACTIONS' && <TransactionHistoryManager />}
 
-          {/* TAB 2: USER DETAILS & BACKEND RECORD INSPECTOR */}
-          {activeTab === 'USERS' && <UserDetailsInspector />}
+            {/* TAB 4: BANK RECEIVING ACCOUNTS */}
+            {activeTab === 'RECEIVING_ACCOUNTS' && <TreasuryReceivingAccountsTab />}
 
-          {/* TAB 3: TRANSACTION HISTORY & LEDGER EDITOR */}
-          {activeTab === 'TRANSACTIONS' && <TransactionHistoryManager />}
-
-          {/* TAB 4: BANK RECEIVING ACCOUNTS */}
-          {activeTab === 'RECEIVING_ACCOUNTS' && <TreasuryReceivingAccountsTab />}
-
-          {/* TAB 5: APPLICATIONS & KYC APPROVALS */}
-          {activeTab === 'APPLICATIONS' && (
-            <div className="space-y-6">
-              <div className="bg-white rounded-2xl border border-slate-200 p-4 sm:p-6 shadow-sm text-slate-800 space-y-4">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            {/* TAB 5: APPLICATIONS & KYC APPROVALS */}
+            {activeTab === 'APPLICATIONS' && (
+              <div className="bg-white dark:bg-[#0f172a] rounded-2xl border border-slate-200/80 dark:border-slate-800 p-6 shadow-2xs space-y-5">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                   <div>
-                    <h2 className="text-lg font-bold font-serif text-slate-900 flex items-center gap-2">
-                      <FileCheck2 className="w-5 h-5 text-[#c5a880]" />
-                      <span>Account Application &amp; KYC Verification Dossiers</span>
+                    <h2 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                      <FileCheck2 className="w-5 h-5 text-[#004281] dark:text-blue-400" />
+                      <span>Account Applications &amp; KYC Verification Dossiers</span>
                     </h2>
                     <p className="text-xs text-slate-500">
                       Inspect client identity submissions, regulatory risk rating, and issue verified IBAN clearance
@@ -421,7 +442,7 @@ export const AdminDashboard: React.FC = () => {
                     <select
                       value={appFilter}
                       onChange={e => setAppFilter(e.target.value as any)}
-                      className="px-3 py-1.5 text-xs rounded-xl border border-slate-200 bg-slate-50 font-bold text-slate-800"
+                      className="px-3 py-1.5 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 font-semibold text-slate-800 dark:text-slate-200"
                     >
                       <option value="ALL">All Applications</option>
                       <option value="PENDING">Pending Review</option>
@@ -431,8 +452,8 @@ export const AdminDashboard: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Applications Table / Cards */}
-                <div className="divide-y divide-slate-100">
+                {/* Applications Clean Table */}
+                <div className="divide-y divide-slate-100 dark:divide-slate-800">
                   {filteredApps.length === 0 ? (
                     <div className="p-8 text-center text-slate-400 text-xs">
                       No applications found matching your criteria.
@@ -441,14 +462,14 @@ export const AdminDashboard: React.FC = () => {
                     filteredApps.map(app => (
                       <div
                         key={app.id}
-                        className="py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-slate-50 p-3 rounded-xl transition-colors"
+                        className="py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-slate-50/80 dark:hover:bg-slate-800/40 p-3 rounded-xl transition-colors"
                       >
                         <div className="space-y-1">
                           <div className="flex items-center gap-2">
-                            <span className="text-xs font-bold text-slate-900">
+                            <span className="text-xs font-bold text-slate-900 dark:text-white">
                               {app.firstName} {app.lastName}
                             </span>
-                            <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-slate-100 text-slate-700 font-mono">
+                            <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-mono">
                               {app.accountTypeRequested} ({app.currency})
                             </span>
                             <StatusBadge status={app.status} size="xs" />
@@ -461,13 +482,13 @@ export const AdminDashboard: React.FC = () => {
                         <div className="flex items-center gap-2">
                           <button
                             onClick={() => setEditingApplication(app)}
-                            className="px-2.5 py-1.5 rounded-lg border border-slate-300 hover:bg-slate-100 text-slate-700 text-xs font-bold transition-colors cursor-pointer"
+                            className="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 text-xs font-semibold transition-colors cursor-pointer"
                           >
                             Edit Dossier
                           </button>
                           <button
                             onClick={() => setSelectedAppDossier(app)}
-                            className="px-3 py-1.5 rounded-lg bg-[#0a192f] hover:bg-[#153459] text-white text-xs font-bold transition-colors cursor-pointer"
+                            className="px-3.5 py-1.5 rounded-lg bg-[#004281] hover:bg-[#003366] text-white text-xs font-semibold transition-colors cursor-pointer"
                           >
                             Review Dossier
                           </button>
@@ -477,78 +498,78 @@ export const AdminDashboard: React.FC = () => {
                   )}
                 </div>
               </div>
-            </div>
-          )}
+            )}
 
-          {/* TAB 6: NOTIFICATIONS & ALERTS */}
-          {activeTab === 'NOTIFICATIONS' && <AdminNotificationsTab />}
+            {/* TAB 6: NOTIFICATIONS */}
+            {activeTab === 'NOTIFICATIONS' && <AdminNotificationsTab />}
 
-          {/* TAB 7: SECURITY AUDIT LOGS */}
-          {activeTab === 'AUDIT_LOGS' && (
-            <div className="bg-white rounded-2xl border border-slate-200 p-4 sm:p-6 shadow-sm text-slate-800 space-y-4">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                <div>
-                  <h2 className="text-lg font-bold font-serif text-slate-900 flex items-center gap-2">
-                    <ShieldCheck className="w-5 h-5 text-[#c5a880]" />
-                    <span>Cryptographic Security &amp; Audit Journal</span>
-                  </h2>
-                  <p className="text-xs text-slate-500">
-                    Immutable records of all administrative actions, fund transfers, and ledger movements
-                  </p>
+            {/* TAB 7: SECURITY AUDIT LOGS */}
+            {activeTab === 'AUDIT_LOGS' && (
+              <div className="bg-white dark:bg-[#0f172a] rounded-2xl border border-slate-200/80 dark:border-slate-800 p-6 shadow-2xs space-y-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div>
+                    <h2 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                      <ShieldCheck className="w-5 h-5 text-[#004281] dark:text-blue-400" />
+                      <span>Security &amp; Audit Journal</span>
+                    </h2>
+                    <p className="text-xs text-slate-500">
+                      Authoritative cryptographic log of administrative and ledger changes
+                    </p>
+                  </div>
+
+                  <div className="relative w-full sm:w-64">
+                    <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
+                    <input
+                      type="text"
+                      placeholder="Search audit logs..."
+                      value={auditSearch}
+                      onChange={e => setAuditSearch(e.target.value)}
+                      className="w-full pl-9 pr-3 py-1.5 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white"
+                    />
+                  </div>
                 </div>
 
-                <div className="relative w-full sm:w-64">
-                  <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
-                  <input
-                    type="text"
-                    placeholder="Search logs..."
-                    value={auditSearch}
-                    onChange={e => setAuditSearch(e.target.value)}
-                    className="w-full pl-9 pr-3 py-1.5 text-xs rounded-xl border border-slate-200 bg-slate-50"
-                  />
+                <div className="divide-y divide-slate-100 dark:divide-slate-800 max-h-[600px] overflow-y-auto">
+                  {auditLogs
+                    .filter(l =>
+                      (l.action || '').toLowerCase().includes(auditSearch.toLowerCase()) ||
+                      (l.details || '').toLowerCase().includes(auditSearch.toLowerCase()) ||
+                      (l.actorEmail || l.actorUsername || l.actorId || (l as any).adminId || '').toLowerCase().includes(auditSearch.toLowerCase())
+                    )
+                    .map(log => (
+                      <div key={log.id} className="py-3 text-xs flex items-start gap-3">
+                        <div className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-[#004281] dark:text-blue-400 shrink-0 mt-0.5">
+                          <FileCode className="w-4 h-4" />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="font-bold text-slate-900 dark:text-white font-mono">{log.action}</span>
+                            <span className="text-[10px] text-slate-400 font-mono">
+                              {log.timestamp ? `${new Date(log.timestamp).toLocaleTimeString()} • ${new Date(log.timestamp).toLocaleDateString()}` : 'Recent'}
+                            </span>
+                          </div>
+                          <p className="text-slate-600 dark:text-slate-300 text-[11px] mt-0.5">{log.details}</p>
+                          <div className="text-[10px] text-slate-400 font-mono mt-1">
+                            Actor: {log.actorEmail || log.actorUsername || log.actorId || (log as any).adminId || 'System'} • IP: {log.ipAddress || '127.0.0.1'} • Hash: {(log.signatureHash || (log as any).checksumHash || (log as any).checksum || log.id || '').slice(0, 16)}...
+                          </div>
+                        </div>
+                      </div>
+                    ))}
                 </div>
               </div>
-
-              <div className="divide-y divide-slate-100 max-h-[600px] overflow-y-auto">
-                {auditLogs
-                  .filter(l =>
-                    (l.action || '').toLowerCase().includes(auditSearch.toLowerCase()) ||
-                    (l.details || '').toLowerCase().includes(auditSearch.toLowerCase()) ||
-                    (l.actorEmail || l.actorUsername || l.actorId || (l as any).adminId || '').toLowerCase().includes(auditSearch.toLowerCase())
-                  )
-                  .map(log => (
-                    <div key={log.id} className="py-3 text-xs flex items-start gap-3">
-                      <div className="p-1.5 rounded-lg bg-slate-100 text-slate-700 shrink-0 mt-0.5">
-                        <FileCode className="w-3.5 h-3.5" />
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center justify-between gap-2">
-                          <span className="font-bold text-slate-900 font-mono">{log.action}</span>
-                          <span className="text-[10px] text-slate-400 font-mono">
-                            {log.timestamp ? `${new Date(log.timestamp).toLocaleTimeString()} • ${new Date(log.timestamp).toLocaleDateString()}` : 'Recent'}
-                          </span>
-                        </div>
-                        <p className="text-slate-600 text-[11px] mt-0.5">{log.details}</p>
-                        <div className="text-[10px] text-slate-400 font-mono mt-1">
-                          Actor: {log.actorEmail || log.actorUsername || log.actorId || (log as any).adminId || 'System'} • IP: {log.ipAddress || '127.0.0.1'} • Hash: {(log.signatureHash || (log as any).checksumHash || (log as any).checksum || log.id || '').slice(0, 16)}...
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-              </div>
-            </div>
-          )}
-        </div>
-      </main>
+            )}
+          </div>
+        </main>
+      </div>
 
       {/* APPLICATION REVIEW DOSSIER MODAL */}
       {selectedAppDossier && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-xs">
-          <div className="bg-white rounded-2xl max-w-2xl w-full overflow-hidden shadow-2xl border border-slate-200 text-slate-800">
-            <div className="p-5 bg-[#0a192f] text-white flex items-center justify-between">
+          <div className="bg-white dark:bg-[#0f172a] rounded-2xl max-w-2xl w-full overflow-hidden shadow-2xl border border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200">
+            <div className="p-5 bg-[#004281] text-white flex items-center justify-between">
               <div>
-                <h3 className="text-base font-bold font-serif">Customer Onboarding Dossier</h3>
-                <p className="text-[11px] text-slate-300 font-mono">Ref: {selectedAppDossier.referenceNumber}</p>
+                <h3 className="text-base font-bold">Customer Onboarding Dossier</h3>
+                <p className="text-[11px] text-blue-100 font-mono">Ref: {selectedAppDossier.referenceNumber}</p>
               </div>
               <div className="flex items-center gap-2">
                 <button
@@ -557,13 +578,13 @@ export const AdminDashboard: React.FC = () => {
                     setSelectedAppDossier(null);
                     setEditingApplication(app);
                   }}
-                  className="px-2.5 py-1 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition-colors cursor-pointer"
+                  className="px-3 py-1 rounded-lg bg-white/20 hover:bg-white/30 text-white text-xs font-semibold transition-colors cursor-pointer"
                 >
                   Edit Details
                 </button>
                 <button
                   onClick={() => setSelectedAppDossier(null)}
-                  className="text-slate-400 hover:text-white"
+                  className="text-white/80 hover:text-white"
                 >
                   <X className="w-5 h-5" />
                 </button>
@@ -572,51 +593,51 @@ export const AdminDashboard: React.FC = () => {
 
             <div className="p-6 space-y-4 max-h-[80vh] overflow-y-auto text-xs">
               <div className="grid grid-cols-2 gap-4">
-                <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/60">
+                <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800">
                   <span className="text-[10px] text-slate-400 font-bold uppercase block">Applicant Name</span>
-                  <div className="font-bold text-slate-900 text-sm mt-0.5">
+                  <div className="font-bold text-slate-900 dark:text-white text-sm mt-0.5">
                     {selectedAppDossier.firstName} {selectedAppDossier.lastName}
                   </div>
                 </div>
 
-                <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/60">
+                <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800">
                   <span className="text-[10px] text-slate-400 font-bold uppercase block">Email &amp; Phone</span>
-                  <div className="font-semibold text-slate-800 mt-0.5">
+                  <div className="font-semibold text-slate-800 dark:text-slate-200 mt-0.5">
                     {selectedAppDossier.email}<br />{selectedAppDossier.phone}
                   </div>
                 </div>
 
-                <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/60">
+                <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800">
                   <span className="text-[10px] text-slate-400 font-bold uppercase block">Account Requested</span>
-                  <div className="font-bold text-slate-900 mt-0.5">
+                  <div className="font-bold text-slate-900 dark:text-white mt-0.5">
                     {selectedAppDossier.accountTypeRequested} ({selectedAppDossier.currency})
                   </div>
                 </div>
 
-                <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/60">
+                <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800">
                   <span className="text-[10px] text-slate-400 font-bold uppercase block">Declared Net Worth / Income</span>
-                  <div className="font-bold text-emerald-700 mt-0.5">
+                  <div className="font-bold text-[#00A651] mt-0.5">
                     {selectedAppDossier.annualIncome || '$250,000+'} • Net Worth: {selectedAppDossier.estimatedNetWorth || '$1.5M+'}
                   </div>
                 </div>
 
-                <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/60 col-span-2">
+                <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800 col-span-2">
                   <span className="text-[10px] text-slate-400 font-bold uppercase block">Residential Address</span>
-                  <div className="text-slate-800 mt-0.5">
+                  <div className="text-slate-800 dark:text-slate-200 mt-0.5">
                     {formatAddress(selectedAppDossier.address) || `${selectedAppDossier.city || ''}, ${selectedAppDossier.country || ''}`}
                   </div>
                 </div>
               </div>
 
               {selectedAppDossier.status === 'PENDING' && (
-                <div className="space-y-3 pt-3 border-t border-slate-200">
+                <div className="space-y-3 pt-3 border-t border-slate-200 dark:border-slate-800">
                   <div className="space-y-1">
-                    <label className="font-bold text-slate-700">Approval Compliance Memo</label>
+                    <label className="font-bold text-slate-700 dark:text-slate-300">Approval Compliance Memo</label>
                     <input
                       type="text"
                       value={approvalNotes}
                       onChange={e => setApprovalNotes(e.target.value)}
-                      className="w-full px-3 py-2 rounded-xl border border-slate-300"
+                      className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
                     />
                   </div>
 
@@ -625,7 +646,7 @@ export const AdminDashboard: React.FC = () => {
                       type="button"
                       onClick={() => handleRejectApp(selectedAppDossier.id)}
                       disabled={isProcessingApp}
-                      className="px-4 py-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold border border-rose-200 transition-colors"
+                      className="px-4 py-2 rounded-xl bg-rose-50 dark:bg-rose-950/60 hover:bg-rose-100 text-rose-700 dark:text-rose-400 font-bold border border-rose-200 dark:border-rose-800 transition-colors"
                     >
                       Reject Application
                     </button>
@@ -633,7 +654,7 @@ export const AdminDashboard: React.FC = () => {
                       type="button"
                       onClick={() => handleApproveApp(selectedAppDossier.id)}
                       disabled={isProcessingApp}
-                      className="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold flex items-center gap-1.5 shadow-md transition-colors"
+                      className="px-5 py-2 rounded-xl bg-[#00A651] hover:bg-[#008f45] text-white font-bold flex items-center gap-1.5 shadow-md transition-colors"
                     >
                       {isProcessingApp ? (
                         <RefreshCw className="w-3.5 h-3.5 animate-spin" />
@@ -671,3 +692,4 @@ export const AdminDashboard: React.FC = () => {
     </div>
   );
 };
+
