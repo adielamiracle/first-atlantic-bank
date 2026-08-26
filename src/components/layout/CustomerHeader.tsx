@@ -14,7 +14,8 @@ import {
   Sun,
   Moon,
   Fingerprint,
-  ShieldCheck
+  Menu,
+  X
 } from 'lucide-react';
 import { useBank } from '../../context/BankContext';
 import { InstitutionalCrest } from '../common/InstitutionalCrest';
@@ -38,6 +39,7 @@ export const CustomerHeader: React.FC = () => {
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
   const [searchModalOpen, setSearchModalOpen] = useState(false);
+  const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -50,222 +52,293 @@ export const CustomerHeader: React.FC = () => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
+  const userInitials = currentUser
+    ? `${currentUser.firstName?.charAt(0) || 'F'}${currentUser.lastName?.charAt(0) || 'A'}`
+    : 'FA';
+
   return (
     <>
       <GlobalSearchModal isOpen={searchModalOpen} onClose={() => setSearchModalOpen(false)} />
 
-      <header className="bg-white dark:bg-[#0a192f] border-b border-slate-200 dark:border-[#1e3656] sticky top-0 z-20 shadow-xs transition-colors duration-200">
-        <div className="px-4 sm:px-8 py-3 flex items-center justify-between gap-4">
-          {/* Mobile brand header or search */}
-          <div className="flex items-center gap-3">
-            <div className="lg:hidden">
-              <button onClick={() => setCurrentView('DASHBOARD_OVERVIEW')} className="cursor-pointer">
-                <InstitutionalCrest size="sm" variant={darkMode ? "dark" : "light"} showSubtitle={false} />
-              </button>
+      {/* Mobile Drawer */}
+      {mobileDrawerOpen && (
+        <div className="fixed inset-0 z-50 lg:hidden bg-slate-900/60 backdrop-blur-xs flex">
+          <div className="w-72 max-w-[80vw] bg-white dark:bg-[#071322] h-full shadow-2xl p-5 flex flex-col justify-between overflow-y-auto animate-in slide-in-from-left duration-200">
+            <div className="space-y-4">
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+                <button
+                  onClick={() => {
+                    setCurrentView('DASHBOARD_OVERVIEW');
+                    setMobileDrawerOpen(false);
+                  }}
+                  className="flex items-center gap-1.5 cursor-pointer"
+                >
+                  <span className="font-serif text-lg font-bold tracking-tight text-slate-900 dark:text-white">
+                    First Atlantic
+                  </span>
+                  <span className="w-2 h-2 rounded-full bg-[#f8c22d]" />
+                </button>
+                <button
+                  onClick={() => setMobileDrawerOpen(false)}
+                  className="p-1 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* User badge */}
+              <div className="p-3 rounded-xl bg-amber-50/80 dark:bg-amber-950/30 border border-amber-200/60 dark:border-amber-900/40 flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-[#f8c22d] text-slate-950 font-bold flex items-center justify-center text-sm shadow-xs shrink-0">
+                  {userInitials}
+                </div>
+                <div className="min-w-0">
+                  <div className="text-xs font-bold text-slate-900 dark:text-white truncate">
+                    {currentUser ? `${currentUser.firstName} ${currentUser.lastName}` : 'First Atlantic Client'}
+                  </div>
+                  <div className="text-[11px] text-amber-800 dark:text-amber-300 font-medium">
+                    Verified Tier 3 Account
+                  </div>
+                </div>
+              </div>
+
+              {/* Nav links */}
+              <div className="space-y-1 text-xs">
+                {[
+                  { label: 'Overview', view: 'DASHBOARD_OVERVIEW' },
+                  { label: 'Accounts & Ledger', view: 'DASHBOARD_ACCOUNT_DETAIL' },
+                  { label: 'Transfers & Wires', view: 'DASHBOARD_TRANSFERS' },
+                  { label: 'Bill Pay & Remittance', view: 'DASHBOARD_BILLPAY' },
+                  { label: 'Cards & Spend Limits', view: 'DASHBOARD_CARDS' },
+                  { label: 'Mobile Check Deposit', view: 'DASHBOARD_DEPOSIT' },
+                  { label: 'Statements & Tax Reports', view: 'DASHBOARD_STATEMENTS' },
+                  { label: 'Security & Biometrics', view: 'DASHBOARD_SECURITY' },
+                  { label: 'Private Concierge', view: 'DASHBOARD_MESSAGES' },
+                  { label: 'Profile & KYC Settings', view: 'DASHBOARD_PROFILE' }
+                ].map((item) => (
+                  <button
+                    key={item.view}
+                    onClick={() => {
+                      setCurrentView(item.view as any);
+                      setMobileDrawerOpen(false);
+                    }}
+                    className="w-full text-left px-3 py-2.5 rounded-lg font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800/80 transition-colors"
+                  >
+                    {item.label}
+                  </button>
+                ))}
+              </div>
             </div>
 
+            <div className="pt-4 border-t border-slate-100 dark:border-slate-800 space-y-2">
+              <button
+                onClick={toggleDarkMode}
+                className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
+              >
+                <span className="flex items-center gap-2">
+                  {darkMode ? <Sun className="w-4 h-4 text-[#f8c22d]" /> : <Moon className="w-4 h-4 text-slate-500" />}
+                  {darkMode ? 'Light Theme' : 'Dark Theme'}
+                </span>
+                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800">
+                  {darkMode ? 'DARK' : 'LIGHT'}
+                </span>
+              </button>
+
+              <button
+                onClick={() => logout()}
+                className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30"
+              >
+                <LogOut className="w-4 h-4" />
+                <span>Sign Out</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <header className="bg-white dark:bg-[#071322] border-b border-slate-100 dark:border-slate-800/80 sticky top-0 z-20 transition-colors duration-200">
+        <div className="px-3 sm:px-6 lg:px-8 py-2.5 flex items-center justify-between gap-3 max-w-7xl mx-auto">
+          {/* Mobile Left: Hamburger + Brand Name */}
+          <div className="flex items-center gap-2.5 sm:gap-4 min-w-0">
+            <button
+              onClick={() => setMobileDrawerOpen(true)}
+              className="lg:hidden p-1.5 rounded-lg text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
+              aria-label="Open Navigation Menu"
+            >
+              <Menu className="w-5 h-5" />
+            </button>
+
+            <button
+              onClick={() => setCurrentView('DASHBOARD_OVERVIEW')}
+              className="flex items-center gap-1.5 cursor-pointer text-left select-none"
+            >
+              <span className="text-lg sm:text-xl font-bold font-serif tracking-tight text-slate-900 dark:text-white">
+                First Atlantic
+              </span>
+              <span className="w-2 h-2 rounded-full bg-[#f8c22d] inline-block shadow-2xs" />
+            </button>
+
+            {/* Quick Search trigger on tablet/desktop */}
             <button
               onClick={() => setSearchModalOpen(true)}
-              className="flex items-center justify-between gap-2 px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400 text-xs w-60 md:w-80 cursor-pointer hover:border-slate-300 dark:hover:border-slate-700 transition-colors text-left"
+              className="hidden sm:flex items-center justify-between gap-2 px-3 py-1.5 rounded-full bg-slate-100 dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 text-slate-500 dark:text-slate-400 text-xs w-48 md:w-64 cursor-pointer hover:border-slate-300 dark:hover:border-slate-700 transition-colors text-left"
             >
-              <div className="flex items-center gap-2 overflow-hidden">
-                <Search className="w-3.5 h-3.5 text-[#d4af37] shrink-0" />
-                <span className="text-slate-500 dark:text-slate-400 truncate">
-                  Search banks, routing codes, wires...
+              <div className="flex items-center gap-2 overflow-hidden min-w-0">
+                <Search className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                <span className="text-slate-500 dark:text-slate-400 truncate text-[11px]">
+                  Search accounts, wires...
                 </span>
               </div>
-              <kbd className="hidden sm:inline-block px-1.5 py-0.5 text-[10px] font-mono bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded border border-slate-300 dark:border-slate-700 shrink-0">
+              <kbd className="hidden md:inline-block px-1.5 py-0.2 text-[9px] font-mono bg-slate-200 dark:bg-slate-800 text-slate-500 rounded">
                 ⌘K
               </kbd>
             </button>
           </div>
 
-        {/* Right Tools & Profile */}
-        <div className="flex items-center gap-2 sm:gap-4">
-          {/* Dark Mode Toggle Button */}
-          <button
-            onClick={toggleDarkMode}
-            title={darkMode ? "Switch to Light Mode" : "Switch to Institutional Dark Mode"}
-            aria-label="Toggle dark mode theme"
-            className="p-2 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors border border-transparent hover:border-slate-200 dark:hover:border-slate-700 cursor-pointer flex items-center gap-1.5"
-          >
-            {darkMode ? (
-              <>
-                <Sun className="w-4 h-4 text-[#e5ca95]" />
-                <span className="hidden xl:inline text-[11px] font-semibold text-[#e5ca95]">Light</span>
-              </>
-            ) : (
-              <>
-                <Moon className="w-4 h-4 text-[#0a192f]" />
-                <span className="hidden xl:inline text-[11px] font-semibold text-slate-700">Dark</span>
-              </>
-            )}
-          </button>
-
-          {/* Quick Biometric Verification Shortcut if enabled */}
-          {biometricState.enabled && (
+          {/* Right: Notifications & Yellow Initials Avatar */}
+          <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+            {/* Dark mode toggle */}
             <button
-              onClick={() => openBiometricPrompt({ mode: 'VERIFY', title: 'Hardware Biometric Verification', subtitle: 'Simulate instant Touch ID / Face ID sensor verification.' })}
-              className="hidden lg:flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-semibold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/20 transition-colors cursor-pointer"
-              title="Biometric Hardware Enclave Active"
+              onClick={toggleDarkMode}
+              title={darkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
+              aria-label="Toggle dark mode theme"
+              className="p-2 rounded-full text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
             >
-              <Fingerprint className="w-3.5 h-3.5" />
-              <span>FIDO2 Active</span>
-            </button>
-          )}
-
-          {/* Quick Transfer Button */}
-          <button
-            onClick={() => setCurrentView('DASHBOARD_TRANSFERS')}
-            className="hidden sm:flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-[#0a192f] dark:bg-[#112a4a] hover:bg-[#132c4d] dark:hover:bg-[#193a64] text-white text-xs font-semibold shadow-xs transition-colors cursor-pointer border border-[#c5a880]/30"
-          >
-            <ArrowUpRight className="w-3.5 h-3.5 text-[#d4af37]" />
-            <span>Pay &amp; Transfer</span>
-          </button>
-
-          {/* Region Badge */}
-          <div className="hidden md:flex items-center gap-1 text-xs font-medium text-slate-600 dark:text-slate-300 px-2.5 py-1 rounded-md bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
-            <Globe className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400" />
-            <span>{region === 'US' ? 'US Hub (USD)' : 'UK Hub (GBP)'}</span>
-          </div>
-
-          {/* Notifications */}
-          <div className="relative">
-            <button
-              onClick={() => setNotificationsOpen(!notificationsOpen)}
-              className="p-2 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 relative transition-colors cursor-pointer"
-              aria-label="View notifications"
-            >
-              <Bell className="w-4 h-4" />
-              <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-[#c5a880]" />
+              {darkMode ? <Sun className="w-4 h-4 text-[#f8c22d]" /> : <Moon className="w-4 h-4 text-slate-600" />}
             </button>
 
-            {notificationsOpen && (
-              <div
-                className="absolute right-0 mt-2 w-80 sm:w-96 rounded-xl bg-white dark:bg-[#0d2038] border border-slate-200 dark:border-[#1e3656] shadow-xl py-3 z-50 text-slate-800 dark:text-slate-100"
-                onClick={() => setNotificationsOpen(false)}
+            {/* Quick Pay button on desktop */}
+            <button
+              onClick={() => setCurrentView('DASHBOARD_TRANSFERS')}
+              className="hidden md:flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-xs font-semibold hover:opacity-90 transition-opacity cursor-pointer shadow-2xs"
+            >
+              <ArrowUpRight className="w-3.5 h-3.5" />
+              <span>Send Money</span>
+            </button>
+
+            {/* Notifications Bell */}
+            <div className="relative">
+              <button
+                onClick={() => setNotificationsOpen(!notificationsOpen)}
+                className="p-2 rounded-full text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 relative transition-colors cursor-pointer"
+                aria-label="View notifications"
               >
-                <div className="px-4 py-2 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
-                  <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 font-serif">
-                    Bank Alerts &amp; Notifications
-                  </h4>
-                  <span className="text-[10px] font-medium text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded-full border border-emerald-200 dark:border-emerald-800">
-                    2 New
-                  </span>
-                </div>
+                <Bell className="w-5 h-5" />
+                <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-[#f8c22d] ring-2 ring-white dark:ring-[#071322]" />
+              </button>
 
-                <div className="divide-y divide-slate-100 dark:divide-slate-800 max-h-72 overflow-y-auto">
-                  <div className="p-3.5 hover:bg-slate-50 dark:hover:bg-slate-800/60 flex items-start gap-3 transition-colors">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
-                    <div>
-                      <p className="text-xs font-semibold text-slate-900 dark:text-slate-100">Direct Deposit Credited</p>
-                      <p className="text-[11px] text-slate-600 dark:text-slate-400 mt-0.5">
-                        Morgan Stanley Global Wealth distribution of $28,500.00 posted to Checking.
-                      </p>
-                      <span className="text-[10px] text-slate-400 font-mono mt-1 block">2 hours ago</span>
-                    </div>
-                  </div>
-
-                  <div className="p-3.5 hover:bg-slate-50 dark:hover:bg-slate-800/60 flex items-start gap-3 transition-colors">
-                    <Shield className="w-4 h-4 text-[#8c6d37] dark:text-[#c5a880] shrink-0 mt-0.5" />
-                    <div>
-                      <p className="text-xs font-semibold text-slate-900 dark:text-slate-100">Biometric &amp; Security Health</p>
-                      <p className="text-[11px] text-slate-600 dark:text-slate-400 mt-0.5">
-                        {biometricState.enabled ? 'FIDO2 Hardware Enclave verified active.' : 'Hardware authenticator TOTP verified successfully.'}
-                      </p>
-                      <span className="text-[10px] text-slate-400 font-mono mt-1 block">Today, 14:22 EST</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="p-2 border-t border-slate-100 dark:border-slate-800 text-center">
-                  <button
-                    onClick={() => setCurrentView('DASHBOARD_SECURITY')}
-                    className="text-xs font-semibold text-[#8c6d37] dark:text-[#c5a880] hover:underline cursor-pointer"
-                  >
-                    Manage Security in Security Center &rarr;
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Profile Dropdown */}
-          <div className="relative">
-            <button
-              onClick={() => setProfileMenuOpen(!profileMenuOpen)}
-              className="flex items-center gap-2 p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-800 dark:text-slate-100 transition-colors cursor-pointer"
-            >
-              <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-[#0a192f] to-[#1d3d63] text-white flex items-center justify-center font-semibold text-xs border border-[#c5a880]/30 shadow-xs">
-                {currentUser?.firstName?.charAt(0) || 'J'}
-                {currentUser?.lastName?.charAt(0) || 'S'}
-              </div>
-            </button>
-
-            {profileMenuOpen && (
-              <div
-                className="absolute right-0 mt-2 w-60 rounded-xl bg-white dark:bg-[#0d2038] border border-slate-200 dark:border-[#1e3656] shadow-xl py-2 z-50 text-slate-800 dark:text-slate-100"
-                onClick={() => setProfileMenuOpen(false)}
-              >
-                <div className="px-4 py-2 border-b border-slate-100 dark:border-slate-800">
-                  <p className="text-xs font-bold text-slate-900 dark:text-slate-100">
-                    {currentUser ? `${currentUser.firstName} ${currentUser.lastName}` : 'Jonathan Sterling'}
-                  </p>
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate">{currentUser?.email}</p>
-                </div>
-
-                <div className="py-1">
-                  <button
-                    onClick={() => setCurrentView('DASHBOARD_PROFILE')}
-                    className="w-full text-left px-4 py-2 text-xs text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800/80 flex items-center gap-2 cursor-pointer"
-                  >
-                    <User className="w-3.5 h-3.5 text-slate-400" />
-                    <span>Profile &amp; KYC Info</span>
-                  </button>
-                  <button
-                    onClick={() => setCurrentView('DASHBOARD_SECURITY')}
-                    className="w-full text-left px-4 py-2 text-xs text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800/80 flex items-center gap-2 cursor-pointer"
-                  >
-                    <Lock className="w-3.5 h-3.5 text-slate-400" />
-                    <span>Security &amp; Biometrics</span>
-                  </button>
-                  <button
-                    onClick={toggleDarkMode}
-                    className="w-full text-left px-4 py-2 text-xs text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800/80 flex items-center justify-between cursor-pointer"
-                  >
-                    <div className="flex items-center gap-2">
-                      {darkMode ? <Sun className="w-3.5 h-3.5 text-[#c5a880]" /> : <Moon className="w-3.5 h-3.5 text-slate-400" />}
-                      <span>Dark Mode</span>
-                    </div>
-                    <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">
-                      {darkMode ? 'ON' : 'OFF'}
+              {notificationsOpen && (
+                <div
+                  className="absolute right-0 mt-2 w-80 sm:w-96 rounded-2xl bg-white dark:bg-[#0d2038] border border-slate-200 dark:border-[#1e3656] shadow-xl py-3 z-50 text-slate-800 dark:text-slate-100 animate-in fade-in zoom-in-95 duration-150"
+                  onClick={() => setNotificationsOpen(false)}
+                >
+                  <div className="px-4 py-2 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                    <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                      Bank Alerts &amp; Notifications
+                    </h4>
+                    <span className="text-[10px] font-bold text-slate-950 bg-[#f8c22d] px-2 py-0.5 rounded-full">
+                      2 New
                     </span>
-                  </button>
-                  <button
-                    onClick={() => setCurrentView('DASHBOARD_MESSAGES')}
-                    className="w-full text-left px-4 py-2 text-xs text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800/80 flex items-center gap-2 cursor-pointer"
-                  >
-                    <HelpCircle className="w-3.5 h-3.5 text-slate-400" />
-                    <span>Private Concierge</span>
-                  </button>
-                </div>
+                  </div>
 
-                <div className="pt-1 border-t border-slate-100 dark:border-slate-800">
-                  <button
-                    onClick={() => logout()}
-                    className="w-full text-left px-4 py-2 text-xs text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 flex items-center gap-2 font-medium cursor-pointer"
-                  >
-                    <LogOut className="w-3.5 h-3.5" />
-                    <span>Sign Out</span>
-                  </button>
+                  <div className="divide-y divide-slate-100 dark:divide-slate-800 max-h-72 overflow-y-auto">
+                    <div className="p-3.5 hover:bg-slate-50 dark:hover:bg-slate-800/60 flex items-start gap-3 transition-colors">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
+                      <div>
+                        <p className="text-xs font-semibold text-slate-900 dark:text-slate-100">Direct Deposit Credited</p>
+                        <p className="text-[11px] text-slate-600 dark:text-slate-400 mt-0.5">
+                          Direct clearing distribution of $28,500.00 posted to Checking.
+                        </p>
+                        <span className="text-[10px] text-slate-400 font-mono mt-1 block">2 hours ago</span>
+                      </div>
+                    </div>
+
+                    <div className="p-3.5 hover:bg-slate-50 dark:hover:bg-slate-800/60 flex items-start gap-3 transition-colors">
+                      <Shield className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
+                      <div>
+                        <p className="text-xs font-semibold text-slate-900 dark:text-slate-100">Security &amp; Device Protected</p>
+                        <p className="text-[11px] text-slate-600 dark:text-slate-400 mt-0.5">
+                          {biometricState.enabled ? 'FIDO2 Hardware Enclave verified active.' : 'Hardware authenticator active.'}
+                        </p>
+                        <span className="text-[10px] text-slate-400 font-mono mt-1 block">Today, 14:22 EST</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="p-2 border-t border-slate-100 dark:border-slate-800 text-center">
+                    <button
+                      onClick={() => setCurrentView('DASHBOARD_SECURITY')}
+                      className="text-xs font-semibold text-amber-600 dark:text-amber-400 hover:underline cursor-pointer"
+                    >
+                      Manage in Security Center &rarr;
+                    </button>
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
+            </div>
+
+            {/* Circular Yellow Avatar matching screenshot (NB or JS) */}
+            <div className="relative">
+              <button
+                onClick={() => setProfileMenuOpen(!profileMenuOpen)}
+                className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-[#f8c22d] text-slate-950 font-bold flex items-center justify-center text-xs shadow-xs hover:opacity-90 transition-opacity cursor-pointer border border-amber-300/50"
+                aria-label="User profile menu"
+              >
+                {userInitials}
+              </button>
+
+              {profileMenuOpen && (
+                <div
+                  className="absolute right-0 mt-2 w-60 rounded-2xl bg-white dark:bg-[#0d2038] border border-slate-200 dark:border-[#1e3656] shadow-xl py-2 z-50 text-slate-800 dark:text-slate-100 animate-in fade-in zoom-in-95 duration-150"
+                  onClick={() => setProfileMenuOpen(false)}
+                >
+                  <div className="px-4 py-2.5 border-b border-slate-100 dark:border-slate-800">
+                    <p className="text-xs font-bold text-slate-900 dark:text-slate-100">
+                      {currentUser ? `${currentUser.firstName} ${currentUser.lastName}` : 'First Atlantic Client'}
+                    </p>
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate">{currentUser?.email || 'client@firstatlantic.com'}</p>
+                  </div>
+
+                  <div className="py-1">
+                    <button
+                      onClick={() => setCurrentView('DASHBOARD_PROFILE')}
+                      className="w-full text-left px-4 py-2 text-xs text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800/80 flex items-center gap-2 cursor-pointer"
+                    >
+                      <User className="w-3.5 h-3.5 text-slate-400" />
+                      <span>Profile &amp; KYC Info</span>
+                    </button>
+                    <button
+                      onClick={() => setCurrentView('DASHBOARD_SECURITY')}
+                      className="w-full text-left px-4 py-2 text-xs text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800/80 flex items-center gap-2 cursor-pointer"
+                    >
+                      <Lock className="w-3.5 h-3.5 text-slate-400" />
+                      <span>Security &amp; Biometrics</span>
+                    </button>
+                    <button
+                      onClick={() => setCurrentView('DASHBOARD_MESSAGES')}
+                      className="w-full text-left px-4 py-2 text-xs text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800/80 flex items-center gap-2 cursor-pointer"
+                    >
+                      <HelpCircle className="w-3.5 h-3.5 text-slate-400" />
+                      <span>Private Concierge</span>
+                    </button>
+                  </div>
+
+                  <div className="pt-1 border-t border-slate-100 dark:border-slate-800">
+                    <button
+                      onClick={() => logout()}
+                      className="w-full text-left px-4 py-2 text-xs text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 flex items-center gap-2 font-semibold cursor-pointer"
+                    >
+                      <LogOut className="w-3.5 h-3.5" />
+                      <span>Sign Out</span>
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </div>
-      </div>
-    </header>
-  </>
+      </header>
+    </>
   );
 };
+
 

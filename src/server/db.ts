@@ -236,6 +236,9 @@ export class BankDatabase {
     };
 
     this.adminUsers.set(singleMasterAdmin.id, singleMasterAdmin);
+    this.userPasswords.set(singleMasterAdmin.id, 'AdminMaster2026!');
+    this.userPasswords.set('admin@firstatlanticbank.com', 'AdminMaster2026!');
+    this.userPasswords.set('admin', 'AdminMaster2026!');
 
     // 4. Seed Accounts for Jonathan Sterling
     const acc1: BankAccount = {

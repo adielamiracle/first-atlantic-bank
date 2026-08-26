@@ -134,7 +134,7 @@ const MainAppRouter: React.FC = () => {
         {/* Main Content Pane */}
         <div className="flex-1 flex flex-col min-w-0 pb-16 md:pb-0">
           <CustomerHeader />
-          <main className="flex-1 p-3 sm:p-5 lg:p-6 max-w-7xl w-full mx-auto overflow-hidden">
+          <main className="flex-1 p-2.5 xs:p-3.5 sm:p-5 lg:p-6 max-w-7xl w-full mx-auto overflow-x-hidden min-w-0">
             <AnimatePresence mode="wait">
               <motion.div
                 key={currentView}

@@ -88,25 +88,24 @@ export const LoginPage: React.FC = () => {
     const enteredPassword = password.trim();
 
     try {
-      // 3. Change the login function to: supabase.auth.signInWithPassword({email, password})
+      // Supabase authentication check
       let sbUser = null;
-      let sbErrorMsg = '';
 
       try {
-        const { data: sbData, error: sbError } = await supabase.auth.signInWithPassword({
-          email: emailOrUser,
-          password: enteredPassword
-        });
-        if (sbError) {
-          sbErrorMsg = sbError.message;
-        } else if (sbData?.user) {
-          sbUser = sbData.user;
+        if (emailOrUser.includes('@')) {
+          const { data: sbData, error: sbError } = await supabase.auth.signInWithPassword({
+            email: emailOrUser,
+            password: enteredPassword
+          });
+          if (!sbError && sbData?.user) {
+            sbUser = sbData.user;
+          }
         }
       } catch (sbErr: any) {
         console.warn('Supabase auth notice:', sbErr?.message || sbErr);
       }
 
-      // 4. After login, if email === 'admin@firstatlanticbank.com' redirect to /admin dashboard
+      // After login, if email === 'admin@firstatlanticbank.com' redirect to /admin dashboard
       if (
         emailOrUser.toLowerCase() === 'admin@firstatlanticbank.com' ||
         sbUser?.email?.toLowerCase() === 'admin@firstatlanticbank.com'
@@ -130,7 +129,7 @@ export const LoginPage: React.FC = () => {
 
       const data = await res.json();
       if (!res.ok) {
-        // 5. Show errors if login fails
+        // Show errors if login fails
         if (data.error === 'ACCOUNT_PENDING_APPROVAL' || data.approval_status === 'PENDING' || (data.status && data.status.startsWith('PENDING'))) {
           setApplicationNotice({
             referenceNumber: data.referenceNumber || 'FAB-ACT-2026',
@@ -146,7 +145,7 @@ export const LoginPage: React.FC = () => {
           showToast('ERROR', 'Account Suspended', suspMsg);
           return;
         }
-        const failMessage = sbErrorMsg || data.message || data.error || 'Authentication failed. Please verify your credentials.';
+        const failMessage = data.message || data.error || 'Invalid credentials. Please verify your username/email and password.';
         setErrorMessage(failMessage);
         showToast('ERROR', 'Login Failed', failMessage);
         return;
@@ -774,14 +773,6 @@ export const EnrollPage: React.FC = () => {
   };
 
   const validateStep3 = () => {
-    if (!formData.employmentStatus || !formData.sourceOfFunds) {
-      setErrorMsg('Please provide your employment status and source of funds.');
-      return false;
-    }
-    if (!formData.passportNumber.trim()) {
-      setErrorMsg('Please provide your official Passport Identification Number.');
-      return false;
-    }
     setErrorMsg('');
     return true;
   };
@@ -950,7 +941,7 @@ export const EnrollPage: React.FC = () => {
           {[
             { num: 1, label: '1. Applicant & PIN' },
             { num: 2, label: '2. Address & Tax' },
-            { num: 3, label: '3. KYC & Passport' },
+            { num: 3, label: '3. Passport Photo' },
             { num: 4, label: '4. Jurisdictions' }
           ].map((s) => (
             <div
@@ -1294,114 +1285,18 @@ export const EnrollPage: React.FC = () => {
             </div>
           )}
 
-          {/* STEP 3: Employment, Wealth & Passport Document Section */}
+          {/* STEP 3: Passport Biometric Profile Photo Section */}
           {step === 3 && (
             <div className="space-y-4">
               <div className="text-xs uppercase font-bold tracking-wider text-[#8c6d37] font-mono border-b border-slate-100 pb-1">
-                Financial Profile &amp; Sovereign Passport KYC
+                Biometric Passport &amp; Profile Picture
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-bold uppercase text-slate-700 mb-1">Employment Status *</label>
-                  <select
-                    value={formData.employmentStatus}
-                    onChange={(e) => handleChange('employmentStatus', e.target.value)}
-                    className="w-full px-3.5 py-2 text-sm bg-slate-50 border border-slate-300 rounded-lg text-slate-900 focus:bg-white"
-                  >
-                    <option value="EXECUTIVE_DIRECTOR">Corporate Executive / Managing Director</option>
-                    <option value="EMPLOYED">Employed Professional</option>
-                    <option value="BUSINESS_OWNER">Business Owner / Entrepreneur</option>
-                    <option value="INVESTOR">Private Investor / Family Office</option>
-                    <option value="RETIRED">Retired</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold uppercase text-slate-700 mb-1">Employer / Business Name</label>
-                  <input
-                    type="text"
-                    placeholder="e.g. Allianz Global Investors / Tech GmbH"
-                    value={formData.employerName}
-                    onChange={(e) => handleChange('employerName', e.target.value)}
-                    className="w-full px-3.5 py-2 text-sm bg-slate-50 border border-slate-300 rounded-lg text-slate-900 focus:bg-white"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-bold uppercase text-slate-700 mb-1">Annual Income Bracket (€ / $ / £) *</label>
-                  <select
-                    value={formData.annualIncomeEur}
-                    onChange={(e) => handleChange('annualIncomeEur', e.target.value)}
-                    className="w-full px-3.5 py-2 text-sm bg-slate-50 border border-slate-300 rounded-lg text-slate-900 focus:bg-white"
-                  >
-                    <option value="75000">€50,000 – €100,000</option>
-                    <option value="150000">€100,000 – €250,000</option>
-                    <option value="350000">€250,000 – €500,000</option>
-                    <option value="750000">€500,000 – €1,000,000</option>
-                    <option value="2000000">€1,000,000+</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold uppercase text-slate-700 mb-1">Primary Source of Wealth *</label>
-                  <select
-                    value={formData.sourceOfFunds}
-                    onChange={(e) => handleChange('sourceOfFunds', e.target.value)}
-                    className="w-full px-3.5 py-2 text-sm bg-slate-50 border border-slate-300 rounded-lg text-slate-900 focus:bg-white"
-                  >
-                    <option value="SALARY_AND_BONUS">Executive Salary, Bonus &amp; Equity</option>
-                    <option value="BUSINESS_PROFIT">Commercial Business Profits &amp; Dividends</option>
-                    <option value="INVESTMENT_RETURNS">Capital Markets &amp; Securities Trading</option>
-                    <option value="REAL_ESTATE">Real Estate Holdings &amp; Rental Income</option>
-                    <option value="INHERITANCE">Inheritance &amp; Trust Distributions</option>
-                  </select>
-                </div>
-              </div>
-
-              {/* Passport Document & Biometric Photo Section */}
-              <div className="p-4 bg-slate-50 rounded-xl border border-slate-200 space-y-3.5">
-                <div className="flex items-center justify-between border-b border-slate-200 pb-2">
-                  <div className="flex items-center gap-2 text-xs font-bold uppercase text-slate-800">
-                    <FileText className="w-4 h-4 text-[#8c6d37]" />
-                    <span>Official Passport &amp; Biometric Identity Verification</span>
-                  </div>
-                  <span className="text-[10px] text-emerald-700 font-semibold bg-emerald-100 px-2 py-0.5 rounded border border-emerald-300">
-                    Sovereign KYC Level 2
-                  </span>
-                </div>
-
-                <div>
-                  <label className="block text-[11px] font-bold text-slate-700 mb-1">
-                    Official Passport Document Number *
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="e.g. C84920194 or P9821034"
-                    value={formData.passportNumber}
-                    onChange={(e) => handleChange('passportNumber', e.target.value)}
-                    className="w-full px-3.5 py-2 text-sm bg-white border border-slate-300 rounded-lg text-slate-900 font-mono uppercase focus:outline-none focus:border-[#8c6d37]"
-                  />
-                  <span className="text-[10px] text-slate-500 mt-0.5 block">
-                    Will be linked to your digital identity dossier and biometric verification checkpoint.
-                  </span>
-                </div>
-
-                <div>
-                  <label className="block text-[11px] font-bold text-slate-700 mb-1.5">
-                    Passport / Applicant Biometric Photo *
-                  </label>
-                  <PassportPhotoUploader
-                    currentPhoto={formData.passportPhoto}
-                    onPhotoChange={(newPhoto) => handleChange('passportPhoto', newPhoto)}
-                  />
-                  <p className="text-[10px] text-slate-500 mt-1">
-                    You can upload a photo from your computer or phone gallery, snap a selfie with your camera, or select a sample portrait.
-                  </p>
-                </div>
+              <div className="space-y-3">
+                <PassportPhotoUploader
+                  currentPhoto={formData.passportPhoto}
+                  onPhotoChange={(newPhoto) => handleChange('passportPhoto', newPhoto)}
+                />
               </div>
 
               <div className="flex gap-3 pt-2">
@@ -1419,7 +1314,7 @@ export const EnrollPage: React.FC = () => {
                   }}
                   className="w-2/3 py-2.5 rounded-xl bg-[#0a192f] hover:bg-[#132d52] text-white font-bold text-xs uppercase tracking-widest flex items-center justify-center gap-2 cursor-pointer"
                 >
-                  <span>Continue to Account Tier &amp; Booking</span>
+                  <span>Continue to Jurisdictions &amp; Region</span>
                   <ArrowRight className="w-4 h-4" />
                 </button>
               </div>
