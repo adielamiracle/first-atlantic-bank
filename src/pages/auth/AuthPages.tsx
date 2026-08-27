@@ -99,6 +99,8 @@ export const LoginPage: React.FC = () => {
           });
           if (!sbError && sbData?.user) {
             sbUser = sbData.user;
+          } else if (sbError && sbError.message && !sbError.message.includes('Invalid login credentials')) {
+            console.info('Supabase auth feedback:', sbError.message);
           }
         }
       } catch (sbErr: any) {
@@ -167,9 +169,9 @@ export const LoginPage: React.FC = () => {
           phoneMasked: data.phoneMasked,
           loginPin: data.loginPin
         });
-        // Pre-fill PIN if saved from registration
+        // Pre-fill PIN if saved from registration or default 1234
         const savedPin = localStorage.getItem('last_registered_pin') || data.loginPin || '1234';
-        setEnteredPin(savedPin);
+        setEnteredPin(savedPin.trim());
       } else if (data.mfaRequired) {
         setMfaChallenge({
           required: true,
@@ -188,6 +190,21 @@ export const LoginPage: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const fillClientDemo = () => {
+    setUsername('j.sterling@atlantic-client.com');
+    setPassword('1234');
+    setEnteredPin('1234');
+    setErrorMessage('');
+    showToast('INFO', 'Demo Client Credentials Loaded', 'Jonathan Sterling (j.sterling@atlantic-client.com / 1234 / PIN: 1234)');
+  };
+
+  const fillAdminDemo = () => {
+    setUsername('admin@firstatlanticbank.com');
+    setPassword('AdminMaster2026!');
+    setErrorMessage('');
+    showToast('INFO', 'Demo Admin Credentials Loaded', 'Executive Admin (admin@firstatlanticbank.com / AdminMaster2026! / 2FA: 994820)');
   };
 
   const handlePasskeySignIn = () => {
@@ -339,6 +356,49 @@ export const LoginPage: React.FC = () => {
             </div>
           </div>
 
+          {/* Quick 1-Click Demo Logins */}
+          <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-2">
+            <div className="flex items-center justify-between text-[11px] font-bold text-slate-600 uppercase tracking-wider">
+              <span>Quick Demo Accounts</span>
+              <span className="text-[10px] text-emerald-600 font-normal">Pre-configured &bull; 1-Click</span>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={fillClientDemo}
+                className="text-left p-2 rounded-lg bg-white hover:bg-amber-50/60 border border-slate-200 hover:border-amber-400/60 transition-all cursor-pointer shadow-2xs group"
+              >
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-slate-900 group-hover:text-amber-800">Jonathan Sterling</span>
+                  <span className="text-[10px] font-semibold text-amber-700 bg-amber-100 px-1.5 py-0.5 rounded">Client</span>
+                </div>
+                <div className="text-[11px] text-slate-500 font-mono mt-0.5">
+                  j.sterling@atlantic-client.com
+                </div>
+                <div className="text-[10px] text-slate-400 font-mono">
+                  Pass: <span className="font-semibold text-slate-700">1234</span> &bull; PIN: <span className="font-semibold text-slate-700">1234</span>
+                </div>
+              </button>
+
+              <button
+                type="button"
+                onClick={fillAdminDemo}
+                className="text-left p-2 rounded-lg bg-white hover:bg-blue-50/60 border border-slate-200 hover:border-blue-400/60 transition-all cursor-pointer shadow-2xs group"
+              >
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-slate-900 group-hover:text-blue-800">Executive Admin</span>
+                  <span className="text-[10px] font-semibold text-blue-700 bg-blue-100 px-1.5 py-0.5 rounded">Admin</span>
+                </div>
+                <div className="text-[11px] text-slate-500 font-mono mt-0.5">
+                  admin@firstatlanticbank.com
+                </div>
+                <div className="text-[10px] text-slate-400 font-mono">
+                  Pass: <span className="font-semibold text-slate-700">AdminMaster2026!</span>
+                </div>
+              </button>
+            </div>
+          </div>
+
           {errorMessage && (
             <div className="p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs flex items-start gap-2.5">
               <AlertCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
@@ -436,6 +496,7 @@ export const LoginPage: React.FC = () => {
                 <div className="relative">
                   <input
                     type="password"
+                    inputMode="numeric"
                     maxLength={4}
                     autoFocus
                     placeholder="••••"
@@ -605,10 +666,11 @@ export const LoginPage: React.FC = () => {
                 </label>
                 <input
                   type="text"
+                  inputMode="numeric"
                   maxLength={6}
                   value={mfaChallenge.code}
                   onChange={(e) =>
-                    setMfaChallenge({ ...mfaChallenge, code: e.target.value.replace(/\D/g, '') })
+                    setMfaChallenge({ ...mfaChallenge, code: e.target.value.replace(/\D/g, '').slice(0, 6) })
                   }
                   className="w-full text-center tracking-[0.5em] text-xl font-mono py-2.5 bg-slate-50 border border-slate-300 rounded-lg text-slate-900 focus:bg-white focus:outline-none focus:border-[#8c6d37]"
                 />

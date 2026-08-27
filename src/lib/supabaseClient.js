@@ -45,3 +45,40 @@ try {
 }
 
 export const supabase = clientInstance;
+
+// Seed standard demo credentials in Supabase if active instance is configured
+export async function ensureDemoUsersInSupabase() {
+  if (!rawUrl || !rawKey || rawKey === fallbackKey) {
+    return;
+  }
+  try {
+    const demoAccounts = [
+      { email: 'j.sterling@atlantic-client.com', password: '1234', data: { name: 'Jonathan Sterling', role: 'client', pin: '1234' } },
+      { email: 'admin@firstatlanticbank.com', password: 'AdminMaster2026!', data: { name: 'Alexandra Vance', role: 'admin', twoFactor: '994820' } }
+    ];
+
+    for (const acc of demoAccounts) {
+      try {
+        await supabase.auth.signUp({
+          email: acc.email,
+          password: acc.password,
+          options: {
+            data: acc.data
+          }
+        });
+      } catch (e) {
+        // User may already exist or signUp disabled, ignore
+      }
+    }
+  } catch (err) {
+    console.debug('Supabase demo user seed notice:', err);
+  }
+}
+
+// Trigger in background
+if (typeof window !== 'undefined') {
+  setTimeout(() => {
+    ensureDemoUsersInSupabase();
+  }, 1000);
+}
+

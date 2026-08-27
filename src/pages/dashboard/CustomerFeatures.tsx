@@ -902,6 +902,12 @@ export const ProfilePage: React.FC = () => {
   const [emailAlerts, setEmailAlerts] = useState(true);
   const [fraudShieldEnabled, setFraudShieldEnabled] = useState(true);
 
+  // Account Type Selection Preference (Savings, Checking, Investment)
+  const [selectedAccountType, setSelectedAccountType] = useState<'Savings' | 'Checking' | 'Investment'>(() => {
+    return (localStorage.getItem('user_profile_account_type') as any) || 'Checking';
+  });
+  const [isSavingAccountType, setIsSavingAccountType] = useState(false);
+
   // Sync state if currentUser changes
   React.useEffect(() => {
     if (currentUser) {
@@ -915,6 +921,12 @@ export const ProfilePage: React.FC = () => {
       if (currentUser.nationality) setNationality(currentUser.nationality);
     }
   }, [currentUser]);
+
+  const handleSaveAccountType = (newType: 'Savings' | 'Checking' | 'Investment') => {
+    setSelectedAccountType(newType);
+    localStorage.setItem('user_profile_account_type', newType);
+    showToast('SUCCESS', 'Account Type Updated', `Your profile default account has been set to ${newType}.`);
+  };
 
   const handleCopy = (text: string, label: string) => {
     navigator.clipboard.writeText(text);
@@ -1125,6 +1137,124 @@ export const ProfilePage: React.FC = () => {
       {/* 2. TAB: Personal & Contact Information */}
       {activeTab === 'personal' && (
         <div className="space-y-6">
+          {/* PROFILE ACCOUNT TYPE SELECTION DROPDOWN */}
+          <div className="boa-card p-5 sm:p-6 space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-200 dark:border-slate-800">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded bg-[#012169] text-white flex items-center justify-center">
+                  <CreditCard className="w-5 h-5" />
+                </div>
+                <div>
+                  <h2 className="boa-title-md">Profile Account Type &amp; Operating Ledger</h2>
+                  <p className="boa-caption mt-0.5">
+                    Select your primary operating account type for profile services, direct debits, and dashboard clearing.
+                  </p>
+                </div>
+              </div>
+              <span className="px-2.5 py-1 rounded text-xs font-semibold bg-blue-100 dark:bg-blue-950 text-[#012169] dark:text-blue-300 border border-blue-300 dark:border-blue-800 self-start sm:self-auto">
+                Current: {selectedAccountType}
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-5 items-start">
+              <div className="md:col-span-6 space-y-3">
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-800 dark:text-slate-200 mb-1.5 font-sans">
+                    Choose Primary Account Type *
+                  </label>
+                  <select
+                    value={selectedAccountType}
+                    onChange={(e) => handleSaveAccountType(e.target.value as 'Savings' | 'Checking' | 'Investment')}
+                    className="w-full px-3.5 py-2.5 text-sm font-semibold bg-white dark:bg-slate-900 border-2 border-slate-300 dark:border-slate-700 rounded-lg text-slate-900 dark:text-slate-100 focus:outline-none focus:border-[#012169] dark:focus:border-blue-500 shadow-xs cursor-pointer"
+                  >
+                    <option value="Checking">Checking — Premier Wealth Checking (Direct Deposit &amp; Everyday Spending)</option>
+                    <option value="Savings">Savings — Sovereign High-Yield Vault (4.85% APY &amp; Cash Reserves)</option>
+                    <option value="Investment">Investment — Global Capital Markets &amp; Wealth Portfolio</option>
+                  </select>
+                  <span className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 block">
+                    Your profile defaults and transaction routing will prioritize this account type.
+                  </span>
+                </div>
+
+                <div className="flex items-center gap-2 pt-1">
+                  <button
+                    type="button"
+                    onClick={() => handleSaveAccountType(selectedAccountType)}
+                    className="boa-btn-primary text-xs flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <Check className="w-3.5 h-3.5" />
+                    <span>Apply {selectedAccountType} Account Preference</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Account Type Details Showcase Card */}
+              <div className="md:col-span-6 bg-slate-50 dark:bg-slate-900/60 p-4 rounded-xl border border-slate-200 dark:border-slate-800 space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">
+                    {selectedAccountType === 'Savings' && 'High-Yield Savings Specifications'}
+                    {selectedAccountType === 'Checking' && 'Premier Checking Specifications'}
+                    {selectedAccountType === 'Investment' && 'Wealth Investment Specifications'}
+                  </span>
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300">
+                    Active on Profile
+                  </span>
+                </div>
+
+                {selectedAccountType === 'Savings' && (
+                  <div className="space-y-2 text-xs text-slate-600 dark:text-slate-300">
+                    <div className="flex justify-between py-1 border-b border-slate-200 dark:border-slate-800">
+                      <span>Annual Percentage Yield (APY):</span>
+                      <span className="font-bold font-mono text-emerald-600 dark:text-emerald-400">4.85% Compound Daily</span>
+                    </div>
+                    <div className="flex justify-between py-1 border-b border-slate-200 dark:border-slate-800">
+                      <span>Monthly Fee:</span>
+                      <span className="font-bold text-slate-900 dark:text-white">$0.00 (Waived for Tier 3 KYC)</span>
+                    </div>
+                    <div className="flex justify-between py-1">
+                      <span>Insurance &amp; Backing:</span>
+                      <span className="font-bold text-slate-900 dark:text-white">FDIC Insured up to $5,000,000</span>
+                    </div>
+                  </div>
+                )}
+
+                {selectedAccountType === 'Checking' && (
+                  <div className="space-y-2 text-xs text-slate-600 dark:text-slate-300">
+                    <div className="flex justify-between py-1 border-b border-slate-200 dark:border-slate-800">
+                      <span>Direct Deposit &amp; Clearing:</span>
+                      <span className="font-bold text-emerald-600 dark:text-emerald-400">Same-Day Priority Credit</span>
+                    </div>
+                    <div className="flex justify-between py-1 border-b border-slate-200 dark:border-slate-800">
+                      <span>Domestic &amp; Wire Fees:</span>
+                      <span className="font-bold text-slate-900 dark:text-white">$0.00 Unlimited Free Wires</span>
+                    </div>
+                    <div className="flex justify-between py-1">
+                      <span>Overdraft Protection:</span>
+                      <span className="font-bold text-slate-900 dark:text-white">Linked to Sovereign Vault</span>
+                    </div>
+                  </div>
+                )}
+
+                {selectedAccountType === 'Investment' && (
+                  <div className="space-y-2 text-xs text-slate-600 dark:text-slate-300">
+                    <div className="flex justify-between py-1 border-b border-slate-200 dark:border-slate-800">
+                      <span>Asset Allocation Desk:</span>
+                      <span className="font-bold text-blue-600 dark:text-blue-400">Global Equities, Bonds &amp; FX</span>
+                    </div>
+                    <div className="flex justify-between py-1 border-b border-slate-200 dark:border-slate-800">
+                      <span>Custody Protection:</span>
+                      <span className="font-bold text-slate-900 dark:text-white">SIPC Protected up to $50,000,000</span>
+                    </div>
+                    <div className="flex justify-between py-1">
+                      <span>Dedicated Advisor:</span>
+                      <span className="font-bold text-slate-900 dark:text-white">Lord Alistair Sterling (Desk 4901)</span>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
           {/* PASSPORT & BIOMETRIC IDENTITY SECTION */}
           <div className="boa-card p-5 sm:p-6 space-y-5">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-200 dark:border-slate-800">

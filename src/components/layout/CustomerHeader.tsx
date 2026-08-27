@@ -155,10 +155,10 @@ export const CustomerHeader: React.FC = () => {
         </div>
       )}
 
-      <header className="bg-white dark:bg-[#071322] border-b border-slate-100 dark:border-slate-800/80 sticky top-0 z-20 transition-colors duration-200">
-        <div className="px-3 sm:px-6 lg:px-8 py-2.5 flex items-center justify-between gap-3 max-w-7xl mx-auto">
+      <header className="bg-white dark:bg-[#071322] border-b border-slate-100 dark:border-slate-800/80 sticky top-0 z-30 transition-colors duration-200 shadow-xs">
+        <div className="px-3 sm:px-6 lg:px-8 py-2.5 flex items-center justify-between gap-2 sm:gap-4 max-w-7xl mx-auto">
           {/* Mobile Left: Hamburger + Brand Name */}
-          <div className="flex items-center gap-2.5 sm:gap-4 min-w-0">
+          <div className="flex items-center gap-2 sm:gap-4 min-w-0">
             <button
               onClick={() => setMobileDrawerOpen(true)}
               className="lg:hidden p-1.5 rounded-lg text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
@@ -169,7 +169,7 @@ export const CustomerHeader: React.FC = () => {
 
             <button
               onClick={() => setCurrentView('DASHBOARD_OVERVIEW')}
-              className="flex items-center gap-1.5 cursor-pointer text-left select-none"
+              className="flex items-center gap-1.5 cursor-pointer text-left select-none shrink-0"
             >
               <span className="text-lg sm:text-xl font-bold font-serif tracking-tight text-slate-900 dark:text-white">
                 First Atlantic
@@ -177,10 +177,10 @@ export const CustomerHeader: React.FC = () => {
               <span className="w-2 h-2 rounded-full bg-[#f8c22d] inline-block shadow-2xs" />
             </button>
 
-            {/* Quick Search trigger on tablet/desktop */}
+            {/* Sticky Search trigger for tablet/desktop */}
             <button
               onClick={() => setSearchModalOpen(true)}
-              className="hidden sm:flex items-center justify-between gap-2 px-3 py-1.5 rounded-full bg-slate-100 dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 text-slate-500 dark:text-slate-400 text-xs w-48 md:w-64 cursor-pointer hover:border-slate-300 dark:hover:border-slate-700 transition-colors text-left"
+              className="hidden md:flex items-center justify-between gap-2 px-3 py-1.5 rounded-full bg-slate-100 dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 text-slate-500 dark:text-slate-400 text-xs w-48 lg:w-64 cursor-pointer hover:border-slate-300 dark:hover:border-slate-700 transition-colors text-left shadow-2xs"
             >
               <div className="flex items-center gap-2 overflow-hidden min-w-0">
                 <Search className="w-3.5 h-3.5 text-slate-400 shrink-0" />
@@ -188,20 +188,31 @@ export const CustomerHeader: React.FC = () => {
                   Search accounts, wires...
                 </span>
               </div>
-              <kbd className="hidden md:inline-block px-1.5 py-0.2 text-[9px] font-mono bg-slate-200 dark:bg-slate-800 text-slate-500 rounded">
+              <kbd className="hidden lg:inline-block px-1.5 py-0.2 text-[9px] font-mono bg-slate-200 dark:bg-slate-800 text-slate-500 rounded">
                 ⌘K
               </kbd>
             </button>
           </div>
 
+          {/* Center Mobile Sticky Quick Search Bar */}
+          <div className="flex-1 md:hidden max-w-[210px] sm:max-w-[280px]">
+            <button
+              onClick={() => setSearchModalOpen(true)}
+              className="w-full flex items-center gap-1.5 px-2.5 py-1.5 rounded-full bg-slate-100 dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 text-slate-500 dark:text-slate-400 text-xs cursor-pointer hover:bg-slate-200/60 transition-colors"
+            >
+              <Search className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+              <span className="truncate text-[11px] text-slate-500 dark:text-slate-400">Search...</span>
+            </button>
+          </div>
+
           {/* Right: Notifications & Yellow Initials Avatar */}
-          <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+          <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
             {/* Dark mode toggle */}
             <button
               onClick={toggleDarkMode}
               title={darkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
               aria-label="Toggle dark mode theme"
-              className="p-2 rounded-full text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+              className="p-1.5 sm:p-2 rounded-full text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
             >
               {darkMode ? <Sun className="w-4 h-4 text-[#f8c22d]" /> : <Moon className="w-4 h-4 text-slate-600" />}
             </button>
@@ -209,21 +220,24 @@ export const CustomerHeader: React.FC = () => {
             {/* Quick Pay button on desktop */}
             <button
               onClick={() => setCurrentView('DASHBOARD_TRANSFERS')}
-              className="hidden md:flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-xs font-semibold hover:opacity-90 transition-opacity cursor-pointer shadow-2xs"
+              className="hidden lg:flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-xs font-semibold hover:opacity-90 transition-opacity cursor-pointer shadow-2xs"
             >
               <ArrowUpRight className="w-3.5 h-3.5" />
               <span>Send Money</span>
             </button>
 
-            {/* Notifications Bell */}
+            {/* Notifications Bell with Mobile & Desktop Unread Alerts Badge */}
             <div className="relative">
               <button
                 onClick={() => setNotificationsOpen(!notificationsOpen)}
-                className="p-2 rounded-full text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 relative transition-colors cursor-pointer"
-                aria-label="View notifications"
+                className="p-1.5 sm:p-2 rounded-full text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 relative transition-colors cursor-pointer"
+                aria-label="View notifications and unread alerts"
               >
                 <Bell className="w-5 h-5" />
-                <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-[#f8c22d] ring-2 ring-white dark:ring-[#071322]" />
+                {/* Visual Unread Counter Badge visible on mobile and desktop */}
+                <span className="absolute -top-0.5 -right-0.5 min-w-4 h-4 px-1 rounded-full bg-[#d4001a] text-white text-[9px] font-bold flex items-center justify-center ring-2 ring-white dark:ring-[#071322] shadow-xs animate-pulse">
+                  2
+                </span>
               </button>
 
               {notificationsOpen && (
@@ -235,8 +249,8 @@ export const CustomerHeader: React.FC = () => {
                     <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
                       Bank Alerts &amp; Notifications
                     </h4>
-                    <span className="text-[10px] font-bold text-slate-950 bg-[#f8c22d] px-2 py-0.5 rounded-full">
-                      2 New
+                    <span className="text-[10px] font-bold text-white bg-[#d4001a] px-2 py-0.5 rounded-full">
+                      2 Unread
                     </span>
                   </div>
 
@@ -244,7 +258,10 @@ export const CustomerHeader: React.FC = () => {
                     <div className="p-3.5 hover:bg-slate-50 dark:hover:bg-slate-800/60 flex items-start gap-3 transition-colors">
                       <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
                       <div>
-                        <p className="text-xs font-semibold text-slate-900 dark:text-slate-100">Direct Deposit Credited</p>
+                        <div className="flex items-center gap-1.5">
+                          <p className="text-xs font-semibold text-slate-900 dark:text-slate-100">Direct Deposit Credited</p>
+                          <span className="w-1.5 h-1.5 rounded-full bg-[#d4001a]" />
+                        </div>
                         <p className="text-[11px] text-slate-600 dark:text-slate-400 mt-0.5">
                           Direct clearing distribution of $28,500.00 posted to Checking.
                         </p>
@@ -255,7 +272,10 @@ export const CustomerHeader: React.FC = () => {
                     <div className="p-3.5 hover:bg-slate-50 dark:hover:bg-slate-800/60 flex items-start gap-3 transition-colors">
                       <Shield className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
                       <div>
-                        <p className="text-xs font-semibold text-slate-900 dark:text-slate-100">Security &amp; Device Protected</p>
+                        <div className="flex items-center gap-1.5">
+                          <p className="text-xs font-semibold text-slate-900 dark:text-slate-100">Security &amp; Device Protected</p>
+                          <span className="w-1.5 h-1.5 rounded-full bg-[#d4001a]" />
+                        </div>
                         <p className="text-[11px] text-slate-600 dark:text-slate-400 mt-0.5">
                           {biometricState.enabled ? 'FIDO2 Hardware Enclave verified active.' : 'Hardware authenticator active.'}
                         </p>

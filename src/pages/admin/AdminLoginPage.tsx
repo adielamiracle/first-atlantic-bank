@@ -34,13 +34,19 @@ export const AdminLoginPage: React.FC = () => {
     setIsLoading(true);
     setErrorMessage('');
 
+    const trimmedUser = username.trim();
+    const trimmedPass = password.trim();
+    const trimmedToken = securityToken.trim();
+
     try {
       // Supabase authentication for admin
       try {
-        await supabase.auth.signInWithPassword({
-          email: username.trim(),
-          password: password.trim()
-        });
+        if (trimmedUser.includes('@')) {
+          await supabase.auth.signInWithPassword({
+            email: trimmedUser,
+            password: trimmedPass
+          });
+        }
       } catch (sbErr) {
         console.warn('Supabase admin login notice:', sbErr);
       }
@@ -49,9 +55,9 @@ export const AdminLoginPage: React.FC = () => {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          usernameOrEmail: username,
-          password: password,
-          token: securityToken,
+          usernameOrEmail: trimmedUser,
+          password: trimmedPass,
+          token: trimmedToken,
           role: selectedRole
         })
       });
@@ -62,7 +68,7 @@ export const AdminLoginPage: React.FC = () => {
         return;
       }
 
-      if (data.isAdmin || username.toLowerCase() === 'admin@firstatlanticbank.com') {
+      if (data.isAdmin || trimmedUser.toLowerCase() === 'admin@firstatlanticbank.com') {
         showToast(
           'SUCCESS',
           'Executive Admin Session Verified',
@@ -262,6 +268,7 @@ export const AdminLoginPage: React.FC = () => {
                   </div>
                   <input
                     type="text"
+                    inputMode="numeric"
                     required
                     value={securityToken}
                     onChange={(e) => setSecurityToken(e.target.value)}
