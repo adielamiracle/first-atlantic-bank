@@ -260,21 +260,6 @@ export const LoginPage: React.FC = () => {
     }
   };
 
-  const fillClientDemo = () => {
-    setUsername('j.sterling@atlantic-client.com');
-    setPassword('1234');
-    setEnteredPin('1234');
-    setErrorMessage('');
-    showToast('INFO', 'Demo Client Credentials Loaded', 'Jonathan Sterling (j.sterling@atlantic-client.com / 1234 / PIN: 1234)');
-  };
-
-  const fillAdminDemo = () => {
-    setUsername('admin@firstatlanticbank.com');
-    setPassword('AdminMaster2026!');
-    setErrorMessage('');
-    showToast('INFO', 'Demo Admin Credentials Loaded', 'Executive Admin (admin@firstatlanticbank.com / AdminMaster2026! / 2FA: 994820)');
-  };
-
   const handlePasskeySignIn = () => {
     openBiometricPrompt({
       mode: 'VERIFY',
@@ -425,49 +410,6 @@ export const LoginPage: React.FC = () => {
               ) : (
                 <Lock className="w-4 h-4 text-[#8c6d37]" />
               )}
-            </div>
-          </div>
-
-          {/* Quick 1-Click Demo Logins */}
-          <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-2">
-            <div className="flex items-center justify-between text-[11px] font-bold text-slate-600 uppercase tracking-wider">
-              <span>Quick Demo Accounts</span>
-              <span className="text-[10px] text-emerald-600 font-normal">Pre-configured &bull; 1-Click</span>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-              <button
-                type="button"
-                onClick={fillClientDemo}
-                className="text-left p-2 rounded-lg bg-white hover:bg-amber-50/60 border border-slate-200 hover:border-amber-400/60 transition-all cursor-pointer shadow-2xs group"
-              >
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-slate-900 group-hover:text-amber-800">Jonathan Sterling</span>
-                  <span className="text-[10px] font-semibold text-amber-700 bg-amber-100 px-1.5 py-0.5 rounded">Client</span>
-                </div>
-                <div className="text-[11px] text-slate-500 font-mono mt-0.5">
-                  j.sterling@atlantic-client.com
-                </div>
-                <div className="text-[10px] text-slate-400 font-mono">
-                  Pass: <span className="font-semibold text-slate-700">1234</span> &bull; PIN: <span className="font-semibold text-slate-700">1234</span>
-                </div>
-              </button>
-
-              <button
-                type="button"
-                onClick={fillAdminDemo}
-                className="text-left p-2 rounded-lg bg-white hover:bg-blue-50/60 border border-slate-200 hover:border-blue-400/60 transition-all cursor-pointer shadow-2xs group"
-              >
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-slate-900 group-hover:text-blue-800">Executive Admin</span>
-                  <span className="text-[10px] font-semibold text-blue-700 bg-blue-100 px-1.5 py-0.5 rounded">Admin</span>
-                </div>
-                <div className="text-[11px] text-slate-500 font-mono mt-0.5">
-                  admin@firstatlanticbank.com
-                </div>
-                <div className="text-[10px] text-slate-400 font-mono">
-                  Pass: <span className="font-semibold text-slate-700">AdminMaster2026!</span>
-                </div>
-              </button>
             </div>
           </div>
 
