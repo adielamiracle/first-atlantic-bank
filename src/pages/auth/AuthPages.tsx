@@ -813,7 +813,7 @@ export const EnrollPage: React.FC = () => {
       setErrorMsg('Passwords do not match.');
       return false;
     }
-    if (!formData.loginPin || formData.loginPin.length !== 4 || !/^\d{4}$/.test(formData.loginPin)) {
+    if (!formData.loginPin || formData.loginPin.length !== 4) {
       setErrorMsg('Please enter a 4-digit numeric login and transfer PIN.');
       return false;
     }

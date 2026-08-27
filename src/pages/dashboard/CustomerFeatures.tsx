@@ -968,8 +968,8 @@ export const ProfilePage: React.FC = () => {
       showToast('ERROR', 'PIN Error', 'Please enter your current 4-digit PIN.');
       return;
     }
-    if (newPin.length !== 4 || !/^\d{4}$/.test(newPin)) {
-      showToast('ERROR', 'Invalid PIN', 'New PIN must be exactly 4 numeric digits.');
+    if (newPin.length !== 4) {
+      showToast('ERROR', 'Invalid PIN', 'New PIN must be exactly 4 digits.');
       return;
     }
     if (newPin !== confirmPin) {
