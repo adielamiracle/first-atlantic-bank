@@ -477,11 +477,17 @@ export const EditApplicationModal: React.FC<EditApplicationModalProps> = ({
                   <label className="font-bold text-slate-700">Initial Opening Deposit ({requestedCurrency})</label>
                   <input
                     type="number"
-                    step="any"
+                    step="0.01"
+                    min="0"
                     value={initialDepositDollars}
                     onChange={e => setInitialDepositDollars(e.target.value)}
                     className="w-full px-3 py-2 rounded-xl border border-slate-300 font-mono font-bold"
                   />
+                  {Number(initialDepositDollars) > 0 && (
+                    <span className="text-xs text-emerald-600 font-mono font-semibold block mt-1">
+                      Formatted: {requestedCurrency === 'EUR' ? '€' : requestedCurrency === 'GBP' ? '£' : '$'}{Number(initialDepositDollars).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </span>
+                  )}
                 </div>
 
                 <div className="sm:col-span-2 p-3 rounded-xl bg-amber-50 border border-amber-200 flex items-center justify-between">

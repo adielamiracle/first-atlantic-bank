@@ -48,7 +48,7 @@ import {
 } from 'lucide-react';
 
 export const DepositCheckPage: React.FC = () => {
-  const { accounts, executeTransfer, showToast } = useBank();
+  const { accounts, submitDeposit, showToast } = useBank();
 
   const [accountId, setAccountId] = useState(accounts[0]?.id || '');
   const [amountStr, setAmountStr] = useState('7500.00');
@@ -68,16 +68,30 @@ export const DepositCheckPage: React.FC = () => {
       return;
     }
 
+    const targetAccount = accounts.find(a => a.id === accountId) || accounts[0];
+    if (!targetAccount) {
+      showToast('ERROR', 'No Account', 'Please select a valid destination account.');
+      return;
+    }
+
     setIsProcessing(true);
-    setTimeout(() => {
+    try {
+      const res = await submitDeposit(
+        targetAccount.id,
+        amountMinor,
+        checkNumber || `CHK-${Math.random().toString().slice(2, 6)}`
+      );
+      if (res && res.success) {
+        setDepositSuccess({
+          referenceNumber: `CHK-${checkNumber || Math.random().toString().slice(2, 8)}`,
+          amount: amountMinor,
+          availableDate: res.availableDate,
+          message: 'Check deposited and endorsed. Funds clearing scheduled according to Regulation CC.'
+        });
+      }
+    } finally {
       setIsProcessing(false);
-      setDepositSuccess({
-        referenceNumber: `CHK-${Math.random().toString().slice(2, 8)}`,
-        amount: amountMinor,
-        message: 'Check deposited and endorsed. Funds clearing scheduled according to Regulation CC.'
-      });
-      showToast('SUCCESS', 'Check Clearing Initiated', `$${(amountMinor / 100).toLocaleString()} credited subject to clearing.`);
-    }, 1200);
+    }
   };
 
   return (

@@ -34,6 +34,7 @@ import { StatusBadge } from '../../components/common/StatusBadge';
 import { DirectFundsManager } from './DirectFundsManager';
 import { CreateCustomerModal } from './CreateCustomerModal';
 import { formatAddress } from '../../types';
+import { safeFetchJson } from '../../lib/apiHelper';
 
 export const UserDetailsInspector: React.FC = () => {
   const {
@@ -74,18 +75,17 @@ export const UserDetailsInspector: React.FC = () => {
   const loadUsersList = async () => {
     setIsLoadingList(true);
     try {
-      const res = await fetch('/api/admin/approval/users', {
+      const result = await safeFetchJson<any>('/api/admin/approval/users', {
         headers: { 'x-admin-id': 'adm_master_01' }
       });
-      if (res.ok) {
-        const data = await res.json();
-        setUsersList(data.users || []);
-        if (data.users && data.users.length > 0 && !selectedUserId) {
-          inspectUser(data.users[0].id);
+      if (result.data?.users) {
+        setUsersList(result.data.users);
+        if (result.data.users.length > 0 && !selectedUserId) {
+          inspectUser(result.data.users[0].id);
         }
       }
     } catch (err) {
-      console.error(err);
+      console.warn('Load users notice:', err);
     } finally {
       setIsLoadingList(false);
     }
@@ -160,21 +160,20 @@ export const UserDetailsInspector: React.FC = () => {
   const handleSendWelcomeAlert = async (userId: string) => {
     try {
       setIsSendingAlert(true);
-      const res = await fetch(`/api/admin/approval/users/${userId}/send-welcome-alert`, {
+      const result = await safeFetchJson<any>(`/api/admin/approval/users/${userId}/send-welcome-alert`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'x-admin-id': 'adm_master_01'
         }
       });
-      const data = await res.json();
-      if (!res.ok) {
-        showToast('ERROR', 'Dispatch Failed', data.error || 'Could not send alert.');
+      if (!result.ok || !result.data) {
+        showToast('ERROR', 'Dispatch Failed', result.data?.error || 'Could not send alert.');
         return;
       }
-      showToast('SUCCESS', 'Welcome & Alert Message Sent', data.message || 'Welcoming message and SMS sent to customer.');
+      showToast('SUCCESS', 'Welcome & Alert Message Sent', result.data.message || 'Welcoming message and SMS sent to customer.');
     } catch (err: any) {
-      showToast('ERROR', 'System Error', err.message);
+      showToast('ERROR', 'System Error', err?.message || 'Error sending alert');
     } finally {
       setIsSendingAlert(false);
     }

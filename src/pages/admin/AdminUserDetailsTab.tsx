@@ -30,6 +30,7 @@ import {
   Key
 } from 'lucide-react';
 import { UserProfile, BankAccount, BankCard, LedgerEntry, AuditLog, formatAddress } from '../../types';
+import { safeFetchJson } from '../../lib/apiHelper';
 
 export const AdminUserDetailsTab: React.FC = () => {
   const { fetchUserBackendDetails, updateUserProfile, toggleUserAccess, setUserApprovalStatus, showToast, setCurrentView } = useBank();
@@ -62,18 +63,17 @@ export const AdminUserDetailsTab: React.FC = () => {
   const loadUsersList = async () => {
     setIsLoadingList(true);
     try {
-      const res = await fetch('/api/admin/approval/users', {
+      const result = await safeFetchJson<any>('/api/admin/approval/users', {
         headers: { 'x-admin-id': 'adm_master_01' }
       });
-      if (res.ok) {
-        const data = await res.json();
-        setUsersList(data.users || []);
-        if (data.users?.length > 0 && !selectedUserId) {
-          setSelectedUserId(data.users[0]?.id || '');
+      if (result.data?.users) {
+        setUsersList(result.data.users);
+        if (result.data.users.length > 0 && !selectedUserId) {
+          setSelectedUserId(result.data.users[0]?.id || '');
         }
       }
     } catch (err) {
-      console.error(err);
+      console.warn('Load users notice:', err);
     } finally {
       setIsLoadingList(false);
     }

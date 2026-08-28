@@ -823,13 +823,19 @@ export const CreateCustomerModal: React.FC<CreateCustomerModalProps> = ({
                     </span>
                     <input
                       type="number"
-                      step="any"
+                      step="0.01"
+                      min="0"
                       value={initialDepositDollars}
                       onChange={e => setInitialDepositDollars(e.target.value)}
                       className="w-full pl-7 pr-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 font-mono font-bold"
                       placeholder="25000"
                     />
                   </div>
+                  {Number(initialDepositDollars) > 0 && (
+                    <span className="text-xs text-emerald-600 dark:text-emerald-400 font-mono font-semibold block mt-1">
+                      Formatted: {currency === 'EUR' ? '€' : currency === 'GBP' ? '£' : '$'}{Number(initialDepositDollars).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </span>
+                  )}
                 </div>
 
                 {/* KYC Tier */}

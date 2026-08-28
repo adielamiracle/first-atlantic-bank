@@ -26,7 +26,9 @@ import {
   Camera,
   Upload,
   Sparkles,
-  ArrowLeft
+  ArrowLeft,
+  Eye,
+  EyeOff
 } from 'lucide-react';
 import { BankRegion } from '../../types';
 import { COUNTRIES, NATIONALITIES } from '../../data/countries';
@@ -43,6 +45,8 @@ export const LoginPage: React.FC = () => {
     return localStorage.getItem('last_registered_password') || '';
   });
   const [rememberDevice, setRememberDevice] = useState(true);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showPin, setShowPin] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [applicationNotice, setApplicationNotice] = useState<{
@@ -509,18 +513,27 @@ export const LoginPage: React.FC = () => {
 
                 <div className="relative">
                   <input
-                    type="password"
+                    type={showPin ? "text" : "password"}
                     inputMode="numeric"
                     maxLength={4}
                     autoFocus
                     placeholder="••••"
                     value={enteredPin}
                     onChange={(e) => setEnteredPin(e.target.value.replace(/\D/g, '').slice(0, 4))}
-                    className="w-full text-center tracking-[0.8em] text-2xl font-mono py-3 bg-slate-50 border-2 border-slate-300 rounded-xl text-slate-900 focus:bg-white focus:outline-none focus:border-[#8c6d37] font-bold"
+                    className="w-full text-center tracking-[0.8em] text-2xl font-mono py-3 bg-slate-50 border-2 border-slate-300 rounded-xl text-slate-900 focus:bg-white focus:outline-none focus:border-[#8c6d37] font-bold pr-12 pl-12"
                   />
-                  <div className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400">
-                    <Key className="w-4 h-4 text-[#8c6d37]" />
-                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setShowPin(!showPin)}
+                    aria-label={showPin ? "Hide PIN" : "Show PIN"}
+                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer p-1 transition-colors"
+                  >
+                    {showPin ? (
+                      <EyeOff className="w-4 h-4" />
+                    ) : (
+                      <Eye className="w-4 h-4" />
+                    )}
+                  </button>
                 </div>
               </div>
 
@@ -606,13 +619,25 @@ export const LoginPage: React.FC = () => {
                     <KeyRound className="w-4 h-4" />
                   </div>
                   <input
-                    type="password"
+                    type={showPassword ? "text" : "password"}
                     required
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="••••••••••••"
-                    className="w-full pl-10 pr-3.5 py-2.5 text-sm rounded-lg font-sans transition-all focus:outline-none bg-slate-50 border border-slate-300 text-slate-900 placeholder-slate-400 focus:bg-white focus:border-[#8c6d37] focus:ring-1 focus:ring-[#8c6d37]"
+                    className="w-full pl-10 pr-10 py-2.5 text-sm rounded-lg font-sans transition-all focus:outline-none bg-slate-50 border border-slate-300 text-slate-900 placeholder-slate-400 focus:bg-white focus:border-[#8c6d37] focus:ring-1 focus:ring-[#8c6d37]"
                   />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    aria-label={showPassword ? "Hide password" : "Show password"}
+                    className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-slate-600 cursor-pointer focus:outline-none transition-colors"
+                  >
+                    {showPassword ? (
+                      <EyeOff className="w-4 h-4" />
+                    ) : (
+                      <Eye className="w-4 h-4" />
+                    )}
+                  </button>
                 </div>
               </div>
 
@@ -853,10 +878,27 @@ export const EnrollPage: React.FC = () => {
     return true;
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const validateStep4 = () => {
+    if (!formData.bookingRegion) {
+      setErrorMsg('Please select your Primary Booking Jurisdiction.');
+      return false;
+    }
+    const fundingAmount = Number(formData.initialDepositMinor) / 100;
+    if (isNaN(fundingAmount) || fundingAmount < 0) {
+      setErrorMsg('Please specify a valid initial opening funding amount.');
+      return false;
+    }
     if (!formData.termsAccepted || !formData.fatcaAccepted) {
       setErrorMsg('Please accept the regulatory agreements and disclosures to proceed.');
+      return false;
+    }
+    setErrorMsg('');
+    return true;
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!validateStep4()) {
       return;
     }
 
@@ -1434,15 +1476,28 @@ export const EnrollPage: React.FC = () => {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-bold uppercase text-slate-700 mb-1">Initial Opening Funding Amount (€/$/£)</label>
-                  <input
-                    type="number"
-                    required
-                    min="1000"
-                    value={formData.initialDepositMinor / 100}
-                    onChange={(e) => handleChange('initialDepositMinor', Math.round(Number(e.target.value) * 100))}
-                    className="w-full px-3.5 py-2 text-sm bg-slate-50 border border-slate-300 rounded-lg text-slate-900 focus:bg-white font-mono"
-                  />
+                  <label className="block text-xs font-bold uppercase text-slate-700 mb-1">
+                    Initial Opening Funding Amount ({formData.requestedCurrency === 'EUR' ? '€' : formData.requestedCurrency === 'GBP' ? '£' : '$'})
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      value={formData.initialDepositMinor !== undefined && formData.initialDepositMinor !== null ? (formData.initialDepositMinor / 100) : ''}
+                      onChange={(e) => {
+                        const num = parseFloat(e.target.value);
+                        handleChange('initialDepositMinor', isNaN(num) ? 0 : Math.round(num * 100));
+                      }}
+                      placeholder="25000"
+                      className="w-full px-3.5 py-2 text-sm bg-slate-50 border border-slate-300 rounded-lg text-slate-900 focus:bg-white font-mono font-bold"
+                    />
+                  </div>
+                  {formData.initialDepositMinor > 0 && (
+                    <span className="text-xs text-emerald-600 font-mono font-semibold block mt-1">
+                      Formatted: {formData.requestedCurrency === 'EUR' ? '€' : formData.requestedCurrency === 'GBP' ? '£' : '$'}{(formData.initialDepositMinor / 100).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </span>
+                  )}
                   <span className="text-[11px] text-slate-500 mt-1 block">
                     Funds will be ledger-credited upon Admin approval.
                   </span>

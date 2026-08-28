@@ -25,6 +25,7 @@ import {
   Clock
 } from 'lucide-react';
 import { AccountActivationRequest, UserApprovalStatus } from '../../types';
+import { safeFetchJson } from '../../lib/apiHelper';
 
 export const AccountActivationTab: React.FC = () => {
   const {
@@ -63,17 +64,16 @@ export const AccountActivationTab: React.FC = () => {
   const fetchUsers = async () => {
     setIsLoadingUsers(true);
     try {
-      const res = await fetch('/api/admin/approval/users', {
+      const result = await safeFetchJson<any>('/api/admin/approval/users', {
         headers: {
           'x-admin-id': 'adm_master_01'
         }
       });
-      if (res.ok) {
-        const data = await res.json();
-        setAllUsersList(data.users || []);
-        if (data.users && data.users.length > 0 && !proposeUserId) {
-          const pending = data.users.find((u: any) => u.approval_status === 'PENDING');
-          setProposeUserId(pending ? pending.id : data.users[0]?.id || '');
+      if (result.data?.users) {
+        setAllUsersList(result.data.users);
+        if (result.data.users.length > 0 && !proposeUserId) {
+          const pending = result.data.users.find((u: any) => u.approval_status === 'PENDING');
+          setProposeUserId(pending ? pending.id : result.data.users[0]?.id || '');
         }
       }
     } catch (err) {
