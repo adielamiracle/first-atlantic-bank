@@ -117,7 +117,7 @@ const MainAppRouter: React.FC = () => {
   }
 
   // 2. Protected Institutional Admin View
-  if (currentView === 'ADMIN_DASHBOARD') {
+  if (currentView === 'ADMIN_DASHBOARD' || currentView.startsWith('ADMIN_')) {
     if (currentRole === 'ADMIN') {
       return <AdminDashboard />;
     }

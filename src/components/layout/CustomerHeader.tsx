@@ -76,12 +76,12 @@ export const CustomerHeader: React.FC = () => {
       )}
 
       <header className="bg-white dark:bg-[#121212] border-b border-slate-100 dark:border-slate-800 sticky top-0 z-30 transition-colors duration-200">
-        <div className="px-4 sm:px-6 py-3 flex items-center justify-between gap-3 max-w-md mx-auto sm:max-w-lg md:max-w-xl">
-          {/* Left: Hamburger menu & First Atlantic Brand Logo */}
+        <div className="px-4 sm:px-6 py-3 flex items-center justify-between gap-3 max-w-7xl mx-auto w-full">
+          {/* Left: Hamburger menu (mobile only) & First Atlantic Brand Logo */}
           <div className="flex items-center gap-3">
             <button
               onClick={() => setMobileDrawerOpen(true)}
-              className="p-1 -ml-1 rounded-lg text-black dark:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+              className="p-1 -ml-1 rounded-lg text-black dark:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer lg:hidden"
               aria-label="Open Navigation Menu"
             >
               <Menu className="w-6 h-6 stroke-[2.2]" />

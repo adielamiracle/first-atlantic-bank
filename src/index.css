@@ -18,6 +18,12 @@
   --success: #10B981;
 }
 
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  touch-action: manipulation;
+}
+
 html.dark {
   color-scheme: dark;
 }
@@ -32,11 +38,38 @@ body {
   -webkit-tap-highlight-color: transparent;
   touch-action: manipulation;
   overflow-x: hidden;
+  width: 100%;
 }
 
 .dark body {
   color: #f1f5f9;
   background-color: #0d1117;
+}
+
+/* Prevent iOS Safari / mobile browser auto-zooming on focus and tap */
+button,
+a,
+select,
+input,
+textarea,
+[role="button"],
+[role="tab"],
+.cursor-pointer {
+  touch-action: manipulation;
+}
+
+@media screen and (max-width: 899px) {
+  input[type="text"],
+  input[type="number"],
+  input[type="email"],
+  input[type="password"],
+  input[type="search"],
+  input[type="tel"],
+  input[type="url"],
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
 }
 
 /* Single Unified Font System across the entire site */
