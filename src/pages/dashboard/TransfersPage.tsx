@@ -678,7 +678,7 @@ export const TransfersPage: React.FC = () => {
         </motion.div>
       ) : (
         /* ==================== TRANSFER INITIATION FORM (GLASSMORPHIC) ==================== */
-        <form onSubmit={handleReview} className="glass-panel-elevated rounded-2xl p-5 sm:p-7 space-y-5 sm:space-y-6 transition-all">
+        <form noValidate onSubmit={handleReview} className="glass-panel-elevated rounded-2xl p-5 sm:p-7 space-y-5 sm:space-y-6 transition-all">
           {/* Step 1: Source Account of Funds */}
           <div className="space-y-2">
             <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
