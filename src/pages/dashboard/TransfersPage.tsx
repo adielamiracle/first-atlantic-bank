@@ -26,11 +26,14 @@ import {
   Info,
   ExternalLink,
   Receipt,
-  FileCheck2
+  FileCheck2,
+  Calculator
 } from 'lucide-react';
 import { CurrencyCode } from '../../types';
 import { REGISTERED_BANKS, RegisteredBank, OTHER_CUSTOM_BANK_ID, DispatchNotificationRecord } from '../../data/banksData';
 import { motion, AnimatePresence } from 'motion/react';
+import { TransferFundsAnimation } from '../../components/dashboard/TransferFundsAnimation';
+import { CurrencyExchangeCalculator } from '../../components/dashboard/CurrencyExchangeCalculator';
 
 export const TransfersPage: React.FC = () => {
   const {
@@ -52,6 +55,7 @@ export const TransfersPage: React.FC = () => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [transferSuccess, setTransferSuccess] = useState<any>(null);
+  const [showCalculator, setShowCalculator] = useState(true);
 
   // Bank Selection State
   const [bankSearchQuery, setBankSearchQuery] = useState('');
@@ -247,73 +251,138 @@ export const TransfersPage: React.FC = () => {
     showToast('INFO', 'Copied to Clipboard', text);
   };
 
+  const handleApplyFxCalculation = ({
+    amount,
+    sourceCurrency,
+    targetCurrency
+  }: {
+    amount: string;
+    sourceCurrency: CurrencyCode;
+    targetCurrency: CurrencyCode;
+  }) => {
+    setAmountStr(amount);
+    setDestCurrency(targetCurrency);
+    if (transferMode !== 'INTERNATIONAL' && sourceCurrency !== targetCurrency) {
+      setTransferMode('INTERNATIONAL');
+    }
+    const matchingSourceAccount = accounts.find((a) => a.currency === sourceCurrency);
+    if (matchingSourceAccount) {
+      setSourceAccountId(matchingSourceAccount.id);
+    }
+    showToast(
+      'INFO',
+      'FX Estimation Applied',
+      `Set transfer amount to ${amount} and target currency to ${targetCurrency}.`
+    );
+  };
+
   return (
     <div className="max-w-5xl mx-auto space-y-6 pb-12 font-sans">
-      {/* Header & Mode Switcher */}
-      <div className="bg-white dark:bg-[#0a192f] rounded-2xl p-6 sm:p-7 border border-slate-200 dark:border-[#1e3656] shadow-sm space-y-5 transition-colors">
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5">
-          <div className="space-y-1">
-            <div className="flex items-center gap-2 text-xs font-bold text-[#8c6d37] dark:text-[#c5a880] tracking-wider uppercase font-mono">
-              <Sparkles className="w-3.5 h-3.5 text-[#d4af37]" />
-              <span>Universal Instant Wire &amp; Bank Transfer Engine</span>
+      {/* Header & Mode Switcher (Glassmorphic) */}
+      <div className="glass-panel-elevated rounded-2xl p-5 sm:p-7 space-y-5">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+          <div className="space-y-1.5 min-w-0">
+            <div className="flex items-center gap-2 text-[11px] sm:text-xs font-bold text-[#d97706] dark:text-[#f8c22d] tracking-wider uppercase font-mono">
+              <Sparkles className="w-3.5 h-3.5 text-[#d4af37] shrink-0" />
+              <span className="truncate">Universal Instant Wire &amp; Bank Transfer Engine</span>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-bold font-serif text-slate-900 dark:text-white">
+            <h1 className="text-xl sm:text-2xl md:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">
               Transfer &amp; Remittance Hub
             </h1>
-            <p className="text-sm text-slate-600 dark:text-slate-300 max-w-2xl leading-relaxed">
+            <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 max-w-2xl leading-relaxed">
               Dispatch funds instantly to all registered UK, USA, European, and Worldwide institutions, or route to any custom bank globally with real-time SMS &amp; Email alerts.
             </p>
           </div>
 
-          {/* Mode Switcher Tabs */}
-          <div className="flex flex-wrap bg-slate-100 dark:bg-slate-800/90 p-1.5 rounded-xl border border-slate-200 dark:border-slate-700 text-xs sm:text-sm font-semibold self-start lg:self-auto shadow-inner">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
+            {/* Currency Calculator Toggle */}
             <button
-              onClick={() => {
-                setTransferMode('DOMESTIC');
-                setTransferSuccess(null);
-              }}
-              className={`px-3.5 py-2 rounded-lg transition-all cursor-pointer flex items-center gap-1.5 ${
-                transferMode === 'DOMESTIC'
-                  ? 'bg-white dark:bg-[#112a4a] text-slate-900 dark:text-white shadow-xs border border-slate-200 dark:border-[#c5a880]/30 font-bold'
-                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+              type="button"
+              onClick={() => setShowCalculator(!showCalculator)}
+              className={`px-3.5 py-2 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer backdrop-blur-md ${
+                showCalculator
+                  ? 'bg-gradient-to-r from-[#d4af37]/20 to-[#f8c22d]/20 text-[#926500] dark:text-[#f8c22d] border border-amber-400/40 font-bold shadow-xs'
+                  : 'bg-white/60 dark:bg-white/5 text-slate-700 dark:text-slate-300 border border-white/60 dark:border-white/10 hover:bg-white dark:hover:bg-white/10'
               }`}
             >
-              <Building className="w-4 h-4 text-[#8c6d37] dark:text-[#c5a880]" />
-              <span>Registered UK / US Banks</span>
+              <Calculator className="w-3.5 h-3.5 text-[#8c6d37] dark:text-[#f8c22d]" />
+              <span>{showCalculator ? 'Hide FX Estimator' : 'FX Rate Estimator'}</span>
             </button>
 
-            <button
-              onClick={() => {
-                setTransferMode('INTERNATIONAL');
-                setTransferSuccess(null);
-              }}
-              className={`px-3.5 py-2 rounded-lg transition-all cursor-pointer flex items-center gap-1.5 ${
-                transferMode === 'INTERNATIONAL'
-                  ? 'bg-white dark:bg-[#112a4a] text-slate-900 dark:text-white shadow-xs border border-slate-200 dark:border-[#c5a880]/30 font-bold'
-                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-              }`}
-            >
-              <Globe className="w-4 h-4 text-[#8c6d37] dark:text-[#c5a880]" />
-              <span>International SWIFT FX</span>
-            </button>
+            {/* Mode Switcher Tabs */}
+            <div className="grid grid-cols-3 sm:flex sm:flex-wrap bg-white/40 dark:bg-white/5 backdrop-blur-xl p-1 rounded-xl border border-white/60 dark:border-white/10 text-xs font-semibold self-stretch sm:self-start lg:self-auto gap-1">
+              <button
+                type="button"
+                onClick={() => {
+                  setTransferMode('DOMESTIC');
+                  setTransferSuccess(null);
+                }}
+                className={`px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-lg transition-all cursor-pointer flex items-center justify-center gap-1.5 text-center ${
+                  transferMode === 'DOMESTIC'
+                    ? 'bg-white dark:bg-white/20 text-slate-950 dark:text-white shadow-xs font-bold border border-white/60 dark:border-white/20'
+                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                }`}
+              >
+                <Building className="w-3.5 h-3.5 text-[#d97706] dark:text-[#f8c22d] shrink-0" />
+                <span className="truncate">UK/US Banks</span>
+              </button>
 
-            <button
-              onClick={() => {
-                setTransferMode('INTERNAL');
-                setTransferSuccess(null);
-              }}
-              className={`px-3.5 py-2 rounded-lg transition-all cursor-pointer flex items-center gap-1.5 ${
-                transferMode === 'INTERNAL'
-                  ? 'bg-white dark:bg-[#112a4a] text-slate-900 dark:text-white shadow-xs border border-slate-200 dark:border-[#c5a880]/30 font-bold'
-                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-              }`}
-            >
-              <ArrowLeftRight className="w-4 h-4 text-[#8c6d37] dark:text-[#c5a880]" />
-              <span>My Accounts</span>
-            </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setTransferMode('INTERNATIONAL');
+                  setTransferSuccess(null);
+                  setShowCalculator(true);
+                }}
+                className={`px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-lg transition-all cursor-pointer flex items-center justify-center gap-1.5 text-center ${
+                  transferMode === 'INTERNATIONAL'
+                    ? 'bg-white dark:bg-white/20 text-slate-950 dark:text-white shadow-xs font-bold border border-white/60 dark:border-white/20'
+                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                }`}
+              >
+                <Globe className="w-3.5 h-3.5 text-[#d97706] dark:text-[#f8c22d] shrink-0" />
+                <span className="truncate">SWIFT FX</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setTransferMode('INTERNAL');
+                  setTransferSuccess(null);
+                }}
+                className={`px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-lg transition-all cursor-pointer flex items-center justify-center gap-1.5 text-center ${
+                  transferMode === 'INTERNAL'
+                    ? 'bg-white dark:bg-white/20 text-slate-950 dark:text-white shadow-xs font-bold border border-white/60 dark:border-white/20'
+                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                }`}
+              >
+                <ArrowLeftRight className="w-3.5 h-3.5 text-[#d97706] dark:text-[#f8c22d] shrink-0" />
+                <span className="truncate">My Accounts</span>
+              </button>
+            </div>
           </div>
         </div>
       </div>
+
+      {/* Real-time Multi-Currency Calculator Widget */}
+      <AnimatePresence>
+        {showCalculator && !transferSuccess && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.25 }}
+          >
+            <CurrencyExchangeCalculator
+              rates={rates}
+              defaultSourceCurrency={sourceAccount?.currency || 'USD'}
+              defaultTargetCurrency={destCurrency}
+              defaultAmount={amountStr || '5000'}
+              onApplyToTransfer={handleApplyFxCalculation}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {transferSuccess ? (
         /* ==================== POST-TRANSFER SUCCESS & REAL-TIME ALERTS VIEW ==================== */
@@ -350,6 +419,22 @@ export const TransfersPage: React.FC = () => {
               </span>
             </div>
           </div>
+
+          {/* Frame-Motion Card-to-Card Animated Funds Conduit */}
+          <TransferFundsAnimation
+            sourceAccount={transferSuccess.sourceAccount}
+            destAccount={transferSuccess.destAccount}
+            destBankName={transferSuccess.bankName}
+            destBeneficiaryName={transferSuccess.type === 'INTERNAL' ? transferSuccess.destAccount?.name : transferSuccess.recipientName}
+            destAccountOrIban={transferSuccess.accountOrIban || transferSuccess.destAccount?.accountNumber}
+            amountMinor={transferSuccess.amountMinor}
+            currency={transferSuccess.currency}
+            destCurrency={transferSuccess.destCurrency || transferSuccess.currency}
+            convertedAmountMinor={transferSuccess.convertedAmountMinor}
+            clearingRail={transferSuccess.clearingRail}
+            transferType={transferSuccess.type}
+            referenceNumber={transferSuccess.referenceNumber}
+          />
 
           {/* Receipt View Tabs */}
           <div className="flex bg-slate-100 dark:bg-slate-900 p-1.5 rounded-xl border border-slate-200 dark:border-slate-800 text-xs sm:text-sm font-semibold max-w-md">
@@ -526,64 +611,104 @@ export const TransfersPage: React.FC = () => {
           </div>
         </motion.div>
       ) : (
-        /* ==================== TRANSFER INITIATION FORM ==================== */
-        <form onSubmit={handleReview} className="bg-white dark:bg-[#0a192f] rounded-2xl p-6 sm:p-8 border border-slate-200 dark:border-[#1e3656] shadow-sm space-y-7 transition-colors">
+        /* ==================== TRANSFER INITIATION FORM (GLASSMORPHIC) ==================== */
+        <form onSubmit={handleReview} className="glass-panel-elevated rounded-2xl p-5 sm:p-7 space-y-5 sm:space-y-6 transition-all">
           {/* Step 1: Source Account of Funds */}
           <div className="space-y-2">
-            <label className="block text-xs sm:text-sm font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+            <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
               1. Source Account (Funds Origin)
             </label>
             <select
               value={sourceAccountId}
               onChange={(e) => setSourceAccountId(e.target.value)}
-              className="w-full px-4 py-3.5 text-sm sm:text-base bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100 font-semibold focus:bg-white dark:focus:bg-slate-900 focus:outline-none focus:border-[#c5a880]"
+              className="glass-input w-full px-4 py-3 text-xs sm:text-sm rounded-xl text-slate-900 dark:text-slate-100 font-semibold focus:outline-none focus:ring-2 focus:ring-[#f8c22d]"
             >
               {accounts.map((acc) => (
-                <option key={acc.id} value={acc.id}>
+                <option key={acc.id} value={acc.id} className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">
                   {acc.name} ({acc.accountNumber}) — Available: ${((acc.availableBalanceMinor || 0) / 100).toLocaleString('en-US', { minimumFractionDigits: 2 })} {acc.currency}
                 </option>
               ))}
             </select>
+
+            {sourceAccount && (
+              <div className="p-3.5 rounded-xl bg-white/60 dark:bg-white/5 border border-white/60 dark:border-white/10 flex items-center justify-between gap-2 min-w-0 backdrop-blur-md">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-[#d4af37] to-[#f8c22d] text-slate-950 flex items-center justify-center font-bold text-xs shrink-0 shadow-xs">
+                    {sourceAccount.currency === 'EUR' ? '€' : sourceAccount.currency === 'GBP' ? '£' : '$'}
+                  </div>
+                  <div className="min-w-0">
+                    <span className="text-xs font-bold text-slate-900 dark:text-white truncate block max-w-[160px] sm:max-w-xs">{sourceAccount.name}</span>
+                    <span className="text-[10px] sm:text-[11px] text-slate-500 font-mono truncate block">Acct: {sourceAccount.accountNumber} • {sourceAccount.region}</span>
+                  </div>
+                </div>
+                <div className="text-right shrink-0">
+                  <span className="text-[9px] sm:text-[10px] uppercase font-mono text-slate-400 block leading-tight">Available</span>
+                  <span className="text-xs sm:text-sm font-mono font-bold text-emerald-600 dark:text-emerald-400 whitespace-nowrap">
+                    {sourceAccount.currency === 'EUR' ? '€' : sourceAccount.currency === 'GBP' ? '£' : '$'}{((sourceAccount.availableBalanceMinor || 0) / 100).toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                  </span>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Step 2: Destination Configuration */}
           {transferMode === 'INTERNAL' ? (
             <div className="space-y-2">
-              <label className="block text-xs sm:text-sm font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
                 2. Destination Account (Internal First Atlantic)
               </label>
               <select
                 value={destAccountId}
                 onChange={(e) => setDestAccountId(e.target.value)}
-                className="w-full px-4 py-3.5 text-sm sm:text-base bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100 font-semibold focus:bg-white dark:focus:bg-slate-900 focus:outline-none focus:border-[#c5a880]"
+                className="glass-input w-full px-4 py-3 text-xs sm:text-sm rounded-xl text-slate-900 dark:text-slate-100 font-semibold focus:outline-none focus:ring-2 focus:ring-[#f8c22d]"
               >
                 {accounts
                   .filter((a) => a.id !== sourceAccountId)
                   .map((acc) => (
-                    <option key={acc.id} value={acc.id}>
+                    <option key={acc.id} value={acc.id} className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">
                       {acc.name} ({acc.accountNumber}) — {acc.currency}
                     </option>
                   ))}
               </select>
+
+              {destAccount && (
+                <div className="p-3.5 rounded-xl bg-white/60 dark:bg-white/5 border border-white/60 dark:border-white/10 flex items-center justify-between gap-2 min-w-0 backdrop-blur-md">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="w-8 h-8 rounded-xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center justify-center font-bold text-xs shrink-0 shadow-xs">
+                      {destAccount.currency === 'EUR' ? '€' : destAccount.currency === 'GBP' ? '£' : '$'}
+                    </div>
+                    <div className="min-w-0">
+                      <span className="text-xs font-bold text-slate-900 dark:text-white truncate block max-w-[160px] sm:max-w-xs">{destAccount.name}</span>
+                      <span className="text-[10px] sm:text-[11px] text-slate-500 font-mono truncate block">Acct: {destAccount.accountNumber} • {destAccount.region}</span>
+                    </div>
+                  </div>
+                  <div className="text-right shrink-0">
+                    <span className="text-[9px] sm:text-[10px] uppercase font-mono text-slate-400 block leading-tight">Balance</span>
+                    <span className="text-xs sm:text-sm font-mono font-bold text-slate-900 dark:text-white whitespace-nowrap">
+                      {destAccount.currency === 'EUR' ? '€' : destAccount.currency === 'GBP' ? '£' : '$'}{((destAccount.balanceMinor || 0) / 100).toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                    </span>
+                  </div>
+                </div>
+              )}
             </div>
           ) : (
-            <div className="space-y-5 p-5 sm:p-6 bg-slate-50 dark:bg-slate-900/70 rounded-2xl border border-slate-200 dark:border-slate-800">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                <h3 className="text-sm font-bold uppercase tracking-wider text-slate-900 dark:text-white font-serif flex items-center gap-2">
-                  <Building className="w-4 h-4 text-[#8c6d37] dark:text-[#c5a880]" />
-                  <span>2. Select Destination Registered Bank or Custom Bank</span>
+            <div className="space-y-4 p-4 sm:p-5 bg-white/40 dark:bg-white/5 rounded-2xl border border-white/60 dark:border-white/10 backdrop-blur-md">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <h3 className="text-xs sm:text-sm font-bold uppercase tracking-wider text-slate-900 dark:text-white flex items-center gap-1.5">
+                  <Building className="w-3.5 h-3.5 text-[#d97706] dark:text-[#f8c22d] shrink-0" />
+                  <span>2. Destination Bank &amp; Beneficiary Details</span>
                 </h3>
               </div>
 
               {/* Country / Bank Region Filter Tabs */}
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">Filter Network:</span>
+              <div className="flex flex-wrap items-center gap-1.5">
+                <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 mr-1">Filter:</span>
                 {[
-                  { id: 'ALL', label: 'All Institutions' },
-                  { id: 'US', label: '🇺🇸 United States (Fedwire / ACH)' },
-                  { id: 'UK', label: '🇬🇧 United Kingdom (FPS / CHAPS)' },
-                  { id: 'EU', label: '🇪🇺 Europe (SEPA)' },
-                  { id: 'GLOBAL', label: '🌐 Global SWIFT' }
+                  { id: 'ALL', label: 'All' },
+                  { id: 'US', label: '🇺🇸 US' },
+                  { id: 'UK', label: '🇬🇧 UK' },
+                  { id: 'EU', label: '🇪🇺 EU' },
+                  { id: 'GLOBAL', label: '🌐 Global' }
                 ].map((tab) => (
                   <button
                     key={tab.id}
@@ -591,10 +716,10 @@ export const TransfersPage: React.FC = () => {
                     onClick={() => {
                       setBankCountryFilter(tab.id as any);
                     }}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                    className={`px-3 py-1 rounded-lg text-[11px] sm:text-xs font-semibold transition-all cursor-pointer backdrop-blur-md ${
                       bankCountryFilter === tab.id
-                        ? 'bg-[#0a192f] text-white dark:bg-[#112a4a] border border-[#c5a880]/40'
-                        : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-700 hover:border-slate-400'
+                        ? 'bg-slate-950 text-white dark:bg-white dark:text-slate-950 font-bold shadow-xs'
+                        : 'bg-white/60 dark:bg-white/5 text-slate-700 dark:text-slate-300 border border-white/60 dark:border-white/10 hover:bg-white dark:hover:bg-white/15'
                     }`}
                   >
                     {tab.label}
@@ -604,18 +729,18 @@ export const TransfersPage: React.FC = () => {
 
               {/* Bank Search Input */}
               <div className="relative">
-                <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                <Search className="w-3.5 h-3.5 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
                 <input
                   type="text"
-                  placeholder="Search registered UK/US banks by name, sort code, routing or SWIFT..."
+                  placeholder="Search registered UK/US banks by name, sort code, or SWIFT..."
                   value={bankSearchQuery}
                   onChange={(e) => setBankSearchQuery(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2.5 text-xs sm:text-sm bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100 focus:outline-none focus:border-[#c5a880]"
+                  className="glass-input w-full pl-9 pr-4 py-2.5 text-xs sm:text-sm rounded-xl text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-[#f8c22d]"
                 />
               </div>
 
               {/* Grid of Registered Banks */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 max-h-56 overflow-y-auto pr-1">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 max-h-48 sm:max-h-56 overflow-y-auto pr-1">
                 {filteredBanks.map((bank) => {
                   const isSelected = !isCustomBank && selectedBankId === bank.id;
                   return (
@@ -623,29 +748,29 @@ export const TransfersPage: React.FC = () => {
                       key={bank.id}
                       type="button"
                       onClick={() => handleSelectBank(bank)}
-                      className={`p-3 rounded-xl text-left border transition-all cursor-pointer flex items-start justify-between gap-2 ${
+                      className={`p-2.5 rounded-xl text-left transition-all cursor-pointer flex items-start justify-between gap-1.5 backdrop-blur-md ${
                         isSelected
-                          ? 'bg-amber-50 dark:bg-amber-950/40 border-[#c5a880] ring-2 ring-[#c5a880]/40 shadow-xs'
-                          : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:border-slate-400 dark:hover:border-slate-700'
+                          ? 'bg-[#f8c22d]/15 border-2 border-[#f8c22d] shadow-xs'
+                          : 'bg-white/70 dark:bg-white/5 border border-white/70 dark:border-white/10 hover:border-[#f8c22d]/60'
                       }`}
                     >
                       <div className="space-y-0.5 min-w-0">
-                        <div className="flex items-center gap-1.5">
+                        <div className="flex items-center gap-1">
                           <span className="text-xs">
                             {bank.country === 'US' ? '🇺🇸' : bank.country === 'UK' ? '🇬🇧' : bank.country === 'EU' ? '🇪🇺' : '🌐'}
                           </span>
-                          <span className="font-bold text-xs sm:text-sm text-slate-900 dark:text-white truncate block">
+                          <span className="font-bold text-xs text-slate-900 dark:text-white truncate block">
                             {bank.shortName}
                           </span>
                         </div>
-                        <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
+                        <p className="text-[10px] text-slate-500 dark:text-slate-400 truncate">
                           {bank.codeType}: <span className="font-mono font-semibold text-slate-700 dark:text-slate-300">{bank.routingOrSortCode}</span>
                         </p>
-                        <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-mono block">
+                        <span className="text-[9px] text-emerald-600 dark:text-emerald-400 font-mono block font-semibold">
                           {bank.clearingRail}
                         </span>
                       </div>
-                      {isSelected && <Check className="w-4 h-4 text-[#8c6d37] dark:text-[#c5a880] shrink-0" />}
+                      {isSelected && <Check className="w-4 h-4 text-[#d97706] dark:text-[#f8c22d] shrink-0 stroke-[2.5]" />}
                     </button>
                   );
                 })}
@@ -654,38 +779,38 @@ export const TransfersPage: React.FC = () => {
                 <button
                   type="button"
                   onClick={handleSelectCustomBank}
-                  className={`p-3 rounded-xl text-left border transition-all cursor-pointer flex items-start justify-between gap-2 ${
+                  className={`p-2.5 rounded-xl text-left transition-all cursor-pointer flex items-start justify-between gap-1.5 backdrop-blur-md ${
                     isCustomBank
-                      ? 'bg-amber-50 dark:bg-amber-950/40 border-[#c5a880] ring-2 ring-[#c5a880]/40 shadow-xs'
-                      : 'bg-white dark:bg-slate-900 border-dashed border-slate-300 dark:border-slate-700 hover:border-slate-400'
+                      ? 'bg-[#f8c22d]/15 border-2 border-[#f8c22d] shadow-xs'
+                      : 'bg-white/40 dark:bg-white/5 border border-dashed border-slate-300 dark:border-white/20 hover:border-[#f8c22d]/60'
                   }`}
                 >
                   <div className="space-y-0.5">
-                    <div className="flex items-center gap-1.5 text-xs font-bold text-slate-900 dark:text-white">
-                      <span>➕ Other / Custom Bank</span>
+                    <div className="flex items-center gap-1 text-xs font-bold text-slate-900 dark:text-white">
+                      <span>➕ Custom Bank</span>
                     </div>
-                    <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                      Input any bank worldwide manually
+                    <p className="text-[10px] text-slate-500 dark:text-slate-400">
+                      Input bank details manually
                     </p>
                   </div>
-                  {isCustomBank && <Check className="w-4 h-4 text-[#8c6d37] dark:text-[#c5a880] shrink-0" />}
+                  {isCustomBank && <Check className="w-4 h-4 text-[#d97706] dark:text-[#f8c22d] shrink-0 stroke-[2.5]" />}
                 </button>
               </div>
 
               {/* Beneficiary Details Inputs */}
-              <div className="pt-4 border-t border-slate-200 dark:border-slate-800 space-y-4">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="pt-3 border-t border-white/60 dark:border-white/10 space-y-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
                     <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-                      Beneficiary Legal Name / Company *
+                      Beneficiary Legal Name *
                     </label>
                     <input
                       type="text"
                       required
                       value={recipientName}
                       onChange={(e) => setRecipientName(e.target.value)}
-                      placeholder="e.g. Jonathan Vance / Acmer Corporation"
-                      className="w-full px-3.5 py-2.5 text-xs sm:text-sm bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100 focus:outline-none focus:border-[#c5a880] font-medium"
+                      placeholder="e.g. Jonathan Vance"
+                      className="glass-input w-full px-3.5 py-2.5 text-xs sm:text-sm rounded-xl text-slate-900 dark:text-slate-100 font-medium"
                     />
                   </div>
 
@@ -701,16 +826,16 @@ export const TransfersPage: React.FC = () => {
                         setCustomBankName(e.target.value);
                         setIsCustomBank(true);
                       }}
-                      placeholder="e.g. Barclays Bank UK PLC / JPMorgan Chase"
-                      className="w-full px-3.5 py-2.5 text-xs sm:text-sm bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100 focus:outline-none focus:border-[#c5a880] font-medium"
+                      placeholder="e.g. Barclays Bank UK PLC"
+                      className="glass-input w-full px-3.5 py-2.5 text-xs sm:text-sm rounded-xl text-slate-900 dark:text-slate-100 font-medium"
                     />
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
                     <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-                      {transferMode === 'DOMESTIC' ? 'ABA Routing Number / UK Sort Code *' : 'SWIFT / BIC Code / Routing *'}
+                      {transferMode === 'DOMESTIC' ? 'ABA Routing / UK Sort Code *' : 'SWIFT / BIC Code *'}
                     </label>
                     <input
                       type="text"
@@ -718,27 +843,27 @@ export const TransfersPage: React.FC = () => {
                       value={recipientRouting}
                       onChange={(e) => setRecipientRouting(e.target.value)}
                       placeholder="9-digit ABA or 6-digit Sort Code"
-                      className="w-full px-3.5 py-2.5 text-xs sm:text-sm bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100 font-mono font-semibold focus:outline-none focus:border-[#c5a880]"
+                      className="glass-input w-full px-3.5 py-2.5 text-xs sm:text-sm rounded-xl text-slate-900 dark:text-slate-100 font-mono font-semibold"
                     />
                   </div>
 
                   <div>
                     <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-                      Beneficiary Account # / IBAN *
+                      Account # / IBAN *
                     </label>
                     <input
                       type="text"
                       required
                       value={recipientAccount}
                       onChange={(e) => setRecipientAccount(e.target.value)}
-                      placeholder="Account Number or International IBAN"
-                      className="w-full px-3.5 py-2.5 text-xs sm:text-sm bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100 font-mono font-semibold focus:outline-none focus:border-[#c5a880]"
+                      placeholder="Account Number or IBAN"
+                      className="glass-input w-full px-3.5 py-2.5 text-xs sm:text-sm rounded-xl text-slate-900 dark:text-slate-100 font-mono font-semibold"
                     />
                   </div>
                 </div>
 
                 {/* Country & Currency selector for international */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
                     <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
                       Destination Currency
@@ -746,11 +871,11 @@ export const TransfersPage: React.FC = () => {
                     <select
                       value={destCurrency}
                       onChange={(e) => setDestCurrency(e.target.value as CurrencyCode)}
-                      className="w-full px-3.5 py-2.5 text-xs sm:text-sm bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100 font-medium focus:outline-none focus:border-[#c5a880]"
+                      className="glass-input w-full px-3.5 py-2.5 text-xs sm:text-sm rounded-xl text-slate-900 dark:text-slate-100 font-medium"
                     >
-                      <option value="USD">USD — US Dollar ($)</option>
-                      <option value="GBP">GBP — British Pound Sterling (£)</option>
-                      <option value="EUR">EUR — European Euro (€)</option>
+                      <option value="USD" className="bg-white dark:bg-slate-900">USD — US Dollar ($)</option>
+                      <option value="GBP" className="bg-white dark:bg-slate-900">GBP — British Pound Sterling (£)</option>
+                      <option value="EUR" className="bg-white dark:bg-slate-900">EUR — European Euro (€)</option>
                     </select>
                   </div>
 
@@ -762,8 +887,8 @@ export const TransfersPage: React.FC = () => {
                       type="text"
                       value={recipientCountry}
                       onChange={(e) => setRecipientCountry(e.target.value)}
-                      placeholder="e.g. United States, United Kingdom, Switzerland"
-                      className="w-full px-3.5 py-2.5 text-xs sm:text-sm bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100 font-medium focus:outline-none focus:border-[#c5a880]"
+                      placeholder="e.g. United States, United Kingdom"
+                      className="glass-input w-full px-3.5 py-2.5 text-xs sm:text-sm rounded-xl text-slate-900 dark:text-slate-100 font-medium"
                     />
                   </div>
                 </div>
@@ -774,16 +899,16 @@ export const TransfersPage: React.FC = () => {
           {/* Step 3: Transfer Amount & Presets */}
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <label className="block text-xs sm:text-sm font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
                 3. Transfer Amount ({sourceAccount?.currency})
               </label>
-              <span className="text-xs text-slate-500 dark:text-slate-400 font-mono">
-                Available: ${((sourceAccount?.availableBalanceMinor || 0) / 100).toLocaleString('en-US', { minimumFractionDigits: 2 })}
+              <span className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 font-mono">
+                Avail: ${((sourceAccount?.availableBalanceMinor || 0) / 100).toLocaleString('en-US', { minimumFractionDigits: 2 })}
               </span>
             </div>
 
             <div className="relative">
-              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-xl font-bold text-slate-500 font-serif">
+              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-xl font-bold text-slate-500">
                 {sourceAccount?.currency === 'USD' ? '$' : sourceAccount?.currency === 'GBP' ? '£' : '€'}
               </span>
               <input
@@ -793,28 +918,28 @@ export const TransfersPage: React.FC = () => {
                 value={amountStr}
                 onChange={(e) => setAmountStr(e.target.value)}
                 placeholder="0.00"
-                className="w-full pl-10 pr-4 py-3.5 text-xl sm:text-2xl font-mono font-bold bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:bg-white dark:focus:bg-slate-900 focus:outline-none focus:border-[#c5a880]"
+                className="glass-input w-full pl-10 pr-4 py-3.5 text-xl font-mono font-bold rounded-2xl text-slate-900 dark:text-white"
               />
             </div>
 
             {/* Fast Transfer Preset Buttons */}
-            <div className="flex flex-wrap items-center gap-2 pt-1">
-              <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">Quick Amount:</span>
+            <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
+              <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 mr-1">Quick:</span>
               {[1000, 5000, 10000, 25000, 50000, 100000].map((preset) => (
                 <button
                   key={preset}
                   type="button"
                   onClick={() => setAmountStr(preset.toString())}
-                  className="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-xs font-mono font-bold text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700 transition-colors cursor-pointer"
+                  className="px-3 py-1.5 rounded-xl bg-white/60 hover:bg-white dark:bg-white/5 dark:hover:bg-white/15 text-[11px] sm:text-xs font-mono font-bold text-slate-800 dark:text-slate-200 border border-white/60 dark:border-white/10 transition-all cursor-pointer backdrop-blur-md active:scale-95 shadow-2xs"
                 >
-                  +${preset.toLocaleString()}
+                  +${preset >= 1000 ? `${preset / 1000}k` : preset}
                 </button>
               ))}
             </div>
           </div>
 
           {/* Step 4: Memo & Notifications */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
             <div>
               <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1">
                 Memo / Reference (Optional)
@@ -823,23 +948,23 @@ export const TransfersPage: React.FC = () => {
                 type="text"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                placeholder="e.g. Escrow completion, investment disbursement"
-                className="w-full px-3.5 py-3 text-xs sm:text-sm bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:bg-white dark:focus:bg-slate-900 focus:outline-none focus:border-[#c5a880]"
+                placeholder="e.g. Escrow completion"
+                className="glass-input w-full px-3.5 py-3 text-xs sm:text-sm rounded-xl text-slate-900 dark:text-white"
               />
             </div>
 
             {/* Notification Checkboxes */}
-            <div className="space-y-2 p-3 bg-slate-50 dark:bg-slate-900/60 rounded-xl border border-slate-200 dark:border-slate-800">
-              <span className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 block">
+            <div className="space-y-1.5 p-3 bg-white/50 dark:bg-white/5 rounded-xl border border-white/60 dark:border-white/10 backdrop-blur-md">
+              <span className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 block">
                 Instant Notification Dispatch
               </span>
-              <div className="flex flex-col sm:flex-row gap-3 pt-1">
+              <div className="flex flex-col gap-1.5 pt-0.5">
                 <label className="flex items-center gap-2 text-xs text-slate-700 dark:text-slate-300 font-medium cursor-pointer">
                   <input
                     type="checkbox"
                     checked={notifyEmail}
                     onChange={(e) => setNotifyEmail(e.target.checked)}
-                    className="rounded text-[#8c6d37] focus:ring-[#8c6d37]"
+                    className="rounded text-[#f8c22d] focus:ring-[#f8c22d]"
                   />
                   <span>Email Clearance Receipt</span>
                 </label>
@@ -848,7 +973,7 @@ export const TransfersPage: React.FC = () => {
                     type="checkbox"
                     checked={notifySms}
                     onChange={(e) => setNotifySms(e.target.checked)}
-                    className="rounded text-[#8c6d37] focus:ring-[#8c6d37]"
+                    className="rounded text-[#f8c22d] focus:ring-[#f8c22d]"
                   />
                   <span>Mobile SMS Alert (Worldwide)</span>
                 </label>
@@ -858,17 +983,17 @@ export const TransfersPage: React.FC = () => {
 
           {/* Live FX Calculation breakdown if applicable */}
           {sourceAccount && sourceAccount.currency !== destCurrency && transferMode !== 'INTERNAL' && (
-            <div className="p-4 rounded-xl bg-amber-50/80 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/60 text-xs sm:text-sm text-amber-950 dark:text-amber-300 space-y-1.5 font-mono">
+            <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/20 text-xs sm:text-sm text-amber-950 dark:text-amber-300 space-y-1.5 font-mono backdrop-blur-md">
               <div className="flex justify-between">
-                <span>Locked Spot Exchange Rate:</span>
+                <span>Locked Spot Rate:</span>
                 <span className="font-bold">1 {sourceAccount.currency} = {rate} {destCurrency}</span>
               </div>
               <div className="flex justify-between">
-                <span>Estimated Recipient Receives:</span>
+                <span>Recipient Receives:</span>
                 <span className="font-bold">{destCurrency === 'GBP' ? '£' : destCurrency === 'EUR' ? '€' : '$'}{(estimatedConvertedAmount / 100).toLocaleString('en-US', { minimumFractionDigits: 2 })} {destCurrency}</span>
               </div>
-              <div className="flex justify-between text-slate-500 dark:text-slate-400 text-xs">
-                <span>Institutional Wire Dispatch Fee:</span>
+              <div className="flex justify-between text-slate-500 dark:text-slate-400 text-[11px]">
+                <span>Wire Dispatch Fee:</span>
                 <span>${(wireFeeMinor / 100).toFixed(2)} USD</span>
               </div>
             </div>
@@ -877,34 +1002,36 @@ export const TransfersPage: React.FC = () => {
           {/* Submit Button */}
           <button
             type="submit"
-            className="w-full py-4 rounded-xl bg-gradient-to-r from-[#0a192f] via-[#142d4f] to-[#0a192f] hover:brightness-110 text-white font-bold text-sm uppercase tracking-widest transition-all shadow-md flex items-center justify-center gap-2.5 cursor-pointer border border-[#c5a880]/40"
+            className="w-full py-3.5 sm:py-4 rounded-2xl bg-gradient-to-r from-[#d4af37] via-[#f8c22d] to-[#deb02c] hover:brightness-105 text-slate-950 font-extrabold text-xs sm:text-sm uppercase tracking-widest transition-all shadow-lg flex items-center justify-center gap-2 cursor-pointer border border-white/40 active:scale-[0.99]"
           >
-            <Lock className="w-4 h-4 text-[#d4af37]" />
+            <Lock className="w-4 h-4 text-slate-950 stroke-[2.5]" />
             <span>Review &amp; Authorize Transfer</span>
           </button>
         </form>
       )}
 
-      {/* Confirmation Modal */}
+      {/* Confirmation Modal (Glass) */}
       {showConfirmModal && (
-        <div className="fixed inset-0 z-50 bg-slate-950/75 backdrop-blur-xs flex items-center justify-center p-4 font-sans">
-          <div className="bg-white dark:bg-[#0a192f] rounded-2xl max-w-lg w-full p-6 sm:p-7 shadow-2xl border border-slate-200 dark:border-[#1e3656] space-y-5 text-slate-900 dark:text-slate-100 animate-in fade-in zoom-in-95 duration-150">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
-              <div className="flex items-center gap-2">
-                <ShieldCheck className="w-5 h-5 text-emerald-500" />
-                <h3 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white font-serif">
+        <div className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-md flex items-center justify-center p-4 font-sans">
+          <div className="bg-white/90 dark:bg-[#0f172a]/90 backdrop-blur-2xl rounded-3xl max-w-lg w-full p-6 sm:p-7 shadow-2xl border border-white/60 dark:border-white/15 space-y-5 text-slate-900 dark:text-slate-100 animate-in fade-in zoom-in-95 duration-150">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-200/60 dark:border-white/10">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-full bg-emerald-500/20 text-emerald-500 flex items-center justify-center">
+                  <ShieldCheck className="w-5 h-5 stroke-[2.5]" />
+                </div>
+                <h3 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white">
                   Authorize Transfer &amp; Wire
                 </h3>
               </div>
               <button
                 onClick={() => setShowConfirmModal(false)}
-                className="text-slate-400 hover:text-slate-700 dark:hover:text-white text-2xl font-bold p-1 cursor-pointer"
+                className="p-1 rounded-full text-slate-400 hover:text-slate-700 dark:hover:text-white text-xl font-bold cursor-pointer"
               >
                 &times;
               </button>
             </div>
 
-            <div className="space-y-1.5 text-center py-2 bg-slate-50 dark:bg-slate-900/60 rounded-xl p-4 border border-slate-200 dark:border-slate-800">
+            <div className="space-y-1.5 text-center py-2 bg-white/60 dark:bg-white/5 rounded-2xl p-4 border border-white/60 dark:border-white/10 backdrop-blur-md">
               <span className="text-xs text-slate-500 dark:text-slate-400 uppercase font-bold tracking-wider">Debit Total</span>
               <CurrencyDisplay
                 amountMinor={amountMinor}
@@ -919,7 +1046,7 @@ export const TransfersPage: React.FC = () => {
               )}
             </div>
 
-            <div className="bg-slate-50 dark:bg-slate-900/70 rounded-xl p-4 border border-slate-200 dark:border-slate-800 text-xs sm:text-sm text-slate-700 dark:text-slate-300 space-y-2 font-mono">
+            <div className="bg-white/60 dark:bg-white/5 rounded-2xl p-4 border border-white/60 dark:border-white/10 text-xs sm:text-sm text-slate-700 dark:text-slate-300 space-y-2.5 font-mono backdrop-blur-md">
               <div className="flex justify-between">
                 <span className="text-slate-500 dark:text-slate-400 font-sans">Origin:</span>
                 <span className="font-bold text-slate-900 dark:text-white">{sourceAccount?.name}</span>
@@ -950,7 +1077,7 @@ export const TransfersPage: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setShowConfirmModal(false)}
-                className="flex-1 py-3 rounded-xl border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 font-semibold text-xs sm:text-sm cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+                className="flex-1 py-3 rounded-xl border border-slate-300 dark:border-white/15 text-slate-700 dark:text-slate-300 font-semibold text-xs sm:text-sm cursor-pointer hover:bg-white/80 dark:hover:bg-white/10 transition-colors"
               >
                 Cancel
               </button>
@@ -958,13 +1085,13 @@ export const TransfersPage: React.FC = () => {
                 type="button"
                 disabled={isProcessing}
                 onClick={handleExecuteTransfer}
-                className="flex-1 py-3 rounded-xl bg-[#0a192f] dark:bg-[#112a4a] hover:bg-[#132d52] text-white font-bold text-xs sm:text-sm uppercase tracking-wider flex items-center justify-center gap-2 shadow-md cursor-pointer border border-[#c5a880]/30"
+                className="flex-1 py-3 rounded-xl bg-gradient-to-r from-[#d4af37] to-[#f8c22d] text-slate-950 font-bold text-xs sm:text-sm uppercase tracking-wider flex items-center justify-center gap-2 shadow-md cursor-pointer border border-white/40 active:scale-95"
               >
                 {isProcessing ? (
-                  <RefreshCw className="w-4 h-4 animate-spin text-[#d4af37]" />
+                  <RefreshCw className="w-4 h-4 animate-spin text-slate-950" />
                 ) : (
                   <>
-                    <Lock className="w-4 h-4 text-[#d4af37]" />
+                    <Lock className="w-4 h-4 text-slate-950 stroke-[2.5]" />
                     <span>Authorize &amp; Execute</span>
                   </>
                 )}

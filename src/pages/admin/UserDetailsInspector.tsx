@@ -24,6 +24,7 @@ import {
   Phone,
   MapPin,
   Calendar,
+  Clock,
   Layers,
   ArrowUpRight,
   ArrowDownLeft,
@@ -33,7 +34,7 @@ import { CurrencyDisplay } from '../../components/common/CurrencyDisplay';
 import { StatusBadge } from '../../components/common/StatusBadge';
 import { DirectFundsManager } from './DirectFundsManager';
 import { CreateCustomerModal } from './CreateCustomerModal';
-import { formatAddress } from '../../types';
+import { formatAddress, formatDateTime } from '../../types';
 import { safeFetchJson } from '../../lib/apiHelper';
 
 export const UserDetailsInspector: React.FC = () => {
@@ -314,9 +315,16 @@ export const UserDetailsInspector: React.FC = () => {
                           Tier {userDetails.user.kycTier || 3} VIP
                         </span>
                       </div>
-                      <p className="text-xs text-slate-500 font-mono">
-                        User ID: {userDetails.user.id} • Region: {userDetails.user.region}
-                      </p>
+                      <div className="flex items-center gap-2 text-xs text-slate-500 font-mono flex-wrap">
+                        <span>User ID: <strong className="text-slate-800">{userDetails.user.id}</strong></span>
+                        <span>•</span>
+                        <span>Region: {userDetails.user.region}</span>
+                        <span>•</span>
+                        <span className="inline-flex items-center gap-1 text-slate-700 bg-slate-100 px-2 py-0.5 rounded font-sans text-[11px]">
+                          <Calendar className="w-3 h-3 text-[#004281]" />
+                          <span>Joined: <strong>{formatDateTime(userDetails.user.createdAt)}</strong></span>
+                        </span>
+                      </div>
                     </div>
                   </div>
 

@@ -65,6 +65,15 @@ export const GlobalSearchModal: React.FC<{ isOpen: boolean; onClose: () => void 
         keywords: 'savings yield interest apy compound vault high rate rate dollar sterling euro'
       },
       {
+        id: 'srv_glass_uikit',
+        title: 'Glassmorphism UI Kit & Modern Vector Interface Set',
+        subtitle: 'Transparent buttons, sliders, panels, toggles, frosted search bars, and real-time audio synthesizer media controls.',
+        category: 'SERVICES',
+        badge: 'UI Kit',
+        viewTarget: (isAuthenticated ? 'DASHBOARD_GLASS_STUDIO' : 'PUBLIC_GLASS_STUDIO') as AppView,
+        keywords: 'glass glassmorphism ui kit vector transparent buttons sliders toggles search bar media controls audio sound mobile first'
+      },
+      {
         id: 'srv_infinite_card',
         title: 'Atlantic Sovereign Infinite Metal Card',
         subtitle: 'Uncapped worldwide concierge access, wholesale FX spot interbank rates, and zero foreign transaction fees.',

@@ -40,10 +40,8 @@ export const CurrencyDisplay: React.FC<CurrencyDisplayProps> = ({
   const sign = showSign ? (isPositive ? '+' : isNegative ? '-' : '') : isNegative ? '-' : '';
 
   return (
-    <span className={`inline-flex items-baseline font-mono tabular-nums ${sizeClasses[size]} ${className}`}>
-      {sign && <span className="mr-0.5">{sign}</span>}
-      <span className="opacity-90 font-serif mr-0.5">{symbol}</span>
-      <span>{formattedNum}</span>
+    <span className={`inline-block tabular-nums font-sans ${sizeClasses[size]} ${className}`}>
+      {sign}{symbol}{formattedNum}
     </span>
   );
 };

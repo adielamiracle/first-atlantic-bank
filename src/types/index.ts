@@ -471,6 +471,25 @@ export function formatAddress(address: any): string {
   return String(address);
 }
 
+export function formatDateTime(dateStr?: string | number | Date | null, includeSeconds = true): string {
+  if (!dateStr) return 'N/A';
+  try {
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return String(dateStr);
+    return d.toLocaleString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      ...(includeSeconds ? { second: '2-digit' } : {}),
+      hour12: true
+    });
+  } catch {
+    return String(dateStr);
+  }
+}
+
 export interface BiometricSecurityState {
   enabled: boolean;
   type: 'FACE_ID' | 'TOUCH_ID' | 'FINGERPRINT' | 'WINDOWS_HELLO' | 'WEBAUTHN';

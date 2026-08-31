@@ -3,6 +3,12 @@ import { useBank } from '../../context/BankContext';
 import { CurrencyDisplay } from '../../components/common/CurrencyDisplay';
 import { StatusBadge } from '../../components/common/StatusBadge';
 import { PassportPhotoUploader } from '../../components/common/PassportPhotoUploader';
+import { GlassPanel } from '../../components/glass/GlassPanel';
+import { GlassButton } from '../../components/glass/GlassButton';
+import { GlassToggle } from '../../components/glass/GlassToggle';
+import { GlassSlider } from '../../components/glass/GlassSlider';
+import { GlassSearchBar } from '../../components/glass/GlassSearchBar';
+import { GlassTabs } from '../../components/glass/GlassTabs';
 import {
   Camera,
   CheckCircle2,
@@ -96,26 +102,33 @@ export const DepositCheckPage: React.FC = () => {
 
   return (
     <div className="max-w-3xl mx-auto space-y-6">
-      <div className="bg-white dark:bg-[#0a192f] rounded-2xl p-6 border border-slate-200 dark:border-[#1e3656] shadow-sm space-y-2 transition-colors">
-        <h1 className="text-xl font-bold font-serif text-slate-900 dark:text-white">
-          Mobile &amp; Remote Check Capture
-        </h1>
-        <p className="text-xs text-slate-500 dark:text-slate-400">
-          Instant digital clearing with automated optical MICR character recognition and funds availability rules.
-        </p>
-      </div>
+      <GlassPanel variant="standard" className="p-6">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400/20 to-amber-600/30 text-[#8c6d37] dark:text-[#f8c22d] border border-amber-400/30 flex items-center justify-center shadow-xs">
+            <Camera className="w-5 h-5" />
+          </div>
+          <div>
+            <h1 className="text-xl font-bold font-serif text-slate-900 dark:text-white">
+              Mobile &amp; Remote Check Capture
+            </h1>
+            <p className="text-xs text-slate-500 dark:text-slate-400">
+              Instant digital clearing with automated optical MICR character recognition and funds availability rules.
+            </p>
+          </div>
+        </div>
+      </GlassPanel>
 
       {depositSuccess ? (
-        <div className="bg-white dark:bg-[#0a192f] rounded-2xl p-8 border border-emerald-200 dark:border-emerald-800/60 shadow-md text-center space-y-5 transition-colors">
-          <div className="w-14 h-14 rounded-full bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center mx-auto border border-emerald-200 dark:border-emerald-800">
-            <CheckCircle2 className="w-8 h-8" />
+        <GlassPanel variant="elevated" glow className="p-8 text-center space-y-5">
+          <div className="w-16 h-16 rounded-2xl bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center mx-auto border border-emerald-500/40 shadow-lg shadow-emerald-500/10">
+            <CheckCircle2 className="w-9 h-9" />
           </div>
           <div className="space-y-1">
             <h2 className="text-xl font-bold font-serif text-slate-900 dark:text-white">Check Endorsed &amp; Accepted</h2>
             <p className="text-xs text-slate-600 dark:text-slate-400">{depositSuccess.message}</p>
           </div>
 
-          <div className="max-w-md mx-auto bg-slate-50 dark:bg-slate-900/80 rounded-xl p-4 border border-slate-200 dark:border-slate-800 text-xs space-y-2 text-slate-700 dark:text-slate-300 font-mono text-left">
+          <GlassPanel variant="subtle" className="max-w-md mx-auto p-4.5 text-xs space-y-2.5 text-slate-700 dark:text-slate-300 font-mono text-left">
             <div className="flex justify-between">
               <span className="text-slate-500 dark:text-slate-400 font-sans">Immediate Availability:</span>
               <span className="font-bold font-sans text-emerald-600 dark:text-emerald-400">$500.00 (Instant)</span>
@@ -126,128 +139,133 @@ export const DepositCheckPage: React.FC = () => {
             </div>
             <div className="flex justify-between">
               <span className="text-slate-500 dark:text-slate-400 font-sans">Reference:</span>
-              <span className="font-bold text-[#c5a880]">{depositSuccess.referenceNumber}</span>
+              <span className="font-bold text-[#8c6d37] dark:text-[#f8c22d]">{depositSuccess.referenceNumber}</span>
             </div>
-          </div>
+          </GlassPanel>
 
-          <button
+          <GlassButton
+            variant="primary-gold"
+            size="lg"
             onClick={() => {
               setDepositSuccess(null);
               setAmountStr('');
             }}
-            className="px-6 py-2.5 rounded-xl bg-[#0a192f] dark:bg-[#112a4a] text-white font-bold text-xs uppercase cursor-pointer border border-[#c5a880]/30 hover:bg-[#15345d]"
           >
             Deposit Another Check
-          </button>
-        </div>
+          </GlassButton>
+        </GlassPanel>
       ) : (
-        <form onSubmit={handleDeposit} className="bg-white dark:bg-[#0a192f] rounded-2xl p-7 border border-slate-200 dark:border-[#1e3656] shadow-sm space-y-6 transition-colors">
-          <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1">
-              Deposit Into Account
-            </label>
-            <select
-              value={accountId}
-              onChange={(e) => setAccountId(e.target.value)}
-              className="w-full px-3.5 py-2.5 text-xs bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-800 rounded-xl text-slate-900 dark:text-slate-100 font-medium focus:outline-none"
-            >
-              {accounts.map((acc) => (
-                <option key={acc.id} value={acc.id}>
-                  {acc.name} ({acc.accountNumber}) — Available: ${(acc.availableBalanceMinor / 100).toLocaleString()} {acc.currency}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <GlassPanel variant="standard" className="p-7">
+          <form onSubmit={handleDeposit} className="space-y-6">
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1">
-                Check Amount ($)
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">
+                Deposit Into Account
               </label>
-              <input
-                type="number"
-                step="0.01"
-                required
-                value={amountStr}
-                onChange={(e) => setAmountStr(e.target.value)}
-                className="w-full px-3.5 py-2.5 text-base font-mono font-bold bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-800 rounded-xl text-slate-900 dark:text-slate-100 focus:outline-none"
-              />
+              <select
+                value={accountId}
+                onChange={(e) => setAccountId(e.target.value)}
+                className="w-full px-3.5 py-2.5 text-xs glass-input rounded-xl text-slate-900 dark:text-slate-100 font-medium focus:outline-none"
+              >
+                {accounts.map((acc) => (
+                  <option key={acc.id} value={acc.id} className="bg-white dark:bg-[#0a192f] text-slate-900 dark:text-white">
+                    {acc.name} ({acc.accountNumber}) — Available: ${(acc.availableBalanceMinor / 100).toLocaleString()} {acc.currency}
+                  </option>
+                ))}
+              </select>
             </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">
+                  Check Amount ($)
+                </label>
+                <input
+                  type="number"
+                  step="0.01"
+                  required
+                  value={amountStr}
+                  onChange={(e) => setAmountStr(e.target.value)}
+                  className="w-full px-3.5 py-2.5 text-base font-mono font-bold glass-input rounded-xl text-slate-900 dark:text-slate-100 focus:outline-none"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">
+                  Check Serial #
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={checkNumber}
+                  onChange={(e) => setCheckNumber(e.target.value)}
+                  className="w-full px-3.5 py-2.5 text-xs font-mono glass-input rounded-xl text-slate-900 dark:text-slate-100 focus:outline-none"
+                />
+              </div>
+            </div>
+
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1">
-                Check Serial #
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">
+                Check Issuer / Payer
               </label>
               <input
                 type="text"
                 required
-                value={checkNumber}
-                onChange={(e) => setCheckNumber(e.target.value)}
-                className="w-full px-3.5 py-2.5 text-xs font-mono bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-800 rounded-xl text-slate-900 dark:text-slate-100 focus:outline-none"
+                value={payerName}
+                onChange={(e) => setPayerName(e.target.value)}
+                className="w-full px-3.5 py-2.5 text-xs glass-input rounded-xl text-slate-900 dark:text-slate-100 focus:outline-none"
               />
             </div>
-          </div>
 
-          <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1">
-              Check Issuer / Payer
-            </label>
-            <input
-              type="text"
-              required
-              value={payerName}
-              onChange={(e) => setPayerName(e.target.value)}
-              className="w-full px-3.5 py-2.5 text-xs bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-800 rounded-xl text-slate-900 dark:text-slate-100 focus:outline-none"
-            />
-          </div>
+            {/* Simulated Image Capture Boxes */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div
+                onClick={() => {
+                  setFrontCaptured(true);
+                  showToast('SUCCESS', 'Front Check Captured', 'High-resolution MICR band validated.');
+                }}
+                className={`p-6 rounded-2xl border-2 border-dashed flex flex-col items-center justify-center text-center cursor-pointer transition-all duration-200 backdrop-blur-md ${
+                  frontCaptured 
+                    ? 'border-emerald-500/60 bg-emerald-500/10 text-emerald-900 dark:text-emerald-300 shadow-md shadow-emerald-500/5' 
+                    : 'border-white/50 dark:border-white/15 bg-white/30 dark:bg-white/[0.02] hover:bg-white/50 dark:hover:bg-white/[0.06] text-slate-600 dark:text-slate-400'
+                }`}
+              >
+                <Camera className="w-6 h-6 mb-2" />
+                <span className="text-xs font-bold uppercase tracking-wider">
+                  {frontCaptured ? '✓ Front Image Captured' : 'Capture Check Front'}
+                </span>
+                <span className="text-[10px] text-slate-500 dark:text-slate-400 mt-1">Tap to simulate optical camera scan</span>
+              </div>
 
-          {/* Simulated Image Capture Boxes */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div
-              onClick={() => {
-                setFrontCaptured(true);
-                showToast('SUCCESS', 'Front Check Captured', 'High-resolution MICR band validated.');
-              }}
-              className={`p-6 rounded-2xl border-2 border-dashed flex flex-col items-center justify-center text-center cursor-pointer transition-colors ${
-                frontCaptured 
-                  ? 'border-emerald-500 bg-emerald-50/40 dark:bg-emerald-950/20 text-emerald-900 dark:text-emerald-300' 
-                  : 'border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-900 text-slate-600 dark:text-slate-400'
-              }`}
-            >
-              <Camera className="w-6 h-6 mb-2" />
-              <span className="text-xs font-bold uppercase tracking-wider">
-                {frontCaptured ? '✓ Front Image Captured' : 'Capture Check Front'}
-              </span>
-              <span className="text-[10px] text-slate-500 dark:text-slate-400 mt-1">Tap to simulate optical camera scan</span>
+              <div
+                onClick={() => {
+                  setBackCaptured(true);
+                  showToast('SUCCESS', 'Back Check Captured', 'Endorsement signature recognized.');
+                }}
+                className={`p-6 rounded-2xl border-2 border-dashed flex flex-col items-center justify-center text-center cursor-pointer transition-all duration-200 backdrop-blur-md ${
+                  backCaptured 
+                    ? 'border-emerald-500/60 bg-emerald-500/10 text-emerald-900 dark:text-emerald-300 shadow-md shadow-emerald-500/5' 
+                    : 'border-white/50 dark:border-white/15 bg-white/30 dark:bg-white/[0.02] hover:bg-white/50 dark:hover:bg-white/[0.06] text-slate-600 dark:text-slate-400'
+                }`}
+              >
+                <Camera className="w-6 h-6 mb-2" />
+                <span className="text-xs font-bold uppercase tracking-wider">
+                  {backCaptured ? '✓ Back Image Endorsed' : 'Capture Check Back'}
+                </span>
+                <span className="text-[10px] text-slate-500 dark:text-slate-400 mt-1">Requires endorsement signature</span>
+              </div>
             </div>
 
-            <div
-              onClick={() => {
-                setBackCaptured(true);
-                showToast('SUCCESS', 'Back Check Captured', 'Endorsement signature recognized.');
-              }}
-              className={`p-6 rounded-2xl border-2 border-dashed flex flex-col items-center justify-center text-center cursor-pointer transition-colors ${
-                backCaptured 
-                  ? 'border-emerald-500 bg-emerald-50/40 dark:bg-emerald-950/20 text-emerald-900 dark:text-emerald-300' 
-                  : 'border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-900 text-slate-600 dark:text-slate-400'
-              }`}
+            <GlassButton
+              type="submit"
+              variant="primary-gold"
+              size="lg"
+              loading={isProcessing}
+              iconLeft={<CheckCircle2 className="w-4 h-4" />}
+              className="w-full uppercase tracking-widest text-xs"
             >
-              <Camera className="w-6 h-6 mb-2" />
-              <span className="text-xs font-bold uppercase tracking-wider">
-                {backCaptured ? '✓ Back Image Endorsed' : 'Capture Check Back'}
-              </span>
-              <span className="text-[10px] text-slate-500 dark:text-slate-400 mt-1">Requires endorsement signature</span>
-            </div>
-          </div>
-
-          <button
-            type="submit"
-            disabled={isProcessing}
-            className="w-full py-3.5 rounded-xl bg-[#0a192f] dark:bg-[#112a4a] hover:bg-[#132d52] dark:hover:bg-[#183d6a] text-white font-bold text-xs uppercase tracking-widest shadow-md flex items-center justify-center gap-2 cursor-pointer border border-[#c5a880]/30 transition-all"
-          >
-            {isProcessing ? <RefreshCw className="w-4 h-4 animate-spin text-[#d4af37]" /> : <CheckCircle2 className="w-4 h-4 text-[#d4af37]" />}
-            <span>Submit Check for Instant Clearing</span>
-          </button>
-        </form>
+              Submit Check for Instant Clearing
+            </GlassButton>
+          </form>
+        </GlassPanel>
       )}
     </div>
   );
@@ -278,7 +296,7 @@ export const StatementsPage: React.FC = () => {
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
-      <div className="bg-white dark:bg-[#0a192f] rounded-2xl p-6 border border-slate-200 dark:border-[#1e3656] shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-colors">
+      <GlassPanel variant="standard" className="p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-xl font-bold font-serif text-slate-900 dark:text-white">
             Electronic Statements &amp; Tax Documents
@@ -288,20 +306,21 @@ export const StatementsPage: React.FC = () => {
           </p>
         </div>
 
-        <button
+        <GlassButton
+          variant="glass-default"
+          size="sm"
           onClick={() => window.print()}
-          className="px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-700 text-xs font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-1.5 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer transition-colors"
+          iconLeft={<Printer className="w-3.5 h-3.5" />}
         >
-          <Printer className="w-3.5 h-3.5" />
-          <span>Print Current Page</span>
-        </button>
-      </div>
+          Print Page
+        </GlassButton>
+      </GlassPanel>
 
-      <div className="bg-white dark:bg-[#0a192f] rounded-2xl border border-slate-200 dark:border-[#1e3656] shadow-sm divide-y divide-slate-100 dark:divide-slate-800 overflow-hidden transition-colors">
+      <GlassPanel variant="standard" className="divide-y divide-white/20 dark:divide-white/5 overflow-hidden">
         {statements.map((stmt) => (
-          <div key={stmt.period} className="p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-[#0a192f] dark:bg-[#112a4a] text-[#d4af37] flex items-center justify-center shrink-0 border border-[#c5a880]/30">
+          <div key={stmt.period} className="p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-white/40 dark:hover:bg-white/[0.04] transition-colors">
+            <div className="flex items-center gap-3.5">
+              <div className="w-11 h-11 rounded-xl bg-white/70 dark:bg-white/10 text-[#8c6d37] dark:text-[#f8c22d] flex items-center justify-center shrink-0 border border-white/60 dark:border-white/10 shadow-sm backdrop-blur-md">
                 <FileText className="w-5 h-5" />
               </div>
               <div>
@@ -311,40 +330,43 @@ export const StatementsPage: React.FC = () => {
             </div>
 
             <div className="flex items-center gap-2">
-              <button
+              <GlassButton
+                variant="glass-frosted"
+                size="sm"
                 onClick={() => setSelectedStatement(stmt)}
-                className="px-3.5 py-1.5 rounded-lg border border-[#0a192f] dark:border-[#c5a880] text-[#0a192f] dark:text-[#e5ca95] hover:bg-[#0a192f] hover:text-white dark:hover:bg-[#c5a880] dark:hover:text-slate-950 text-xs font-bold transition-colors flex items-center gap-1.5 cursor-pointer"
+                iconLeft={<Eye className="w-3.5 h-3.5" />}
               >
-                <Eye className="w-3.5 h-3.5" />
-                <span>View</span>
-              </button>
-              <button
+                View
+              </GlassButton>
+              <GlassButton
+                variant="primary-gold"
+                size="sm"
                 onClick={() => handleDownload(stmt.period, 'PDF')}
-                className="px-3.5 py-1.5 rounded-lg bg-[#0a192f] dark:bg-[#112a4a] hover:bg-[#132d52] dark:hover:bg-[#183d6a] text-white text-xs font-bold flex items-center gap-1.5 cursor-pointer border border-[#c5a880]/30"
+                iconLeft={<Download className="w-3.5 h-3.5" />}
               >
-                <Download className="w-3.5 h-3.5 text-[#d4af37]" />
-                <span>PDF</span>
-              </button>
-              <button
+                PDF
+              </GlassButton>
+              <GlassButton
+                variant="glass-ghost"
+                size="sm"
                 onClick={() => handleDownload(stmt.period, 'CSV')}
-                className="px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs font-semibold cursor-pointer"
               >
                 CSV
-              </button>
+              </GlassButton>
             </div>
           </div>
         ))}
-      </div>
+      </GlassPanel>
 
       {/* Statement Preview Modal */}
       {selectedStatement && (
-        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-[#0a192f] rounded-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto p-6 sm:p-8 shadow-2xl border border-slate-300 dark:border-[#1e3656] space-y-6 text-slate-900 dark:text-slate-100">
+        <div className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-md flex items-center justify-center p-4">
+          <GlassPanel variant="elevated" glow className="max-w-3xl w-full max-h-[90vh] overflow-y-auto p-6 sm:p-8 space-y-6 text-slate-900 dark:text-slate-100">
             {/* Statement Header */}
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center pb-6 border-b border-slate-200 dark:border-slate-800 gap-4">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center pb-6 border-b border-white/20 dark:border-white/10 gap-4">
               <div>
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-lg bg-[#0a192f] text-[#d4af37] flex items-center justify-center font-serif font-bold text-sm border border-[#c5a880]/40">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-amber-400 to-amber-600 text-slate-950 flex items-center justify-center font-serif font-bold text-sm shadow-md">
                     FAB
                   </div>
                   <span className="font-serif font-bold text-lg text-slate-900 dark:text-white">First Atlantic Bank &amp; Trust</span>
@@ -360,7 +382,7 @@ export const StatementsPage: React.FC = () => {
             </div>
 
             {/* Client & Account Details */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-slate-50 dark:bg-slate-900/60 p-4 rounded-xl text-xs font-mono border border-slate-200 dark:border-slate-800">
+            <GlassPanel variant="subtle" className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 text-xs font-mono">
               <div>
                 <div className="text-slate-400 uppercase text-[10px]">Account Holder</div>
                 <div className="font-bold text-slate-900 dark:text-white font-sans text-sm">{currentUser ? `${currentUser.firstName} ${currentUser.lastName}` : 'Jonathan Sterling'}</div>
@@ -371,30 +393,30 @@ export const StatementsPage: React.FC = () => {
                 <div className="font-bold text-slate-900 dark:text-white font-sans text-sm">{primaryAccount?.name || 'Private Wealth Checking'}</div>
                 <div className="text-slate-600 dark:text-slate-400">Acct #{primaryAccount?.accountNumber || '•••• 8819'} • Routing: 021000021</div>
               </div>
-            </div>
+            </GlassPanel>
 
             {/* Balance Summary */}
             <div className="grid grid-cols-3 gap-3 text-center font-mono">
-              <div className="p-3 bg-slate-50 dark:bg-slate-900/60 rounded-xl border border-slate-200 dark:border-slate-800">
+              <GlassPanel variant="subtle" className="p-3">
                 <div className="text-[10px] text-slate-400 uppercase">Starting Balance</div>
                 <div className="text-sm font-bold text-slate-800 dark:text-slate-200">${(selectedStatement.startBal / 100).toLocaleString('en-US', { minimumFractionDigits: 2 })}</div>
-              </div>
-              <div className="p-3 bg-slate-50 dark:bg-slate-900/60 rounded-xl border border-slate-200 dark:border-slate-800">
+              </GlassPanel>
+              <GlassPanel variant="subtle" className="p-3">
                 <div className="text-[10px] text-slate-400 uppercase">Net Activity</div>
                 <div className="text-sm font-bold text-emerald-600 dark:text-emerald-400">+${((selectedStatement.endBal - selectedStatement.startBal) / 100).toLocaleString('en-US', { minimumFractionDigits: 2 })}</div>
-              </div>
-              <div className="p-3 bg-slate-50 dark:bg-slate-900/60 rounded-xl border border-slate-200 dark:border-slate-800">
+              </GlassPanel>
+              <GlassPanel variant="subtle" className="p-3">
                 <div className="text-[10px] text-slate-400 uppercase">Closing Balance</div>
-                <div className="text-sm font-bold text-[#8c6d37] dark:text-[#c5a880]">${(selectedStatement.endBal / 100).toLocaleString('en-US', { minimumFractionDigits: 2 })}</div>
-              </div>
+                <div className="text-sm font-bold text-[#8c6d37] dark:text-[#f8c22d]">${(selectedStatement.endBal / 100).toLocaleString('en-US', { minimumFractionDigits: 2 })}</div>
+              </GlassPanel>
             </div>
 
             {/* Transactions itemization */}
             <div className="space-y-2">
               <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 font-serif">Transaction Itemization</h4>
-              <div className="overflow-x-auto border border-slate-200 dark:border-slate-800 rounded-xl">
+              <GlassPanel variant="subtle" className="overflow-x-auto">
                 <table className="w-full text-left font-mono text-xs">
-                  <thead className="bg-slate-100 dark:bg-slate-900 text-slate-600 dark:text-slate-400 text-[10px] uppercase border-b border-slate-200 dark:border-slate-800">
+                  <thead className="bg-white/40 dark:bg-white/5 text-slate-600 dark:text-slate-400 text-[10px] uppercase border-b border-white/20 dark:border-white/10">
                     <tr>
                       <th className="p-2.5">Date</th>
                       <th className="p-2.5">Description</th>
@@ -402,9 +424,9 @@ export const StatementsPage: React.FC = () => {
                       <th className="p-2.5 text-right">Amount</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                  <tbody className="divide-y divide-white/10 dark:divide-white/5">
                     {recentTransactions.map((tx) => (
-                      <tr key={tx.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/40">
+                      <tr key={tx.id} className="hover:bg-white/30 dark:hover:bg-white/[0.03]">
                         <td className="p-2.5 text-slate-500 dark:text-slate-400">{new Date(tx.createdTimestamp).toLocaleDateString()}</td>
                         <td className="p-2.5 text-slate-800 dark:text-slate-200 font-sans font-medium">{tx.description}</td>
                         <td className="p-2.5 text-slate-500 dark:text-slate-400 text-[10px]">{tx.channel}</td>
@@ -415,32 +437,34 @@ export const StatementsPage: React.FC = () => {
                     ))}
                   </tbody>
                 </table>
-              </div>
+              </GlassPanel>
             </div>
 
             {/* Security seal and dismissal */}
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 border-t border-slate-200 dark:border-slate-800 text-xs">
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 border-t border-white/20 dark:border-white/10 text-xs">
               <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400 font-mono text-[10px]">
                 <ShieldCheck className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                 <span>Cryptographic Digest: SHA256-7f8a91b2c3d4e5f6... (Official Transcript)</span>
               </div>
               <div className="flex items-center gap-2">
-                <button
+                <GlassButton
+                  variant="glass-default"
+                  size="sm"
                   onClick={() => window.print()}
-                  className="px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 font-bold text-xs flex items-center gap-1.5 cursor-pointer text-slate-700 dark:text-slate-200"
+                  iconLeft={<Printer className="w-3.5 h-3.5" />}
                 >
-                  <Printer className="w-3.5 h-3.5" />
-                  <span>Print</span>
-                </button>
-                <button
+                  Print
+                </GlassButton>
+                <GlassButton
+                  variant="primary-gold"
+                  size="sm"
                   onClick={() => setSelectedStatement(null)}
-                  className="px-5 py-2 rounded-xl bg-[#0a192f] dark:bg-[#112a4a] hover:bg-[#132d52] text-white font-bold text-xs cursor-pointer border border-[#c5a880]/30"
                 >
                   Close
-                </button>
+                </GlassButton>
               </div>
             </div>
-          </div>
+          </GlassPanel>
         </div>
       )}
     </div>
@@ -503,7 +527,7 @@ export const SecurityCenterPage: React.FC = () => {
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
-      <div className="bg-white dark:bg-[#0a192f] rounded-2xl p-6 border border-slate-200 dark:border-[#1e3656] shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-colors">
+      <GlassPanel variant="standard" className="p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-xl font-bold font-serif text-slate-900 dark:text-white">
             Security Governance &amp; Threat Defense
@@ -513,39 +537,39 @@ export const SecurityCenterPage: React.FC = () => {
           </p>
         </div>
 
-        <div className="px-4 py-2 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800/80 text-emerald-800 dark:text-emerald-400 text-xs font-bold flex items-center gap-2">
+        <div className="px-4 py-2 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-800 dark:text-emerald-300 text-xs font-bold flex items-center gap-2 backdrop-blur-md">
           <ShieldCheck className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
           <span>Security Score: {biometricState.enabled ? '98 / 100 (Maximum Defense)' : '88 / 100 (Protected)'}</span>
         </div>
-      </div>
+      </GlassPanel>
 
       {/* Primary Biometric Hardware Token Banner */}
-      <div className="bg-gradient-to-r from-[#071322] via-[#0d233e] to-[#0a192f] text-white rounded-2xl p-6 border border-[#c5a880]/40 shadow-xl relative overflow-hidden">
+      <GlassPanel variant="gold" glow className="p-6">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
           <div className="flex items-start gap-4">
-            <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 border ${
+            <div className={`w-13 h-13 rounded-2xl flex items-center justify-center shrink-0 border shadow-md backdrop-blur-md ${
               biometricState.enabled 
                 ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40' 
-                : 'bg-[#c5a880]/20 text-[#c5a880] border-[#c5a880]/40'
+                : 'bg-amber-500/20 text-amber-500 dark:text-[#f8c22d] border-amber-400/40'
             }`}>
               <Fingerprint className="w-7 h-7" />
             </div>
             <div className="space-y-1">
               <div className="flex items-center gap-2">
-                <h3 className="text-base font-bold font-serif text-[#e5ca95]">
+                <h3 className="text-base font-bold font-serif text-slate-900 dark:text-[#e5ca95]">
                   Mobile &amp; Hardware Biometric Enclave
                 </h3>
                 <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-full ${
-                  biometricState.enabled ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40' : 'bg-amber-500/20 text-amber-300 border border-amber-500/40'
+                  biometricState.enabled ? 'bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border border-emerald-500/40' : 'bg-amber-500/20 text-amber-700 dark:text-amber-300 border border-amber-500/40'
                 }`}>
                   {biometricState.enabled ? 'BOUND & ACTIVE' : 'NOT ENROLLED'}
                 </span>
               </div>
-              <p className="text-xs text-slate-300 max-w-xl leading-relaxed">
+              <p className="text-xs text-slate-600 dark:text-slate-300 max-w-xl leading-relaxed">
                 Secure your transactions and account sessions with on-device Apple Secure Enclave / Windows Hello biometric verification (W3C WebAuthn Level 2).
               </p>
               {biometricState.enabled && (
-                <div className="flex items-center gap-4 text-[11px] font-mono text-slate-400 pt-1">
+                <div className="flex items-center gap-4 text-[11px] font-mono text-slate-500 dark:text-slate-400 pt-1">
                   <span>Device: {biometricState.deviceName}</span>
                   <span>•</span>
                   <span>Enrolled: {biometricState.enrolledAt ? new Date(biometricState.enrolledAt).toLocaleDateString() : 'Active'}</span>
@@ -557,36 +581,39 @@ export const SecurityCenterPage: React.FC = () => {
           <div className="flex flex-wrap items-center gap-3">
             {biometricState.enabled ? (
               <>
-                <button
+                <GlassButton
+                  variant="primary-gold"
+                  size="sm"
                   onClick={() => openBiometricPrompt({ mode: 'VERIFY', title: 'Test Biometric Sensor', subtitle: 'Simulate instant Touch ID / Face ID sensor scan.' })}
-                  className="px-4 py-2.5 rounded-xl bg-[#c5a880] text-slate-950 font-bold text-xs uppercase tracking-wider flex items-center gap-1.5 hover:brightness-105 transition-all cursor-pointer shadow-md"
+                  iconLeft={<Scan className="w-3.5 h-3.5" />}
                 >
-                  <Scan className="w-3.5 h-3.5" />
-                  <span>Test Sensor</span>
-                </button>
-                <button
+                  Test Sensor
+                </GlassButton>
+                <GlassButton
+                  variant="glass-ghost"
+                  size="sm"
                   onClick={() => toggleBiometrics(false)}
-                  className="px-4 py-2.5 rounded-xl border border-slate-700 hover:bg-slate-800 text-slate-300 font-bold text-xs transition-colors cursor-pointer"
                 >
                   Unbind Key
-                </button>
+                </GlassButton>
               </>
             ) : (
-              <button
+              <GlassButton
+                variant="primary-gold"
+                size="md"
                 onClick={() => toggleBiometrics(true)}
-                className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#c5a880] to-[#b39366] text-slate-950 font-bold text-xs uppercase tracking-wider flex items-center gap-2 hover:brightness-105 transition-all cursor-pointer shadow-lg"
+                iconLeft={<Fingerprint className="w-4 h-4" />}
               >
-                <Fingerprint className="w-4 h-4" />
-                <span>Enroll Biometric Key</span>
-              </button>
+                Enroll Biometric Key
+              </GlassButton>
             )}
           </div>
         </div>
-      </div>
+      </GlassPanel>
 
       {/* Dedicated Biometric Quick Login & Access Controls */}
-      <div className="bg-white dark:bg-[#0a192f] rounded-2xl p-6 border border-slate-200 dark:border-[#1e3656] shadow-sm space-y-4 transition-colors">
-        <div className="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-800">
+      <GlassPanel variant="standard" className="p-6 space-y-4">
+        <div className="flex items-center justify-between pb-3 border-b border-white/20 dark:border-white/10">
           <div>
             <h3 className="text-sm font-bold font-serif text-slate-900 dark:text-white">
               Biometric Access Policy &amp; Quick Login Preferences
@@ -595,17 +622,17 @@ export const SecurityCenterPage: React.FC = () => {
               Customize which security touchpoints accept FaceID, Touch ID, or Hardware Fingerprint scan.
             </p>
           </div>
-          <span className="text-[11px] font-mono font-bold text-[#8c6d37] dark:text-[#c5a880] bg-[#c5a880]/10 px-2.5 py-1 rounded-lg border border-[#c5a880]/30">
+          <span className="text-[11px] font-mono font-bold text-[#8c6d37] dark:text-[#f8c22d] bg-amber-500/10 px-2.5 py-1 rounded-lg border border-amber-400/30">
             FIDO2 / WebAuthn Level 2
           </span>
         </div>
 
-        <div className="divide-y divide-slate-100 dark:divide-slate-800 text-xs">
+        <div className="divide-y divide-white/15 dark:divide-white/5 text-xs">
           {/* Quick Login Toggle */}
           <div className="py-3.5 flex items-center justify-between gap-4">
             <div className="space-y-0.5">
               <div className="font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                <Fingerprint className="w-4 h-4 text-[#8c6d37] dark:text-[#c5a880]" />
+                <Fingerprint className="w-4 h-4 text-[#8c6d37] dark:text-[#f8c22d]" />
                 <span>Quick Biometric Login Access (FaceID / Fingerprint)</span>
               </div>
               <p className="text-slate-500 dark:text-slate-400 text-[11px] leading-relaxed">
@@ -613,23 +640,11 @@ export const SecurityCenterPage: React.FC = () => {
               </p>
             </div>
 
-            <button
-              onClick={handleToggleLoginBiometrics}
-              type="button"
-              role="switch"
-              aria-checked={biometricState.enabled && biometricState.requireForLogin}
-              className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                biometricState.enabled && biometricState.requireForLogin
-                  ? 'bg-emerald-500'
-                  : 'bg-slate-300 dark:bg-slate-700'
-              }`}
-            >
-              <span
-                className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-                  biometricState.enabled && biometricState.requireForLogin ? 'translate-x-5' : 'translate-x-0'
-                }`}
-              />
-            </button>
+            <GlassToggle
+              checked={biometricState.enabled && biometricState.requireForLogin}
+              onChange={handleToggleLoginBiometrics}
+              variant="emerald"
+            />
           </div>
 
           {/* Wire Pre-authorization Toggle */}
@@ -644,23 +659,11 @@ export const SecurityCenterPage: React.FC = () => {
               </p>
             </div>
 
-            <button
-              onClick={handleToggleWireBiometrics}
-              type="button"
-              role="switch"
-              aria-checked={biometricState.requireForWires}
-              className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                biometricState.requireForWires
-                  ? 'bg-emerald-500'
-                  : 'bg-slate-300 dark:bg-slate-700'
-              }`}
-            >
-              <span
-                className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-                  biometricState.requireForWires ? 'translate-x-5' : 'translate-x-0'
-                }`}
-              />
-            </button>
+            <GlassToggle
+              checked={biometricState.requireForWires}
+              onChange={handleToggleWireBiometrics}
+              variant="emerald"
+            />
           </div>
 
           {/* Card Unfreeze Toggle */}
@@ -675,36 +678,24 @@ export const SecurityCenterPage: React.FC = () => {
               </p>
             </div>
 
-            <button
-              onClick={handleToggleCardBiometrics}
-              type="button"
-              role="switch"
-              aria-checked={biometricState.requireForCardUnfreeze}
-              className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                biometricState.requireForCardUnfreeze
-                  ? 'bg-emerald-500'
-                  : 'bg-slate-300 dark:bg-slate-700'
-              }`}
-            >
-              <span
-                className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-                  biometricState.requireForCardUnfreeze ? 'translate-x-5' : 'translate-x-0'
-                }`}
-              />
-            </button>
+            <GlassToggle
+              checked={biometricState.requireForCardUnfreeze}
+              onChange={handleToggleCardBiometrics}
+              variant="emerald"
+            />
           </div>
         </div>
-      </div>
+      </GlassPanel>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Left: Active Authorized Devices */}
-        <div className="bg-white dark:bg-[#0a192f] rounded-2xl p-6 border border-slate-200 dark:border-[#1e3656] shadow-sm space-y-4 transition-colors">
+        <GlassPanel variant="standard" className="p-6 space-y-4">
           <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 font-serif">
             Active Registered Sessions
           </h3>
 
           <div className="space-y-3">
-            <div className="p-3.5 bg-slate-50 dark:bg-slate-900/60 rounded-xl border border-slate-200 dark:border-slate-800 flex items-center justify-between">
+            <GlassPanel variant="subtle" className="p-3.5 flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <Laptop className="w-5 h-5 text-slate-700 dark:text-slate-300" />
                 <div>
@@ -712,10 +703,10 @@ export const SecurityCenterPage: React.FC = () => {
                   <p className="text-[10px] text-emerald-700 dark:text-emerald-400 font-medium">This Current Session • New York, USA</p>
                 </div>
               </div>
-              <span className="text-[10px] uppercase font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-300 dark:border-emerald-800">Active</span>
-            </div>
+              <span className="text-[10px] uppercase font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/15 px-2 py-0.5 rounded border border-emerald-500/30">Active</span>
+            </GlassPanel>
 
-            <div className="p-3.5 bg-slate-50 dark:bg-slate-900/60 rounded-xl border border-slate-200 dark:border-slate-800 flex items-center justify-between">
+            <GlassPanel variant="subtle" className="p-3.5 flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <Smartphone className="w-5 h-5 text-slate-700 dark:text-slate-300" />
                 <div>
@@ -729,18 +720,18 @@ export const SecurityCenterPage: React.FC = () => {
               >
                 Revoke
               </button>
-            </div>
+            </GlassPanel>
           </div>
-        </div>
+        </GlassPanel>
 
         {/* Right: Security Settings & Alerts */}
-        <div className="bg-white dark:bg-[#0a192f] rounded-2xl p-6 border border-slate-200 dark:border-[#1e3656] shadow-sm space-y-4 transition-colors">
+        <GlassPanel variant="standard" className="p-6 space-y-4">
           <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 font-serif">
             MFA &amp; Fraud Monitoring
           </h3>
 
           <div className="space-y-3 text-xs">
-            <div className="flex justify-between items-center py-2 border-b border-slate-100 dark:border-slate-800">
+            <div className="flex justify-between items-center py-2 border-b border-white/15 dark:border-white/5">
               <div>
                 <div className="font-bold text-slate-900 dark:text-white">Two-Factor Authentication (MFA)</div>
                 <div className="text-[11px] text-slate-500 dark:text-slate-400">Hardware TOTP &amp; SMS verification</div>
@@ -748,7 +739,7 @@ export const SecurityCenterPage: React.FC = () => {
               <span className="text-emerald-700 dark:text-emerald-400 font-bold">Enabled</span>
             </div>
 
-            <div className="flex justify-between items-center py-2 border-b border-slate-100 dark:border-slate-800">
+            <div className="flex justify-between items-center py-2 border-b border-white/15 dark:border-white/5">
               <div>
                 <div className="font-bold text-slate-900 dark:text-white">Passkey / Biometric Auth</div>
                 <div className="text-[11px] text-slate-500 dark:text-slate-400">FIDO2 WebAuthn TouchID/FaceID</div>
@@ -767,14 +758,16 @@ export const SecurityCenterPage: React.FC = () => {
             </div>
           </div>
 
-          <button
+          <GlassButton
+            variant="glass-danger"
+            size="md"
             onClick={() => showToast('INFO', 'Suspicious Activity Report', 'Security incident report opened. Fraud ops dispatched.')}
-            className="w-full py-2.5 rounded-xl border border-rose-200 dark:border-rose-900/60 hover:bg-rose-50 dark:hover:bg-rose-950/30 text-rose-700 dark:text-rose-400 font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 cursor-pointer transition-colors"
+            iconLeft={<AlertTriangle className="w-4 h-4" />}
+            className="w-full uppercase tracking-wider text-xs"
           >
-            <AlertTriangle className="w-4 h-4 text-rose-600 dark:text-rose-400" />
-            <span>Report Suspicious Activity</span>
-          </button>
-        </div>
+            Report Suspicious Activity
+          </GlassButton>
+        </GlassPanel>
       </div>
     </div>
   );
@@ -812,16 +805,16 @@ export const MessagesPage: React.FC = () => {
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
-      <div className="bg-white dark:bg-[#0a192f] rounded-2xl p-6 border border-slate-200 dark:border-[#1e3656] shadow-sm space-y-2 transition-colors">
+      <GlassPanel variant="standard" className="p-6">
         <h1 className="text-xl font-bold font-serif text-slate-900 dark:text-white">
           Encrypted Private Wealth Concierge
         </h1>
         <p className="text-xs text-slate-500 dark:text-slate-400">
           End-to-end encrypted direct communication channel with your assigned senior private banking officer.
         </p>
-      </div>
+      </GlassPanel>
 
-      <div className="bg-white dark:bg-[#0a192f] rounded-2xl border border-slate-200 dark:border-[#1e3656] shadow-sm overflow-hidden flex flex-col h-[520px] transition-colors">
+      <GlassPanel variant="standard" className="overflow-hidden flex flex-col h-[540px]">
         {/* Messages list */}
         <div className="flex-1 p-6 overflow-y-auto space-y-4">
           {messages.map((m) => (
@@ -833,10 +826,10 @@ export const MessagesPage: React.FC = () => {
                 {m.sender} • {m.timestamp}
               </div>
               <div
-                className={`max-w-lg p-4 rounded-2xl text-xs leading-relaxed ${
+                className={`max-w-lg p-4 rounded-2xl text-xs leading-relaxed backdrop-blur-md shadow-md ${
                   m.isStaff
-                    ? 'bg-slate-100 dark:bg-slate-900 text-slate-800 dark:text-slate-200 rounded-tl-none border border-slate-200 dark:border-slate-800'
-                    : 'bg-[#0a192f] dark:bg-[#112a4a] text-white rounded-tr-none shadow-sm border border-[#c5a880]/30'
+                    ? 'bg-white/70 dark:bg-white/10 text-slate-800 dark:text-slate-200 rounded-tl-none border border-white/60 dark:border-white/10'
+                    : 'bg-gradient-to-r from-amber-500/20 to-amber-700/20 dark:from-[#0a192f]/90 dark:to-[#112a4a]/90 text-slate-900 dark:text-white rounded-tr-none border border-amber-400/40 dark:border-[#c5a880]/30 shadow-amber-900/5'
                 }`}
               >
                 {m.body}
@@ -846,23 +839,24 @@ export const MessagesPage: React.FC = () => {
         </div>
 
         {/* Input bar */}
-        <form onSubmit={handleSend} className="p-4 border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/60 flex gap-3">
+        <form onSubmit={handleSend} className="p-4 border-t border-white/20 dark:border-white/10 bg-white/40 dark:bg-white/[0.02] flex gap-3 backdrop-blur-md">
           <input
             type="text"
             placeholder="Type encrypted message to private banker..."
             value={inputText}
             onChange={(e) => setInputText(e.target.value)}
-            className="flex-1 px-4 py-2.5 text-xs bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:border-[#8c6d37]"
+            className="flex-1 px-4 py-2.5 text-xs glass-input rounded-xl text-slate-900 dark:text-white focus:outline-none"
           />
-          <button
+          <GlassButton
             type="submit"
-            className="px-5 py-2.5 rounded-xl bg-[#0a192f] dark:bg-[#112a4a] hover:bg-[#132d52] text-white text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 cursor-pointer border border-[#c5a880]/30"
+            variant="primary-gold"
+            size="md"
+            iconLeft={<Send className="w-3.5 h-3.5" />}
           >
-            <Send className="w-3.5 h-3.5 text-[#d4af37]" />
-            <span>Send</span>
-          </button>
+            Send
+          </GlassButton>
         </form>
-      </div>
+      </GlassPanel>
     </div>
   );
 };

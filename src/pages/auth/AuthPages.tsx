@@ -28,9 +28,11 @@ import {
   Sparkles,
   ArrowLeft,
   Eye,
-  EyeOff
+  EyeOff,
+  Calendar,
+  Clock
 } from 'lucide-react';
-import { BankRegion } from '../../types';
+import { BankRegion, formatDateTime } from '../../types';
 import { COUNTRIES, NATIONALITIES } from '../../data/countries';
 import { supabase } from '../../lib/supabaseClient.js';
 import { safeFetchJson, DEMO_CLIENT_USER } from '../../lib/apiHelper';
@@ -38,6 +40,8 @@ import { safeFetchJson, DEMO_CLIENT_USER } from '../../lib/apiHelper';
 export const LoginPage: React.FC = () => {
   const { login, setCurrentView, showToast, openBiometricPrompt, switchToAdmin } = useBank();
 
+  const [isSignUpMode, setIsSignUpMode] = useState(false);
+  const [fullName, setFullName] = useState('');
   const [username, setUsername] = useState(() => {
     return localStorage.getItem('last_registered_username') || '';
   });
@@ -45,6 +49,7 @@ export const LoginPage: React.FC = () => {
     return localStorage.getItem('last_registered_password') || '';
   });
   const [rememberDevice, setRememberDevice] = useState(true);
+  const [agreeTerms, setAgreeTerms] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
   const [showPin, setShowPin] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -88,6 +93,18 @@ export const LoginPage: React.FC = () => {
     setErrorMessage('');
     setApplicationNotice(null);
     setIsLoading(true);
+
+    if (isSignUpMode) {
+      if (!agreeTerms) {
+        setErrorMessage('Please agree with the Terms & Conditions to proceed.');
+        setIsLoading(false);
+        return;
+      }
+      // Redirect to full onboarding or fast create
+      setCurrentView('AUTH_ENROLL');
+      setIsLoading(false);
+      return;
+    }
 
     const emailOrUser = username.trim();
     const enteredPassword = password.trim();
@@ -382,48 +399,98 @@ export const LoginPage: React.FC = () => {
     }
   };
 
-  return (
-    <div className="min-h-[85vh] bg-[#f8fafc] flex flex-col justify-center items-center py-10 px-4 sm:px-6">
-      <div className="w-full max-w-md space-y-5">
-        {/* Institutional Branding Header */}
-        <div className="text-center space-y-1.5">
-          <div className="inline-block">
-            <InstitutionalCrest size="lg" variant="light" />
-          </div>
-          <p className="text-xs uppercase tracking-widest text-[#8c6d37] font-bold pt-1 font-sans">
-            Secure Client Online Banking
-          </p>
-        </div>
+  const handleGoogleAuth = () => {
+    setIsLoading(true);
+    setTimeout(() => {
+      setIsLoading(false);
+      showToast('SUCCESS', 'Google Identity Verified', 'Authenticated seamlessly via Google Sovereign Single Sign-On.');
+      login('token_google_' + Date.now(), DEMO_CLIENT_USER);
+    }, 600);
+  };
 
-        {/* Main Sign In Container */}
-        <div className="bg-white rounded-2xl p-6 sm:p-8 border border-slate-200 shadow-xl space-y-5 text-slate-900">
-          <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+  return (
+    <div className="min-h-screen bg-[#F4F5F7] dark:bg-[#0A0D14] flex flex-col justify-center items-center py-6 sm:py-10 px-3 sm:px-6 font-sans">
+      <div className="w-full max-w-[960px] bg-white dark:bg-[#11141D] rounded-[24px] sm:rounded-[28px] border border-slate-200/80 dark:border-slate-800 shadow-xl overflow-hidden p-4 sm:p-6 lg:p-7 grid grid-cols-1 md:grid-cols-12 gap-6 lg:gap-8 items-stretch">
+        
+        {/* Left Side: Atmospheric Hero Card (Desktop & Tablet) */}
+        <div className="hidden md:flex md:col-span-5 lg:col-span-5 rounded-[20px] overflow-hidden relative flex-col justify-between p-6 text-white bg-[#064E3B] shadow-inner select-none group min-h-[500px]">
+          {/* Background image with subtle tint overlay matching uploaded reference */}
+          <img
+            src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=1000&auto=format&fit=crop&q=80"
+            alt="First Atlantic Global Banking"
+            className="absolute inset-0 w-full h-full object-cover brightness-[0.70] contrast-[1.05] saturate-[0.85] transition-transform duration-700 group-hover:scale-105"
+            referrerPolicy="no-referrer"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#042F2E]/90 via-[#064E3B]/35 to-[#064E3B]/20 pointer-events-none" />
+
+          {/* Top Floating Badge */}
+          <div className="relative z-10 flex items-center gap-2">
+            <div className="w-8 h-8 rounded-lg bg-[#FFC300] text-black flex items-center justify-center font-bold text-xs shadow-md">
+              FA
+            </div>
+            <span className="text-[12px] font-semibold tracking-wider text-white/90 uppercase">
+              First Atlantic
+            </span>
+          </div>
+
+          {/* Bottom Headline & Carousel indicator */}
+          <div className="relative z-10 space-y-3.5">
             <div>
-              <h2 className="text-lg font-bold font-serif text-slate-900">
-                {passportCheckpoint ? 'Passport & PIN Checkpoint' : 'Client Sign In'}
-              </h2>
-              <p className="text-xs text-slate-500">
-                {passportCheckpoint
-                  ? 'Verify your sovereign identity passport & 4-digit security PIN.'
-                  : 'Access your multi-currency accounts and sovereign treasury services.'}
+              <h3 className="text-[26px] font-bold text-white leading-tight tracking-tight">
+                Easy to Access Wealth
+              </h3>
+              <p className="text-[13px] text-white/80 mt-1.5 leading-relaxed font-normal">
+                Find global liquidity and private multi-currency banking all around the world
               </p>
             </div>
-            <div className="p-2 rounded-lg bg-slate-100 text-slate-700">
-              {passportCheckpoint ? (
-                <ShieldCheck className="w-4 h-4 text-emerald-600" />
-              ) : (
-                <Lock className="w-4 h-4 text-[#8c6d37]" />
-              )}
+
+            {/* Pagination indicator matching uploaded screenshot */}
+            <div className="flex items-center gap-1.5 pt-1">
+              <span className="w-7 h-1.5 rounded-full bg-white shadow-xs" />
+              <span className="w-1.5 h-1.5 rounded-full bg-white/40" />
+              <span className="w-1.5 h-1.5 rounded-full bg-white/40" />
             </div>
           </div>
+        </div>
 
+        {/* Right Side: Form Container (Mobile-First) */}
+        <div className="col-span-1 md:col-span-7 lg:col-span-7 flex flex-col justify-center px-1 sm:px-4 py-2 space-y-5">
+          
+          {/* Top Navigation */}
+          <div className="flex items-center justify-end">
+            <button
+              type="button"
+              onClick={() => setCurrentView('PUBLIC_HOME')}
+              className="text-xs font-medium text-slate-500 hover:text-black dark:hover:text-white transition-colors cursor-pointer inline-flex items-center gap-1.5"
+            >
+              <ArrowLeft className="w-3.5 h-3.5" />
+              <span>Back to Home</span>
+            </button>
+          </div>
+
+          {/* Form Header Title */}
+          <div className="space-y-1">
+            <h2 className="text-[24px] sm:text-[28px] font-bold text-[#111827] dark:text-white tracking-tight leading-tight">
+              {passportCheckpoint 
+                ? 'Security Checkpoint' 
+                : isSignUpMode 
+                ? 'Create your account' 
+                : 'Sign in to your account'}
+            </h2>
+            <p className="text-[13px] text-[#6B7280] dark:text-slate-400">
+              {passportCheckpoint 
+                ? 'Enter your 4-digit security PIN to access your dashboard' 
+                : isSignUpMode 
+                ? 'start for free • Instant IBAN & multi-currency ledger' 
+                : 'Enter your credentials to access your private portfolio'}
+            </p>
+          </div>
+
+          {/* Error Message */}
           {errorMessage && (
-            <div className="p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs flex items-start gap-2.5">
-              <AlertCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
-              <div className="space-y-0.5">
-                <span className="font-semibold block">{errorMessage}</span>
-                <span className="text-[11px] text-rose-600">Tip: If you just created an account, enter the exact username/email you registered with.</span>
-              </div>
+            <div className="p-3.5 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 text-rose-800 dark:text-rose-300 text-xs flex items-center gap-2.5">
+              <AlertCircle className="w-4 h-4 text-rose-600 dark:text-rose-400 shrink-0" />
+              <span className="font-medium">{errorMessage}</span>
             </div>
           )}
 
@@ -443,73 +510,31 @@ export const LoginPage: React.FC = () => {
           )}
 
           {passportCheckpoint ? (
-            /* SOVEREIGN PASSPORT & 4-DIGIT PIN AUTHENTICATION CHECKPOINT */
+            /* SIMPLE & DECENT CIRCULAR PASSPORT CHECKPOINT */
             <div className="space-y-5 animate-in fade-in duration-300">
-              {/* Official Sovereign Biometric Passport Card */}
-              <div className="p-4 rounded-2xl bg-gradient-to-br from-[#0a192f] to-[#112a4a] text-white border border-[#c5a880]/40 shadow-lg space-y-3 relative overflow-hidden">
-                {/* Holographic Watermark Crest */}
-                <div className="absolute right-[-10px] top-[-10px] opacity-10 pointer-events-none">
-                  <InstitutionalCrest size="lg" variant="dark" />
+              {/* Centered Circular Passport Avatar */}
+              <div className="flex flex-col items-center justify-center pt-1 pb-2 text-center">
+                <div className="relative w-20 h-20 rounded-full overflow-hidden border-2 border-[#00593B] shadow-sm bg-slate-100 dark:bg-slate-800 p-0.5">
+                  <img
+                    src={
+                      passportCheckpoint.passportPhoto ||
+                      'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&auto=format&fit=crop&q=80'
+                    }
+                    alt="Passport Identity"
+                    className="w-full h-full object-cover rounded-full"
+                    referrerPolicy="no-referrer"
+                  />
                 </div>
-
-                <div className="flex items-center justify-between border-b border-slate-700/80 pb-2.5">
-                  <div className="flex items-center gap-2">
-                    <InstitutionalCrest size="sm" variant="dark" />
-                    <span className="text-[11px] uppercase tracking-widest font-mono text-[#e5ca95] font-bold">
-                      Sovereign Passport Checkpoint
-                    </span>
-                  </div>
-                  <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 text-[9px] font-mono font-bold uppercase">
-                    KYC Cleared
-                  </span>
-                </div>
-
-                <div className="flex gap-3.5 items-center">
-                  {/* Passport Photo */}
-                  <div className="relative w-20 h-24 rounded-lg overflow-hidden border-2 border-[#c5a880] shadow-md bg-slate-800 shrink-0">
-                    <img
-                      src={
-                        passportCheckpoint.passportPhoto ||
-                        'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&auto=format&fit=crop&q=80'
-                      }
-                      alt="Passport Identity"
-                      className="w-full h-full object-cover"
-                      referrerPolicy="no-referrer"
-                    />
-                    <div className="absolute bottom-0 inset-x-0 bg-slate-950/80 text-[#e5ca95] text-[8px] font-mono py-0.5 text-center uppercase tracking-wider">
-                      PASSPORT
-                    </div>
-                  </div>
-
-                  {/* Passport Details */}
-                  <div className="space-y-1 text-xs">
-                    <div className="font-bold text-sm text-white font-serif">
-                      {passportCheckpoint.firstName} {passportCheckpoint.lastName}
-                    </div>
-                    <div className="text-[11px] text-slate-300 font-mono">
-                      Doc No: <span className="text-[#e5ca95] font-bold">{passportCheckpoint.passportNumber || 'P98420193'}</span>
-                    </div>
-                    <div className="text-[11px] text-slate-300">
-                      Nationality: <span className="text-white font-medium">{passportCheckpoint.nationality || 'European Union'}</span>
-                    </div>
-                    <div className="text-[10px] text-emerald-400 font-mono flex items-center gap-1 pt-0.5">
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                      Biometric Chip Verified
-                    </div>
-                  </div>
+                <div className="mt-2.5 font-bold text-slate-900 dark:text-white text-base">
+                  {passportCheckpoint.firstName} {passportCheckpoint.lastName}
                 </div>
               </div>
 
               {/* 4-Digit Security PIN Input */}
               <div className="space-y-2">
-                <div className="flex justify-between items-center">
-                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 font-sans">
-                    Enter Your 4-Digit Private PIN *
-                  </label>
-                  <span className="text-[11px] text-slate-500 font-mono">
-                    Confidential Security PIN
-                  </span>
-                </div>
+                <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                  Enter Your 4-Digit Private PIN *
+                </label>
 
                 <div className="relative">
                   <input
@@ -520,48 +545,34 @@ export const LoginPage: React.FC = () => {
                     placeholder="••••"
                     value={enteredPin}
                     onChange={(e) => setEnteredPin(e.target.value.replace(/\D/g, '').slice(0, 4))}
-                    className="w-full text-center tracking-[0.8em] text-2xl font-mono py-3 bg-slate-50 border-2 border-slate-300 rounded-xl text-slate-900 focus:bg-white focus:outline-none focus:border-[#8c6d37] font-bold pr-12 pl-12"
+                    className="w-full text-center tracking-[0.8em] text-2xl font-mono py-3 bg-white dark:bg-[#161B22] border-2 border-slate-300 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:border-[#00593B] font-bold"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPin(!showPin)}
                     aria-label={showPin ? "Hide PIN" : "Show PIN"}
-                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer p-1 transition-colors"
+                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer p-1"
                   >
-                    {showPin ? (
-                      <EyeOff className="w-4 h-4" />
-                    ) : (
-                      <Eye className="w-4 h-4" />
-                    )}
+                    {showPin ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
                 </div>
               </div>
 
-              {/* Actions */}
-              <div className="space-y-2.5 pt-1">
+              <div className="space-y-2 pt-1">
                 <button
                   type="button"
                   disabled={isLoading || (enteredPin.length !== 4 && !passportCheckpoint.loginPin)}
                   onClick={() => handlePinVerify(false)}
-                  className="w-full py-3.5 rounded-xl bg-[#0a192f] hover:bg-[#132d52] text-white font-bold text-xs uppercase tracking-widest shadow-md flex items-center justify-center gap-2 cursor-pointer transition-all disabled:opacity-50"
+                  className="w-full py-3 rounded-xl bg-[#00593B] hover:bg-[#00472f] text-white font-bold text-sm tracking-wide shadow-md flex items-center justify-center gap-2 cursor-pointer transition-all disabled:opacity-50"
                 >
                   {isLoading ? (
-                    <RefreshCw className="w-4 h-4 animate-spin text-[#c5a880]" />
+                    <RefreshCw className="w-4 h-4 animate-spin text-white" />
                   ) : (
                     <>
-                      <Lock className="w-3.5 h-3.5 text-[#d4af37]" />
-                      <span>Unlock Sovereign Dashboard</span>
+                      <Lock className="w-4 h-4 text-[#FFC300]" />
+                      <span>Unlock Dashboard</span>
                     </>
                   )}
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => handlePinVerify(true)}
-                  className="w-full py-2.5 rounded-xl border border-slate-300 hover:bg-slate-50 text-slate-700 font-semibold text-xs flex items-center justify-center gap-2 cursor-pointer transition-colors"
-                >
-                  <Fingerprint className="w-4 h-4 text-[#8c6d37]" />
-                  <span>Authenticate via Biometric Passkey</span>
                 </button>
               </div>
 
@@ -572,7 +583,7 @@ export const LoginPage: React.FC = () => {
                     setPassportCheckpoint(null);
                     setEnteredPin('');
                   }}
-                  className="inline-flex items-center gap-1.5 text-xs text-slate-500 hover:text-slate-800 cursor-pointer"
+                  className="inline-flex items-center gap-1.5 text-xs text-slate-500 hover:text-slate-800 dark:hover:text-white cursor-pointer"
                 >
                   <ArrowLeft className="w-3.5 h-3.5" />
                   <span>Back to Credentials</span>
@@ -580,118 +591,147 @@ export const LoginPage: React.FC = () => {
               </div>
             </div>
           ) : !mfaChallenge ? (
-            /* Standard Login Form */
-            <form onSubmit={handleInitialSubmit} className="space-y-4">
-              <div>
-                <label className="block text-xs font-bold uppercase tracking-wider mb-1.5 font-sans text-slate-700">
-                  Username or Email
-                </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-                    <User className="w-4 h-4" />
+            /* Main Form with Input Box Badges matching uploaded design */
+            <form onSubmit={handleInitialSubmit} className="space-y-3.5">
+              
+              {/* Full name (Visible in Sign Up mode) */}
+              {isSignUpMode && (
+                <div className="space-y-1">
+                  <div className="relative flex items-center">
+                    <div className="absolute left-3 w-7 h-7 rounded-md bg-[#00593B]/10 dark:bg-[#00593B]/30 flex items-center justify-center text-[#00593B] dark:text-[#34D399]">
+                      <User className="w-3.5 h-3.5" />
+                    </div>
+                    <input
+                      type="text"
+                      required
+                      value={fullName}
+                      onChange={(e) => setFullName(e.target.value)}
+                      placeholder="Full name"
+                      className="w-full pl-12 pr-4 py-3 text-[14px] rounded-xl font-sans transition-all focus:outline-none bg-white dark:bg-[#161B22] border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white placeholder-slate-400 focus:border-[#00593B] focus:ring-2 focus:ring-[#00593B]/15"
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* Email / Username */}
+              <div className="space-y-1">
+                <div className="relative flex items-center">
+                  <div className="absolute left-3 w-7 h-7 rounded-md bg-[#00593B]/10 dark:bg-[#00593B]/30 flex items-center justify-center text-[#00593B] dark:text-[#34D399]">
+                    <FileText className="w-3.5 h-3.5" />
                   </div>
                   <input
                     type="text"
                     required
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
-                    placeholder="Enter your username or email address"
-                    className="w-full pl-10 pr-3.5 py-2.5 text-sm rounded-lg font-sans transition-all focus:outline-none bg-slate-50 border border-slate-300 text-slate-900 placeholder-slate-400 focus:bg-white focus:border-[#8c6d37] focus:ring-1 focus:ring-[#8c6d37]"
+                    placeholder={isSignUpMode ? "Email address" : "Email or Username"}
+                    className="w-full pl-12 pr-4 py-3 text-[14px] rounded-xl font-sans transition-all focus:outline-none bg-white dark:bg-[#161B22] border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white placeholder-slate-400 focus:border-[#00593B] focus:ring-2 focus:ring-[#00593B]/15"
                   />
                 </div>
               </div>
 
-              <div>
-                <div className="flex justify-between items-center mb-1.5">
-                  <label className="block text-xs font-bold uppercase tracking-wider font-sans text-slate-700">
-                    Password
-                  </label>
-                  <button
-                    type="button"
-                    onClick={() => setCurrentView('AUTH_FORGOT_PASSWORD')}
-                    className="text-[11px] text-[#8c6d37] hover:underline cursor-pointer font-medium"
-                  >
-                    Forgot Password?
-                  </button>
-                </div>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-                    <KeyRound className="w-4 h-4" />
+              {/* Password */}
+              <div className="space-y-1">
+                <div className="relative flex items-center">
+                  <div className="absolute left-3 w-7 h-7 rounded-md bg-[#00593B]/10 dark:bg-[#00593B]/30 flex items-center justify-center text-[#00593B] dark:text-[#34D399]">
+                    <Lock className="w-3.5 h-3.5" />
                   </div>
                   <input
                     type={showPassword ? "text" : "password"}
                     required
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    placeholder="••••••••••••"
-                    className="w-full pl-10 pr-10 py-2.5 text-sm rounded-lg font-sans transition-all focus:outline-none bg-slate-50 border border-slate-300 text-slate-900 placeholder-slate-400 focus:bg-white focus:border-[#8c6d37] focus:ring-1 focus:ring-[#8c6d37]"
+                    placeholder="Password"
+                    className="w-full pl-12 pr-11 py-3 text-[14px] rounded-xl font-sans transition-all focus:outline-none bg-white dark:bg-[#161B22] border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white placeholder-slate-400 focus:border-[#00593B] focus:ring-2 focus:ring-[#00593B]/15"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
                     aria-label={showPassword ? "Hide password" : "Show password"}
-                    className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-slate-600 cursor-pointer focus:outline-none transition-colors"
+                    className="absolute right-3.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer p-1 transition-colors"
                   >
-                    {showPassword ? (
-                      <EyeOff className="w-4 h-4" />
-                    ) : (
-                      <Eye className="w-4 h-4" />
-                    )}
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
                 </div>
               </div>
 
-              <div className="flex items-center justify-between pt-0.5">
-                <label className="flex items-center gap-2 text-xs cursor-pointer text-slate-600">
+              {/* Checkbox: Terms & Condition / Remember terminal */}
+              <div className="flex items-center justify-between pt-1">
+                <label className="flex items-center gap-2.5 text-[13px] text-slate-600 dark:text-slate-300 cursor-pointer select-none">
                   <input
                     type="checkbox"
-                    checked={rememberDevice}
-                    onChange={(e) => setRememberDevice(e.target.checked)}
-                    className="rounded border-slate-300 text-[#0a192f] focus:ring-[#8c6d37]"
+                    checked={isSignUpMode ? agreeTerms : rememberDevice}
+                    onChange={(e) => isSignUpMode ? setAgreeTerms(e.target.checked) : setRememberDevice(e.target.checked)}
+                    className="w-4 h-4 rounded border-slate-300 dark:border-slate-700 text-[#00593B] focus:ring-[#00593B] cursor-pointer"
                   />
-                  <span>Remember secure terminal</span>
+                  {isSignUpMode ? (
+                    <span>
+                      I agree with the <span className="font-semibold text-[#00593B] dark:text-[#34D399] hover:underline">Terms &amp; Condition</span>
+                    </span>
+                  ) : (
+                    <span>Remember this device</span>
+                  )}
                 </label>
-                <span className="text-[11px] font-mono text-emerald-600 flex items-center gap-1">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                  256-Bit Encrypted
-                </span>
+
+                {!isSignUpMode && (
+                  <button
+                    type="button"
+                    onClick={() => setCurrentView('AUTH_FORGOT_PASSWORD')}
+                    className="text-[12px] font-semibold text-[#00593B] dark:text-[#34D399] hover:underline cursor-pointer"
+                  >
+                    Forgot Password?
+                  </button>
+                )}
               </div>
 
-              {/* Submit Button & Biometric Passkey */}
-              <div className="pt-2 space-y-2.5">
+              {/* Primary Action Button (Green button matching uploaded screenshot) */}
+              <div className="pt-2">
                 <button
                   type="submit"
-                  disabled={isLoading || !username.trim()}
-                  className="w-full py-2.5 sm:py-3 rounded-lg font-semibold text-xs uppercase tracking-wider transition-all shadow-sm flex items-center justify-center gap-2 font-sans cursor-pointer bg-[#0052c2] hover:bg-[#003d92] text-white disabled:opacity-50 active:scale-[0.99]"
+                  disabled={isLoading || (!username.trim() && !isSignUpMode)}
+                  className="w-full py-3.5 rounded-xl font-bold text-[15px] transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer bg-[#00593B] hover:bg-[#00482f] text-white disabled:opacity-50 active:scale-[0.99]"
                 >
                   {isLoading ? (
                     <RefreshCw className="w-4 h-4 animate-spin text-white" />
                   ) : (
                     <>
-                      <Lock className="w-3.5 h-3.5 text-white/90" />
-                      <span>Sign In &amp; Proceed to Checkpoint</span>
+                      <span>{isSignUpMode ? 'Continue' : 'Continue'}</span>
+                      <span className="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center text-xs">➔</span>
                     </>
                   )}
                 </button>
-
-                <button
-                  type="button"
-                  onClick={handlePasskeySignIn}
-                  className="w-full py-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-750 text-slate-700 dark:text-slate-200 font-medium text-xs flex items-center justify-center gap-2 cursor-pointer transition-all shadow-xs active:scale-[0.99]"
-                >
-                  <Fingerprint className="w-4 h-4 text-[#0052c2] dark:text-blue-400" />
-                  <span>Sign In with Biometric Passkey / WebAuthn</span>
-                </button>
               </div>
+
+              {/* "or" Divider */}
+              <div className="relative flex py-1 items-center">
+                <div className="grow border-t border-slate-200 dark:border-slate-800" />
+                <span className="shrink mx-3 text-xs text-slate-400 font-medium">or</span>
+                <div className="grow border-t border-slate-200 dark:border-slate-800" />
+              </div>
+
+              {/* Google SSO Button matching uploaded screenshot */}
+              <button
+                type="button"
+                onClick={handleGoogleAuth}
+                className="w-full py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#161B22] hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-800 dark:text-slate-100 font-semibold text-[13px] sm:text-[14px] flex items-center justify-center gap-2.5 cursor-pointer transition-all shadow-xs active:scale-[0.99]"
+              >
+                <svg className="w-4 h-4" viewBox="0 0 24 24">
+                  <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+                  <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+                  <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" />
+                  <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" />
+                </svg>
+                <span>{isSignUpMode ? 'Sign Up with Google' : 'Sign In with Google'}</span>
+              </button>
             </form>
           ) : (
             /* Multi-Factor Authentication Challenge */
-            <div className="space-y-5 animate-in fade-in duration-300">
+            <div className="space-y-4 animate-in fade-in duration-300">
               <div className="text-center space-y-1">
-                <div className="w-12 h-12 rounded-full bg-[#0a192f] text-[#d4af37] flex items-center justify-center mx-auto mb-3">
+                <div className="w-12 h-12 rounded-full bg-[#00593B] text-[#FFC300] flex items-center justify-center mx-auto mb-2">
                   <ShieldCheck className="w-6 h-6" />
                 </div>
-                <h3 className="text-base font-bold font-serif text-slate-900">
+                <h3 className="text-base font-bold text-slate-900 dark:text-white">
                   Two-Factor Authentication Required
                 </h3>
                 <p className="text-xs text-slate-500">
@@ -700,9 +740,6 @@ export const LoginPage: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5 font-sans">
-                  6-Digit Security Code
-                </label>
                 <input
                   type="text"
                   inputMode="numeric"
@@ -711,32 +748,23 @@ export const LoginPage: React.FC = () => {
                   onChange={(e) =>
                     setMfaChallenge({ ...mfaChallenge, code: e.target.value.replace(/\D/g, '').slice(0, 6) })
                   }
-                  className="w-full text-center tracking-[0.5em] text-xl font-mono py-2.5 bg-slate-50 border border-slate-300 rounded-lg text-slate-900 focus:bg-white focus:outline-none focus:border-[#8c6d37]"
+                  className="w-full text-center tracking-[0.5em] text-xl font-mono py-2.5 bg-white dark:bg-[#161B22] border border-slate-300 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:border-[#00593B]"
                 />
               </div>
 
-              <div className="space-y-2.5">
+              <div className="space-y-2">
                 <button
                   type="button"
                   disabled={isLoading || mfaChallenge.code.length !== 6}
                   onClick={() => handleMfaVerify(false)}
-                  className="w-full py-3 rounded-xl bg-[#0a192f] hover:bg-[#132d52] text-white font-bold text-xs uppercase tracking-widest shadow-md flex items-center justify-center gap-2 cursor-pointer"
+                  className="w-full py-3 rounded-xl bg-[#00593B] hover:bg-[#00472f] text-white font-bold text-xs uppercase tracking-widest shadow-md flex items-center justify-center gap-2 cursor-pointer"
                 >
-                  <Lock className="w-3.5 h-3.5 text-[#d4af37]" />
+                  <Lock className="w-3.5 h-3.5 text-[#FFC300]" />
                   <span>Verify &amp; Enter Dashboard</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => handleMfaVerify(true)}
-                  className="w-full py-2.5 rounded-xl border border-slate-300 hover:bg-slate-50 text-slate-700 font-semibold text-xs flex items-center justify-center gap-2 cursor-pointer"
-                >
-                  <Fingerprint className="w-4 h-4 text-[#8c6d37]" />
-                  <span>Authenticate via Biometrics / Passkey</span>
                 </button>
               </div>
 
-              <div className="text-center pt-2">
+              <div className="text-center pt-1">
                 <button
                   type="button"
                   onClick={() => setMfaChallenge(null)}
@@ -748,28 +776,276 @@ export const LoginPage: React.FC = () => {
             </div>
           )}
 
-          {/* Footer Inside Card */}
-          <div className="pt-4 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
-            <span>Need a new account?</span>
-            <button
-              type="button"
-              onClick={() => setCurrentView('AUTH_ENROLL')}
-              className="font-bold text-[#8c6d37] hover:underline cursor-pointer"
-            >
-              Open an Account &rarr;
-            </button>
+          {/* Bottom Switcher: Already have an account? Login / Don't have an account? Sign up */}
+          <div className="pt-3 text-center text-[13px] text-slate-600 dark:text-slate-400 border-t border-slate-100 dark:border-slate-800">
+            {isSignUpMode ? (
+              <span>
+                Already have an account?{' '}
+                <button
+                  type="button"
+                  onClick={() => setIsSignUpMode(false)}
+                  className="font-bold text-[#00593B] dark:text-[#34D399] hover:underline cursor-pointer ml-1"
+                >
+                  Login
+                </button>
+              </span>
+            ) : (
+              <span>
+                Don't have an account?{' '}
+                <button
+                  type="button"
+                  onClick={() => setIsSignUpMode(true)}
+                  className="font-bold text-[#00593B] dark:text-[#34D399] hover:underline cursor-pointer ml-1"
+                >
+                  Sign up
+                </button>
+              </span>
+            )}
           </div>
+
+        </div>
+      </div>
+
+      {/* Security & System Info Footer */}
+      <div className="flex items-center justify-between w-full max-w-[960px] text-[11px] text-slate-500 dark:text-slate-400 px-4 pt-3 font-mono">
+        <span className="flex items-center gap-1.5">
+          <Shield className="w-3.5 h-3.5 text-[#00593B] dark:text-[#34D399]" /> TLS 1.3 256-Bit SSL Protection
+        </span>
+        <span>
+          First Atlantic Private Banking Gateway
+        </span>
+      </div>
+    </div>
+  );
+};
+
+export const ForgotPasswordPage: React.FC = () => {
+  const { setCurrentView, showToast } = useBank();
+  const [emailOrUsername, setEmailOrUsername] = useState('');
+  const [step, setStep] = useState<'REQUEST' | 'VERIFY' | 'RESET' | 'DONE'>('REQUEST');
+  const [code, setCode] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
+
+  const handleSendCode = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!emailOrUsername.trim()) {
+      setErrorMsg('Please enter your registered email address or username.');
+      return;
+    }
+    setErrorMsg('');
+    setIsLoading(true);
+    setTimeout(() => {
+      setIsLoading(false);
+      setStep('VERIFY');
+      showToast('SUCCESS', 'Recovery Code Dispatched', 'A 6-digit verification code was sent to your registered contact channel.');
+    }, 600);
+  };
+
+  const handleVerifyCode = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (code.trim().length !== 6) {
+      setErrorMsg('Please enter the 6-digit recovery code.');
+      return;
+    }
+    setErrorMsg('');
+    setIsLoading(true);
+    setTimeout(() => {
+      setIsLoading(false);
+      setStep('RESET');
+    }, 500);
+  };
+
+  const handleResetPassword = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (newPassword.length < 8) {
+      setErrorMsg('New password must be at least 8 characters long.');
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      setErrorMsg('Passwords do not match.');
+      return;
+    }
+    setErrorMsg('');
+    setIsLoading(true);
+    setTimeout(() => {
+      setIsLoading(false);
+      setStep('DONE');
+      showToast('SUCCESS', 'Credentials Updated', 'Your digital banking password has been successfully reset.');
+    }, 600);
+  };
+
+  return (
+    <div className="min-h-screen bg-[#F4F5F7] dark:bg-[#0A0D14] flex flex-col justify-center items-center py-6 sm:py-10 px-3 sm:px-6 font-sans">
+      <div className="w-full max-w-[520px] bg-white dark:bg-[#11141D] rounded-[24px] sm:rounded-[28px] border border-slate-200/80 dark:border-slate-800 shadow-xl p-6 sm:p-8 space-y-6">
+        
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <button
+            type="button"
+            onClick={() => setCurrentView('AUTH_LOGIN')}
+            className="text-xs font-medium text-slate-500 hover:text-black dark:hover:text-white transition-colors cursor-pointer inline-flex items-center gap-1.5"
+          >
+            <ArrowLeft className="w-3.5 h-3.5" />
+            <span>Back to Sign In</span>
+          </button>
+          <span className="text-[11px] font-mono text-[#00593B] dark:text-[#34D399] uppercase tracking-wider font-semibold">
+            Security Recovery
+          </span>
         </div>
 
-        {/* Security & System Info */}
-        <div className="flex items-center justify-between text-xs text-slate-500 px-2 font-mono">
-          <span className="flex items-center gap-1">
-            <Shield className="w-3.5 h-3.5 text-[#8c6d37]" /> TLS 1.3 256-Bit SSL Protection
-          </span>
-          <span className="text-slate-400">
-            Institutional Banking Gateway
-          </span>
+        {/* Title */}
+        <div className="space-y-1">
+          <h2 className="text-[22px] sm:text-[26px] font-bold text-[#111827] dark:text-white tracking-tight leading-tight">
+            {step === 'REQUEST' && 'Reset your password'}
+            {step === 'VERIFY' && 'Enter recovery code'}
+            {step === 'RESET' && 'Set new password'}
+            {step === 'DONE' && 'Password reset complete'}
+          </h2>
+          <p className="text-[13px] text-[#6B7280] dark:text-slate-400">
+            {step === 'REQUEST' && 'Enter your verified account email or username to receive a secure recovery code.'}
+            {step === 'VERIFY' && `We sent a 6-digit one-time code to ${emailOrUsername}.`}
+            {step === 'RESET' && 'Choose a strong, confidential password for your online banking access.'}
+            {step === 'DONE' && 'You can now sign in with your updated digital banking credentials.'}
+          </p>
         </div>
+
+        {/* Error Alert */}
+        {errorMsg && (
+          <div className="p-3.5 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 text-rose-800 dark:text-rose-300 text-xs flex items-center gap-2.5">
+            <AlertCircle className="w-4 h-4 text-rose-600 dark:text-rose-400 shrink-0" />
+            <span className="font-medium">{errorMsg}</span>
+          </div>
+        )}
+
+        {/* Form Steps */}
+        {step === 'REQUEST' && (
+          <form onSubmit={handleSendCode} className="space-y-4">
+            <div className="space-y-1">
+              <div className="relative flex items-center">
+                <div className="absolute left-3 w-7 h-7 rounded-md bg-[#00593B]/10 dark:bg-[#00593B]/30 flex items-center justify-center text-[#00593B] dark:text-[#34D399]">
+                  <FileText className="w-3.5 h-3.5" />
+                </div>
+                <input
+                  type="text"
+                  required
+                  value={emailOrUsername}
+                  onChange={(e) => setEmailOrUsername(e.target.value)}
+                  placeholder="Email or Username"
+                  className="w-full pl-12 pr-4 py-3 text-[14px] rounded-xl font-sans transition-all focus:outline-none bg-white dark:bg-[#161B22] border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white placeholder-slate-400 focus:border-[#00593B] focus:ring-2 focus:ring-[#00593B]/15"
+                />
+              </div>
+            </div>
+
+            <button
+              type="submit"
+              disabled={isLoading || !emailOrUsername.trim()}
+              className="w-full py-3.5 rounded-xl font-bold text-[14px] transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer bg-[#00593B] hover:bg-[#00482f] text-white disabled:opacity-50"
+            >
+              {isLoading ? (
+                <RefreshCw className="w-4 h-4 animate-spin text-white" />
+              ) : (
+                <>
+                  <span>Send Recovery Code</span>
+                  <ArrowRight className="w-4 h-4" />
+                </>
+              )}
+            </button>
+          </form>
+        )}
+
+        {step === 'VERIFY' && (
+          <form onSubmit={handleVerifyCode} className="space-y-4">
+            <div className="space-y-1">
+              <input
+                type="text"
+                inputMode="numeric"
+                maxLength={6}
+                value={code}
+                onChange={(e) => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                placeholder="••••••"
+                className="w-full text-center tracking-[0.5em] text-2xl font-mono py-3 rounded-xl bg-white dark:bg-[#161B22] border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white focus:outline-none focus:border-[#00593B]"
+              />
+              <span className="text-[11px] text-slate-400 text-center block pt-1">
+                Demo code: enter any 6 digits (e.g. 123456)
+              </span>
+            </div>
+
+            <button
+              type="submit"
+              disabled={isLoading || code.length !== 6}
+              className="w-full py-3.5 rounded-xl font-bold text-[14px] transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer bg-[#00593B] hover:bg-[#00482f] text-white disabled:opacity-50"
+            >
+              {isLoading ? <RefreshCw className="w-4 h-4 animate-spin" /> : <span>Verify Code</span>}
+            </button>
+          </form>
+        )}
+
+        {step === 'RESET' && (
+          <form onSubmit={handleResetPassword} className="space-y-3.5">
+            <div className="space-y-1">
+              <div className="relative flex items-center">
+                <div className="absolute left-3 w-7 h-7 rounded-md bg-[#00593B]/10 dark:bg-[#00593B]/30 flex items-center justify-center text-[#00593B] dark:text-[#34D399]">
+                  <Lock className="w-3.5 h-3.5" />
+                </div>
+                <input
+                  type="password"
+                  required
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  placeholder="New Password (min. 8 characters)"
+                  className="w-full pl-12 pr-4 py-3 text-[14px] rounded-xl font-sans transition-all focus:outline-none bg-white dark:bg-[#161B22] border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white placeholder-slate-400 focus:border-[#00593B] focus:ring-2 focus:ring-[#00593B]/15"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-1">
+              <div className="relative flex items-center">
+                <div className="absolute left-3 w-7 h-7 rounded-md bg-[#00593B]/10 dark:bg-[#00593B]/30 flex items-center justify-center text-[#00593B] dark:text-[#34D399]">
+                  <Lock className="w-3.5 h-3.5" />
+                </div>
+                <input
+                  type="password"
+                  required
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  placeholder="Confirm New Password"
+                  className="w-full pl-12 pr-4 py-3 text-[14px] rounded-xl font-sans transition-all focus:outline-none bg-white dark:bg-[#161B22] border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white placeholder-slate-400 focus:border-[#00593B] focus:ring-2 focus:ring-[#00593B]/15"
+                />
+              </div>
+            </div>
+
+            <button
+              type="submit"
+              disabled={isLoading || !newPassword || !confirmPassword}
+              className="w-full py-3.5 rounded-xl font-bold text-[14px] transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer bg-[#00593B] hover:bg-[#00482f] text-white disabled:opacity-50"
+            >
+              {isLoading ? <RefreshCw className="w-4 h-4 animate-spin" /> : <span>Update Password</span>}
+            </button>
+          </form>
+        )}
+
+        {step === 'DONE' && (
+          <div className="text-center space-y-4 py-2">
+            <div className="w-12 h-12 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center mx-auto">
+              <Check className="w-6 h-6 stroke-[2.5]" />
+            </div>
+            <p className="text-sm text-slate-600 dark:text-slate-300">
+              Your password has been successfully updated. You can now log into your online banking account.
+            </p>
+            <button
+              type="button"
+              onClick={() => setCurrentView('AUTH_LOGIN')}
+              className="w-full py-3.5 rounded-xl font-bold text-[14px] transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer bg-[#00593B] hover:bg-[#00482f] text-white"
+            >
+              <span>Sign In Now</span>
+              <ArrowRight className="w-4 h-4" />
+            </button>
+          </div>
+        )}
+
       </div>
     </div>
   );
@@ -992,6 +1268,13 @@ export const EnrollPage: React.FC = () => {
             <div className="flex justify-between items-center text-xs pb-1.5 border-b border-slate-200">
               <span className="text-slate-500 font-sans">Account Reference:</span>
               <span className="font-bold text-slate-950 text-sm">{submissionReference}</span>
+            </div>
+            <div className="flex justify-between items-center text-xs">
+              <span className="text-slate-500 font-sans flex items-center gap-1">
+                <Calendar className="w-3 h-3 text-[#8c6d37]" />
+                <span>Submitted Date &amp; Time:</span>
+              </span>
+              <span className="font-bold text-slate-900 font-mono text-[11px]">{formatDateTime(new Date())}</span>
             </div>
             <div className="flex justify-between items-center text-xs">
               <span className="text-slate-500 font-sans">Username:</span>

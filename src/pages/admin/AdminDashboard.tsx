@@ -32,7 +32,9 @@ import {
   SlidersHorizontal,
   LogOut,
   Sparkles,
-  BarChart2
+  BarChart2,
+  Calendar,
+  Clock
 } from 'lucide-react';
 import { DirectFundsManager } from './DirectFundsManager';
 import { TransactionHistoryManager } from './TransactionHistoryManager';
@@ -43,7 +45,7 @@ import { AdminNotificationsTab } from './AdminNotificationsTab';
 import { EnrollmentTrendWidget } from './EnrollmentTrendWidget';
 import { CreateCustomerModal } from './CreateCustomerModal';
 import { EditApplicationModal } from './EditApplicationModal';
-import { AccountApplication, formatAddress } from '../../types';
+import { AccountApplication, formatAddress, formatDateTime } from '../../types';
 
 export const AdminDashboard: React.FC = () => {
   const {
@@ -462,24 +464,41 @@ export const AdminDashboard: React.FC = () => {
                     filteredApps.map(app => (
                       <div
                         key={app.id}
-                        className="py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-slate-50/80 dark:hover:bg-slate-800/40 p-3 rounded-xl transition-colors"
+                        className="py-4 flex flex-col lg:flex-row lg:items-center justify-between gap-3 hover:bg-slate-50/80 dark:hover:bg-slate-800/40 p-3.5 rounded-xl transition-colors border border-transparent hover:border-slate-200/50 dark:hover:border-slate-700/50"
                       >
-                        <div className="space-y-1">
-                          <div className="flex items-center gap-2">
+                        <div className="space-y-1.5 min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
                             <span className="text-xs font-bold text-slate-900 dark:text-white">
                               {app.firstName} {app.lastName}
                             </span>
                             <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-mono">
-                              {app.accountTypeRequested} ({app.currency})
+                              {app.accountTypeRequested || (app as any).requestedAccountType} ({app.currency || (app as any).requestedCurrency})
                             </span>
                             <StatusBadge status={app.status} size="xs" />
                           </div>
-                          <div className="text-[11px] text-slate-500 font-mono">
-                            {app.email} • Ref: {app.referenceNumber} • Deposit: ${((app.initialDepositMinor || 0) / 100).toLocaleString()}
+                          <div className="flex items-center gap-2.5 text-[11px] text-slate-500 dark:text-slate-400 font-mono flex-wrap">
+                            <span>{app.email}</span>
+                            <span>•</span>
+                            <span>Ref: <strong className="text-slate-700 dark:text-slate-300">{app.referenceNumber}</strong></span>
+                            <span>•</span>
+                            <span>Deposit: ${(((app.initialDepositMinor || (app as any).initialDepositAmountMinor || 0)) / 100).toLocaleString()}</span>
+                            <span>•</span>
+                            <span className="inline-flex items-center gap-1.5 text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-800/90 px-2.5 py-0.5 rounded-md text-[10.5px] font-sans border border-slate-200/80 dark:border-slate-700/80">
+                              <Calendar className="w-3 h-3 text-[#004281] dark:text-sky-400 shrink-0" />
+                              <span className="text-slate-500 dark:text-slate-400">Submitted:</span>
+                              <span className="font-semibold text-slate-900 dark:text-slate-100 font-mono">{formatDateTime(app.submittedAt || (app as any).createdAt)}</span>
+                            </span>
+                            {app.reviewedAt && (
+                              <span className="inline-flex items-center gap-1.5 text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded-md text-[10.5px] font-sans border border-emerald-200 dark:border-emerald-800/70">
+                                <Clock className="w-3 h-3 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                                <span className="text-emerald-600/75 dark:text-emerald-400/75">Reviewed:</span>
+                                <span className="font-semibold font-mono">{formatDateTime(app.reviewedAt)}</span>
+                              </span>
+                            )}
                           </div>
                         </div>
 
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 shrink-0">
                           <button
                             onClick={() => setEditingApplication(app)}
                             className="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 text-xs font-semibold transition-colors cursor-pointer"
@@ -568,8 +587,27 @@ export const AdminDashboard: React.FC = () => {
           <div className="bg-white dark:bg-[#0f172a] rounded-2xl max-w-2xl w-full overflow-hidden shadow-2xl border border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200">
             <div className="p-5 bg-[#004281] text-white flex items-center justify-between">
               <div>
-                <h3 className="text-base font-bold">Customer Onboarding Dossier</h3>
-                <p className="text-[11px] text-blue-100 font-mono">Ref: {selectedAppDossier.referenceNumber}</p>
+                <div className="flex items-center gap-2">
+                  <h3 className="text-base font-bold">Customer Onboarding Dossier</h3>
+                  <StatusBadge status={selectedAppDossier.status} size="xs" />
+                </div>
+                <div className="flex items-center gap-2.5 text-[11px] text-blue-100 font-mono mt-1 flex-wrap">
+                  <span>Ref: {selectedAppDossier.referenceNumber}</span>
+                  <span>•</span>
+                  <span className="inline-flex items-center gap-1 text-sky-200">
+                    <Calendar className="w-3.5 h-3.5" />
+                    <span>Submitted: {formatDateTime(selectedAppDossier.submittedAt || (selectedAppDossier as any).createdAt)}</span>
+                  </span>
+                  {selectedAppDossier.reviewedAt && (
+                    <>
+                      <span>•</span>
+                      <span className="inline-flex items-center gap-1 text-emerald-300">
+                        <Clock className="w-3.5 h-3.5" />
+                        <span>Reviewed: {formatDateTime(selectedAppDossier.reviewedAt)}</span>
+                      </span>
+                    </>
+                  )}
+                </div>
               </div>
               <div className="flex items-center gap-2">
                 <button
@@ -584,7 +622,7 @@ export const AdminDashboard: React.FC = () => {
                 </button>
                 <button
                   onClick={() => setSelectedAppDossier(null)}
-                  className="text-white/80 hover:text-white"
+                  className="text-white/80 hover:text-white cursor-pointer"
                 >
                   <X className="w-5 h-5" />
                 </button>
@@ -593,6 +631,46 @@ export const AdminDashboard: React.FC = () => {
 
             <div className="p-6 space-y-4 max-h-[80vh] overflow-y-auto text-xs">
               <div className="grid grid-cols-2 gap-4">
+                {/* 1. Date and Time Submission & Audit Box */}
+                <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 col-span-2 shadow-2xs">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div className="space-y-1">
+                      <span className="text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider block flex items-center gap-1.5">
+                        <Calendar className="w-3.5 h-3.5 text-[#004281] dark:text-sky-400" />
+                        Application Submission Date &amp; Time
+                      </span>
+                      <div className="font-bold text-slate-900 dark:text-white text-xs sm:text-sm font-mono flex items-center gap-2">
+                        <span>{formatDateTime(selectedAppDossier.submittedAt || (selectedAppDossier as any).createdAt)}</span>
+                        <span className="text-[10px] font-sans font-medium px-2 py-0.5 rounded bg-slate-200/80 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
+                          UTC Logged
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="space-y-1 sm:text-right">
+                      <span className="text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider block flex sm:justify-end items-center gap-1.5">
+                        <Clock className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                        KYC Compliance Review Timestamp
+                      </span>
+                      {selectedAppDossier.reviewedAt ? (
+                        <div className="font-bold text-emerald-700 dark:text-emerald-400 text-xs sm:text-sm font-mono">
+                          {formatDateTime(selectedAppDossier.reviewedAt)}
+                          {selectedAppDossier.reviewedByAdminName && (
+                            <span className="block text-[10px] font-sans text-slate-500 dark:text-slate-400 font-normal">
+                              Officer: {selectedAppDossier.reviewedByAdminName}
+                            </span>
+                          )}
+                        </div>
+                      ) : (
+                        <div className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-700 dark:text-amber-300 font-semibold text-[11px]">
+                          <Clock className="w-3 h-3 text-amber-500" />
+                          <span>Awaiting Compliance Review</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
                 <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800">
                   <span className="text-[10px] text-slate-400 font-bold uppercase block">Applicant Name</span>
                   <div className="font-bold text-slate-900 dark:text-white text-sm mt-0.5">
@@ -610,7 +688,7 @@ export const AdminDashboard: React.FC = () => {
                 <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800">
                   <span className="text-[10px] text-slate-400 font-bold uppercase block">Account Requested</span>
                   <div className="font-bold text-slate-900 dark:text-white mt-0.5">
-                    {selectedAppDossier.accountTypeRequested} ({selectedAppDossier.currency})
+                    {selectedAppDossier.accountTypeRequested || (selectedAppDossier as any).requestedAccountType} ({selectedAppDossier.currency || (selectedAppDossier as any).requestedCurrency})
                   </div>
                 </div>
 

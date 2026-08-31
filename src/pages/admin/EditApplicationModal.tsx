@@ -12,6 +12,7 @@ import {
   Phone,
   MapPin,
   Calendar,
+  Clock,
   Lock,
   Globe,
   FileText,
@@ -21,7 +22,7 @@ import {
   UserCheck,
   Sparkles
 } from 'lucide-react';
-import { AccountApplication, BankRegion, CurrencyCode, AccountType, ApplicationStatus } from '../../types';
+import { AccountApplication, BankRegion, CurrencyCode, AccountType, ApplicationStatus, formatDateTime } from '../../types';
 
 interface EditApplicationModalProps {
   isOpen: boolean;
@@ -180,9 +181,18 @@ export const EditApplicationModal: React.FC<EditApplicationModalProps> = ({
                   REF #{application.referenceNumber}
                 </span>
               </div>
-              <p className="text-[11px] text-slate-300">
-                Modify applicant KYC dossier, compliance scoring, and provisioning parameters
-              </p>
+              <div className="flex items-center gap-3 text-[11px] text-slate-300 flex-wrap mt-0.5">
+                <span className="inline-flex items-center gap-1 text-slate-200">
+                  <Calendar className="w-3 h-3 text-indigo-300" />
+                  <span>Submitted: <strong>{formatDateTime(application.submittedAt || (application as any).createdAt)}</strong></span>
+                </span>
+                {application.reviewedAt && (
+                  <span className="inline-flex items-center gap-1 text-emerald-300">
+                    <Clock className="w-3 h-3 text-emerald-400" />
+                    <span>Reviewed: <strong>{formatDateTime(application.reviewedAt)}</strong></span>
+                  </span>
+                )}
+              </div>
             </div>
           </div>
           <button
@@ -526,6 +536,33 @@ export const EditApplicationModal: React.FC<EditApplicationModalProps> = ({
           {/* TAB 3: REVIEW STATUS & AUDIT */}
           {activeTab === 'STATUS' && (
             <div className="space-y-4 animate-in fade-in duration-150">
+              {/* Date & Time Timestamp Card */}
+              <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                <div className="space-y-0.5">
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                    <Calendar className="w-3.5 h-3.5 text-indigo-600" />
+                    Application Submitted Date &amp; Time
+                  </span>
+                  <div className="font-mono font-bold text-slate-800 text-xs">
+                    {formatDateTime(application.submittedAt || (application as any).createdAt)}
+                  </div>
+                  <span className="text-[10px] text-slate-400">Timestamp logged at client onboarding submission</span>
+                </div>
+
+                <div className="space-y-0.5">
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                    <Clock className="w-3.5 h-3.5 text-emerald-600" />
+                    Last KYC Compliance Review
+                  </span>
+                  <div className="font-mono font-bold text-emerald-700 text-xs">
+                    {application.reviewedAt ? formatDateTime(application.reviewedAt) : 'Pending first compliance review'}
+                  </div>
+                  {application.reviewedByAdminName && (
+                    <span className="text-[10px] text-slate-500">Reviewed by Officer: {application.reviewedByAdminName}</span>
+                  )}
+                </div>
+              </div>
+
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                 <div className="space-y-1">
                   <label className="font-bold text-slate-700">Application Status</label>

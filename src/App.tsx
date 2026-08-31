@@ -22,7 +22,7 @@ import {
 } from './pages/public/PublicPages';
 
 // Auth pages
-import { LoginPage, EnrollPage } from './pages/auth/AuthPages';
+import { LoginPage, EnrollPage, ForgotPasswordPage } from './pages/auth/AuthPages';
 
 // Dashboard pages
 import { DashboardOverview } from './pages/dashboard/DashboardOverview';
@@ -40,6 +40,9 @@ import {
 // Admin dashboard & Login
 import { AdminDashboard } from './pages/admin/AdminDashboard';
 import { AdminLoginPage } from './pages/admin/AdminLoginPage';
+
+// Glassmorphism UI Kit & Vector Interface Showcase
+import { GlassmorphicShowcase } from './components/glass/GlassmorphicShowcase';
 
 const MainAppRouter: React.FC = () => {
   const { currentView, setCurrentView, isAuthenticated, currentRole } = useBank();
@@ -127,12 +130,19 @@ const MainAppRouter: React.FC = () => {
 
   if (isDashboardView && isAuthenticated) {
     return (
-      <div className="min-h-screen bg-[#f8fafc] dark:bg-[#07101e] text-slate-800 dark:text-slate-100 flex flex-col md:flex-row transition-colors duration-200">
+      <div className="relative min-h-screen bg-[#f8fafc] dark:bg-[#07101e] text-slate-800 dark:text-slate-100 flex flex-col md:flex-row transition-colors duration-200 overflow-x-hidden">
+        {/* Ambient Glassmorphic Background Glowing Meshes */}
+        <div className="fixed inset-0 pointer-events-none overflow-hidden z-0" aria-hidden="true">
+          <div className="absolute -top-40 -left-40 w-96 h-96 rounded-full bg-blue-500/10 dark:bg-blue-600/15 blur-3xl" />
+          <div className="absolute top-1/3 -right-40 w-96 h-96 rounded-full bg-amber-500/10 dark:bg-amber-600/10 blur-3xl" />
+          <div className="absolute -bottom-40 left-1/3 w-[500px] h-[500px] rounded-full bg-indigo-500/8 dark:bg-indigo-700/12 blur-3xl" />
+        </div>
+
         {/* Persistent Desktop Sidebar */}
         <CustomerSidebar />
 
         {/* Main Content Pane */}
-        <div className="flex-1 flex flex-col min-w-0 pb-16 md:pb-0">
+        <div className="relative z-10 flex-1 flex flex-col min-w-0 pb-16 md:pb-0">
           <CustomerHeader />
           <main className="flex-1 p-2.5 xs:p-3.5 sm:p-5 lg:p-6 max-w-7xl w-full mx-auto overflow-x-hidden min-w-0">
             <AnimatePresence mode="wait">
@@ -154,6 +164,7 @@ const MainAppRouter: React.FC = () => {
                 {currentView === 'DASHBOARD_SECURITY' && <SecurityCenterPage />}
                 {currentView === 'DASHBOARD_MESSAGES' && <MessagesPage />}
                 {currentView === 'DASHBOARD_PROFILE' && <ProfilePage />}
+                {currentView === 'DASHBOARD_GLASS_STUDIO' && <GlassmorphicShowcase />}
               </motion.div>
             </AnimatePresence>
           </main>
@@ -167,31 +178,46 @@ const MainAppRouter: React.FC = () => {
 
   // 4. Public & Customer Authentication Portal Layout
   return (
-    <div className="min-h-screen bg-[#f8fafc] dark:bg-[#07101e] text-slate-800 dark:text-slate-100 flex flex-col transition-colors duration-200">
-      <PublicNavbar />
-      <main className="flex-1">
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={currentView}
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -6 }}
-            transition={{ duration: 0.2, ease: 'easeOut' }}
-            className="w-full"
-          >
-            {currentView === 'PUBLIC_HOME' && <HomePage />}
-            {currentView === 'PUBLIC_PERSONAL' && <PersonalPage />}
-            {currentView === 'PUBLIC_BUSINESS' && <BusinessPage />}
-            {currentView === 'PUBLIC_WEALTH' && <WealthPage />}
-            {currentView === 'PUBLIC_INTERNATIONAL' && <InternationalPage />}
-            {currentView === 'PUBLIC_LOCATIONS' && <LocationsPage />}
-            {currentView === 'PUBLIC_SECURITY' && <SecurityPublicPage />}
-            {currentView === 'AUTH_LOGIN' && <LoginPage />}
-            {currentView === 'AUTH_ENROLL' && <EnrollPage />}
-          </motion.div>
-        </AnimatePresence>
-      </main>
-      <PublicFooter />
+    <div className="relative min-h-screen bg-[#f8fafc] dark:bg-[#07101e] text-slate-800 dark:text-slate-100 flex flex-col transition-colors duration-200 overflow-x-hidden">
+      {/* Ambient Glassmorphic Background Glowing Meshes */}
+      <div className="fixed inset-0 pointer-events-none overflow-hidden z-0" aria-hidden="true">
+        <div className="absolute -top-32 left-1/4 w-[500px] h-[500px] rounded-full bg-blue-500/10 dark:bg-blue-600/15 blur-3xl" />
+        <div className="absolute top-1/2 -right-32 w-[450px] h-[450px] rounded-full bg-amber-500/10 dark:bg-amber-600/10 blur-3xl" />
+        <div className="absolute -bottom-32 left-10 w-[550px] h-[550px] rounded-full bg-indigo-500/8 dark:bg-indigo-800/12 blur-3xl" />
+      </div>
+
+      <div className="relative z-10 flex flex-col min-h-screen">
+        <PublicNavbar />
+        <main className="flex-1">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={currentView}
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -6 }}
+              transition={{ duration: 0.2, ease: 'easeOut' }}
+              className="w-full"
+            >
+              {currentView === 'PUBLIC_HOME' && <HomePage />}
+              {currentView === 'PUBLIC_PERSONAL' && <PersonalPage />}
+              {currentView === 'PUBLIC_BUSINESS' && <BusinessPage />}
+              {currentView === 'PUBLIC_WEALTH' && <WealthPage />}
+              {currentView === 'PUBLIC_INTERNATIONAL' && <InternationalPage />}
+              {currentView === 'PUBLIC_LOCATIONS' && <LocationsPage />}
+              {currentView === 'PUBLIC_SECURITY' && <SecurityPublicPage />}
+              {currentView === 'PUBLIC_GLASS_STUDIO' && (
+                <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
+                  <GlassmorphicShowcase />
+                </div>
+              )}
+              {currentView === 'AUTH_LOGIN' && <LoginPage />}
+              {currentView === 'AUTH_ENROLL' && <EnrollPage />}
+              {(currentView === 'AUTH_FORGOT' || (currentView as any) === 'AUTH_FORGOT_PASSWORD') && <ForgotPasswordPage />}
+            </motion.div>
+          </AnimatePresence>
+        </main>
+        <PublicFooter />
+      </div>
     </div>
   );
 };
