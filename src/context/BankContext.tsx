@@ -159,7 +159,7 @@ interface BankContextType {
   isInitialSplash: boolean;
   dismissSplash: () => void;
   toasts: ToastMessage[];
-  showToast: (type: ToastMessage['type'], title: string, message: string) => void;
+  showToast: (type: ToastMessage['type'], title: string, message: string, durationMs?: number) => void;
   removeToast: (id: string) => void;
 
   // Actions
@@ -370,10 +370,10 @@ export const BankProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
-  const showToast = (type: ToastMessage['type'], title: string, message: string) => {
+  const showToast = (type: ToastMessage['type'], title: string, message: string, durationMs: number = 3000) => {
     const id = `toast_${Date.now()}_${Math.random().toString().slice(-4)}`;
     setToasts(prev => [...prev, { id, type, title, message }]);
-    setTimeout(() => removeToast(id), 5000);
+    setTimeout(() => removeToast(id), durationMs);
   };
 
   const removeToast = (id: string) => {
@@ -1033,15 +1033,19 @@ export const BankProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       });
       const data = await res.json();
       if (!res.ok) {
-        showToast('ERROR', 'Wire/ACH Rejected', data.error || 'Outbound payment declined.');
-        return { success: false, error: data.error };
+        const errorMsg = data.error?.includes('pattern') ? 'Bank Account must be 9-12 digits' : (data.error || 'Outbound payment declined.');
+        showToast('ERROR', 'Validation Error', errorMsg, 3000);
+        return { success: false, error: errorMsg };
       }
-      showToast('SUCCESS', 'Payment Transmitted', `Outbound ${transferType.replace('_', ' ')} dispatched successfully.`);
+      showToast('SUCCESS', 'Payment Transmitted', `Outbound ${transferType.replace('_', ' ')} dispatched successfully.`, 3000);
       await refreshData();
       return { success: true, feeMinor: data.feeMinor };
     } catch (err: any) {
-      showToast('ERROR', 'System Error', err.message);
-      return { success: false, error: err.message };
+      const errorMsg = err.message?.includes('pattern') || err.message?.includes('match')
+        ? 'Bank Account must be 9-12 digits'
+        : (err.message || 'Unable to process transfer request.');
+      showToast('ERROR', 'Validation Error', errorMsg, 3000);
+      return { success: false, error: errorMsg };
     }
   };
 
@@ -1301,7 +1305,13 @@ export const BankProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       }
 
       showToast('SUCCESS', 'Customer Created', `Provisioned verified account ${resData.account?.accountNumber || ''} for ${resData.user?.firstName} ${resData.user?.lastName}.`);
-      await Promise.all([refreshData(), fetchApplications(), fetchAdminStats()]);
+      await Promise.all([
+        refreshData(),
+        fetchApplications(),
+        fetchAdminStats(),
+        fetchAuditLogs(),
+        fetchActivationQueue()
+      ]);
       return {
         success: true,
         user: resData.user,

@@ -3091,6 +3091,30 @@ export class BankDatabase {
     const accountType = data.requestedAccountType || 'CHECKING_PREMIER';
     const initialDepositMinor = Math.max(0, Number(data.initialDepositMinor) || 0);
 
+    // 1. Parse address cleanly
+    let addressObj = {
+      line1: '100 Atlantic Plaza',
+      line2: '',
+      city: region === 'UK' ? 'London' : region === 'EU' ? 'Frankfurt' : 'New York',
+      stateOrCounty: region === 'UK' ? 'Greater London' : region === 'EU' ? 'Hesse' : 'NY',
+      postalCode: region === 'UK' ? 'W1J 5AS' : region === 'EU' ? '60311' : '10001',
+      country: region === 'UK' ? 'United Kingdom' : region === 'EU' ? 'Germany' : 'United States'
+    };
+
+    const rawAddress: any = data.address;
+    if (typeof rawAddress === 'string' && rawAddress.trim()) {
+      addressObj.line1 = rawAddress.trim();
+    } else if (rawAddress && typeof rawAddress === 'object') {
+      addressObj = {
+        line1: rawAddress.line1 || addressObj.line1,
+        line2: rawAddress.line2 || '',
+        city: rawAddress.city || addressObj.city,
+        stateOrCounty: rawAddress.stateOrCounty || addressObj.stateOrCounty,
+        postalCode: rawAddress.postalCode || addressObj.postalCode,
+        country: rawAddress.country || addressObj.country
+      };
+    }
+
     // 1. Create UserProfile
     const newUser: UserProfile = {
       id: newUserId,
@@ -3109,14 +3133,7 @@ export class BankDatabase {
       nationalInsuranceMasked: region === 'UK' ? (data.ssnOrTaxId || 'QQ 12 34 56 A') : undefined,
       region,
       approval_status: data.approvalStatus || 'APPROVED',
-      address: {
-        line1: data.address?.line1 || '100 Atlantic Plaza',
-        line2: data.address?.line2 || '',
-        city: data.address?.city || (region === 'UK' ? 'London' : region === 'EU' ? 'Frankfurt' : 'New York'),
-        stateOrCounty: data.address?.stateOrCounty || (region === 'UK' ? 'Greater London' : region === 'EU' ? 'Hesse' : 'NY'),
-        postalCode: data.address?.postalCode || (region === 'UK' ? 'W1J 5AS' : region === 'EU' ? '60311' : '10001'),
-        country: data.address?.country || (region === 'UK' ? 'United Kingdom' : region === 'EU' ? 'Germany' : 'United States')
-      },
+      address: addressObj,
       mfaEnabled: true,
       mfaMethod: 'AUTHENTICATOR',
       biometricsEnabled: true,
@@ -3131,8 +3148,11 @@ export class BankDatabase {
       lastLogin: new Date().toISOString()
     };
 
+    const initialPassword = data.password?.trim() || 'AtlanticSecure2026!';
     this.users.set(newUser.id, newUser);
-    this.userPasswords.set(newUser.id, data.password || 'AtlanticSecure2026!');
+    this.userPasswords.set(newUser.id, initialPassword);
+    this.userPasswords.set(cleanUsername, initialPassword);
+    this.userPasswords.set(cleanEmail, initialPassword);
 
     // 2. Generate Account details based on Region
     const accId = `acc_${newUser.id}_${currency.toLowerCase()}_01`;

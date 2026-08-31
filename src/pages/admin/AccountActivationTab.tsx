@@ -26,6 +26,7 @@ import {
 } from 'lucide-react';
 import { AccountActivationRequest, UserApprovalStatus } from '../../types';
 import { safeFetchJson } from '../../lib/apiHelper';
+import { CreateCustomerModal } from './CreateCustomerModal';
 
 export const AccountActivationTab: React.FC = () => {
   const {
@@ -56,6 +57,7 @@ export const AccountActivationTab: React.FC = () => {
 
   // Propose Modal State
   const [isProposeModalOpen, setIsProposeModalOpen] = useState(false);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [proposeUserId, setProposeUserId] = useState('');
   const [proposeReason, setProposeReason] = useState('Institutional Account Onboarding Verification');
   const [proposeNotes, setProposeNotes] = useState('Maker signature applied. Dispatched for 4-Eyes checker review.');
@@ -197,16 +199,24 @@ export const AccountActivationTab: React.FC = () => {
 
         <div className="flex flex-wrap items-center gap-2.5">
           <button
-            onClick={() => setIsProposeModalOpen(true)}
-            className="px-4 py-2 rounded-xl bg-gradient-to-r from-[#d4af37] to-[#bfa130] hover:from-[#e5bd3b] hover:to-[#cca833] text-slate-950 font-bold text-xs shadow-md flex items-center gap-1.5 transition-all"
+            onClick={() => setIsCreateModalOpen(true)}
+            className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-md flex items-center gap-1.5 transition-all cursor-pointer"
           >
             <UserPlus className="w-4 h-4" />
-            <span>Propose New Activation</span>
+            <span>+ Onboard New Customer</span>
+          </button>
+
+          <button
+            onClick={() => setIsProposeModalOpen(true)}
+            className="px-4 py-2 rounded-xl bg-gradient-to-r from-[#d4af37] to-[#bfa130] hover:from-[#e5bd3b] hover:to-[#cca833] text-slate-950 font-bold text-xs shadow-md flex items-center gap-1.5 transition-all cursor-pointer"
+          >
+            <ShieldCheck className="w-4 h-4" />
+            <span>Propose Activation</span>
           </button>
 
           <button
             onClick={() => { fetchActivationQueue(); fetchUsers(); }}
-            className="p-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs flex items-center gap-1.5 text-slate-300 border border-slate-700"
+            className="p-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs flex items-center gap-1.5 text-slate-300 border border-slate-700 cursor-pointer"
           >
             <RefreshCw className="w-3.5 h-3.5" />
             <span>Refresh</span>
@@ -601,6 +611,14 @@ export const AccountActivationTab: React.FC = () => {
           </div>
         </div>
       )}
+      {/* Create Customer Modal */}
+      <CreateCustomerModal
+        isOpen={isCreateModalOpen}
+        onClose={() => setIsCreateModalOpen(false)}
+        onSuccess={async () => {
+          await Promise.all([fetchUsers(), fetchActivationQueue(), fetchAdminStats()]);
+        }}
+      />
     </div>
   );
 };

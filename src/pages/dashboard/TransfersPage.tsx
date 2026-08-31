@@ -35,6 +35,10 @@ import { motion, AnimatePresence } from 'motion/react';
 import { TransferFundsAnimation } from '../../components/dashboard/TransferFundsAnimation';
 import { CurrencyExchangeCalculator } from '../../components/dashboard/CurrencyExchangeCalculator';
 
+const BANK_ACCOUNT_REGEX = /^[0-9]{9,12}$/;
+const EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+const DEMO_TEST_ACCOUNT = '8282827272';
+
 export const TransfersPage: React.FC = () => {
   const {
     currentUser,
@@ -132,35 +136,93 @@ export const TransfersPage: React.FC = () => {
     setRecipientSwift('');
   };
 
-  const handleReview = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (amountMinor <= 0) {
-      showToast('ERROR', 'Invalid Amount', 'Please enter a valid transfer amount greater than zero.');
-      return;
+  // Input mask to enforce numeric only and max 12 digits on the Bank Account field
+  const handleBankAccountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const numericOnly = e.target.value.replace(/\D/g, '').slice(0, 12);
+    setRecipientAccount(numericOnly);
+  };
+
+  // Comprehensive pre-submission validation function
+  const validateTransferForm = (): { isValid: boolean; errorField?: string; errorMessage?: string } => {
+    // 1. Amount: must be > 0
+    if (isNaN(amountMinor) || amountMinor <= 0) {
+      return {
+        isValid: false,
+        errorField: 'amount',
+        errorMessage: 'Transfer amount must be greater than zero.'
+      };
     }
+
     if (sourceAccount && sourceAccount.availableBalanceMinor < amountMinor + wireFeeMinor) {
-      showToast('ERROR', 'Insufficient Funds', 'Transfer amount plus institutional clearing fee exceeds available balance.');
-      return;
+      return {
+        isValid: false,
+        errorField: 'balance',
+        errorMessage: 'Transfer amount plus institutional clearing fee exceeds available balance.'
+      };
     }
+
     if (transferMode !== 'INTERNAL') {
+      // 2. Beneficiary: not empty
       if (!recipientName.trim()) {
-        showToast('ERROR', 'Missing Beneficiary', 'Please provide the legal beneficiary name.');
-        return;
+        return {
+          isValid: false,
+          errorField: 'beneficiary',
+          errorMessage: 'Beneficiary name cannot be empty.'
+        };
       }
+
       const finalBankName = isCustomBank ? customBankName : (REGISTERED_BANKS.find(b => b.id === selectedBankId)?.name || customBankName);
       if (!finalBankName.trim()) {
-        showToast('ERROR', 'Missing Bank Name', 'Please select or enter the destination bank name.');
-        return;
+        return {
+          isValid: false,
+          errorField: 'bankName',
+          errorMessage: 'Please select or enter the destination bank name.'
+        };
       }
-      if (!recipientAccount.trim()) {
-        showToast('ERROR', 'Missing Account/IBAN', 'Please enter the beneficiary account number or IBAN.');
-        return;
+
+      // 3. Bank Account field: must be 9-12 digits regex, or accept test account 8282827272
+      const cleanAccount = recipientAccount.trim();
+      const isTestAcc = cleanAccount === DEMO_TEST_ACCOUNT;
+      if (!cleanAccount || (!BANK_ACCOUNT_REGEX.test(cleanAccount) && !isTestAcc)) {
+        return {
+          isValid: false,
+          errorField: 'bankAccount',
+          errorMessage: 'Bank Account must be 9-12 digits'
+        };
       }
+
+      // 4. Email: must match email regex
+      const cleanEmail = recipientEmail.trim();
+      if (cleanEmail && !EMAIL_REGEX.test(cleanEmail)) {
+        return {
+          isValid: false,
+          errorField: 'email',
+          errorMessage: 'Please enter a valid email address.'
+        };
+      }
+    }
+
+    return { isValid: true };
+  };
+
+  const handleReview = (e: React.FormEvent) => {
+    e.preventDefault();
+    const validation = validateTransferForm();
+    if (!validation.isValid) {
+      showToast('ERROR', 'Validation Error', validation.errorMessage || 'Bank Account must be 9-12 digits', 3000);
+      return;
     }
     setShowConfirmModal(true);
   };
 
   const handleExecuteTransfer = async () => {
+    const validation = validateTransferForm();
+    if (!validation.isValid) {
+      setShowConfirmModal(false);
+      showToast('ERROR', 'Validation Error', validation.errorMessage || 'Bank Account must be 9-12 digits', 3000);
+      return;
+    }
+
     setIsProcessing(true);
     try {
       const activeBank = REGISTERED_BANKS.find(b => b.id === selectedBankId);
@@ -194,7 +256,9 @@ export const TransfersPage: React.FC = () => {
           };
           setTransferSuccess(successObj);
           setShowConfirmModal(false);
-          showToast('SUCCESS', 'Transfer Posted', 'Funds credited to destination account immediately.');
+          showToast('SUCCESS', 'Transfer Posted', 'Funds credited to destination account immediately.', 3000);
+        } else {
+          showToast('ERROR', 'Transfer Error', res.error || 'Unable to execute internal transfer.', 3000);
         }
       } else {
         const res = await executeExternalTransfer(
@@ -236,7 +300,9 @@ export const TransfersPage: React.FC = () => {
           };
           setTransferSuccess(successObj);
           setShowConfirmModal(false);
-          showToast('SUCCESS', 'Wire Dispatched', `Cleared via ${rail}. SMS & Email alerts generated.`);
+          showToast('SUCCESS', 'Wire Dispatched', `Cleared via ${rail}. SMS & Email alerts generated.`, 3000);
+        } else {
+          showToast('ERROR', 'Validation Error', res.error || 'Bank Account must be 9-12 digits', 3000);
         }
       }
     } finally {
@@ -834,10 +900,11 @@ export const TransfersPage: React.FC = () => {
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                    <label htmlFor="transfer-recipient-routing" className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
                       {transferMode === 'DOMESTIC' ? 'ABA Routing / UK Sort Code *' : 'SWIFT / BIC Code *'}
                     </label>
                     <input
+                      id="transfer-recipient-routing"
                       type="text"
                       required
                       value={recipientRouting}
@@ -848,42 +915,55 @@ export const TransfersPage: React.FC = () => {
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-                      Account # / IBAN *
-                    </label>
+                    <div className="flex items-center justify-between mb-1">
+                      <label htmlFor="transfer-recipient-bank-account" className="block text-xs font-bold text-slate-700 dark:text-slate-300">
+                        Bank Account # (9-12 Digits) *
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() => setRecipientAccount('8282827272')}
+                        className="text-[10px] font-mono text-[#d4af37] dark:text-[#f8c22d] hover:underline cursor-pointer"
+                        title="Fill demo test account"
+                      >
+                        Demo: 8282827272
+                      </button>
+                    </div>
                     <input
+                      id="transfer-recipient-bank-account"
                       type="text"
+                      inputMode="numeric"
+                      maxLength={12}
                       required
                       value={recipientAccount}
-                      onChange={(e) => setRecipientAccount(e.target.value)}
-                      placeholder="Account Number or IBAN"
+                      onChange={handleBankAccountChange}
+                      placeholder="9-12 digits (e.g. 8282827272)"
                       className="glass-input w-full px-3.5 py-2.5 text-xs sm:text-sm rounded-xl text-slate-900 dark:text-slate-100 font-mono font-semibold"
                     />
                   </div>
                 </div>
 
-                {/* Country & Currency selector for international */}
+                {/* Beneficiary Email & Country */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-                      Destination Currency
+                    <label htmlFor="transfer-recipient-email" className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                      Beneficiary Email (Notice &amp; Verification)
                     </label>
-                    <select
-                      value={destCurrency}
-                      onChange={(e) => setDestCurrency(e.target.value as CurrencyCode)}
+                    <input
+                      id="transfer-recipient-email"
+                      type="email"
+                      value={recipientEmail}
+                      onChange={(e) => setRecipientEmail(e.target.value)}
+                      placeholder="beneficiary.wires@morganstanley.com"
                       className="glass-input w-full px-3.5 py-2.5 text-xs sm:text-sm rounded-xl text-slate-900 dark:text-slate-100 font-medium"
-                    >
-                      <option value="USD" className="bg-white dark:bg-slate-900">USD — US Dollar ($)</option>
-                      <option value="GBP" className="bg-white dark:bg-slate-900">GBP — British Pound Sterling (£)</option>
-                      <option value="EUR" className="bg-white dark:bg-slate-900">EUR — European Euro (€)</option>
-                    </select>
+                    />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                    <label htmlFor="transfer-recipient-country" className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
                       Beneficiary Country
                     </label>
                     <input
+                      id="transfer-recipient-country"
                       type="text"
                       value={recipientCountry}
                       onChange={(e) => setRecipientCountry(e.target.value)}
@@ -892,6 +972,27 @@ export const TransfersPage: React.FC = () => {
                     />
                   </div>
                 </div>
+
+                {/* Destination Currency for International */}
+                {transferMode === 'INTERNATIONAL' && (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label htmlFor="transfer-dest-currency" className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                        Destination Currency
+                      </label>
+                      <select
+                        id="transfer-dest-currency"
+                        value={destCurrency}
+                        onChange={(e) => setDestCurrency(e.target.value as CurrencyCode)}
+                        className="glass-input w-full px-3.5 py-2.5 text-xs sm:text-sm rounded-xl text-slate-900 dark:text-slate-100 font-medium"
+                      >
+                        <option value="USD" className="bg-white dark:bg-slate-900">USD — US Dollar ($)</option>
+                        <option value="GBP" className="bg-white dark:bg-slate-900">GBP — British Pound Sterling (£)</option>
+                        <option value="EUR" className="bg-white dark:bg-slate-900">EUR — European Euro (€)</option>
+                      </select>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           )}

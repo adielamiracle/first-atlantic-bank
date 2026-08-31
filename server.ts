@@ -102,10 +102,10 @@ async function startServer() {
            u.id.toLowerCase() === cleanInput
     );
 
-    // Fallback convenience for demo accounts if typed without exact casing
-    if (!user && (cleanInput === 'jsterling' || cleanInput === 'j.sterling@atlantic-client.com' || cleanInput.includes('sterling'))) {
+    // Fallback convenience for demo accounts if specifically requested
+    if (!user && (cleanInput === 'jsterling' || cleanInput === 'j.sterling@atlantic-client.com')) {
       user = db.users.get('usr_sterling_01');
-    } else if (!user && (cleanInput === 'emontgomery' || cleanInput.includes('evelyn') || cleanInput.includes('montgomery'))) {
+    } else if (!user && (cleanInput === 'emontgomery' || cleanInput === 'e.montgomery@atlantic-wealth.co.uk')) {
       user = db.users.get('usr_montgomery_02');
     }
 

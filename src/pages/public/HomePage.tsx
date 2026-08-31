@@ -376,94 +376,69 @@ export const HomePage: React.FC = () => {
             </AnimatePresence>
           </div>
 
-          {/* Mobile-Friendly Proportional Action Buttons */}
+          {/* Client Action Buttons matching Dashboard typography & size */}
           <motion.div
             initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.15 }}
-            className="flex flex-wrap items-center justify-center gap-2 sm:gap-4 pt-0.5 sm:pt-2 px-1"
+            className="flex flex-wrap items-center justify-center gap-3 pt-2 px-1"
           >
             <button
               id="hero-access-portal-btn"
               onClick={() => setCurrentView('AUTH_LOGIN')}
-              className="px-4 py-2 sm:px-6 sm:py-3 rounded-xl bg-white text-slate-950 font-bold text-xs sm:text-sm hover:bg-slate-100 transition-all shadow-xl flex items-center justify-center gap-1.5 sm:gap-2 cursor-pointer border border-white active:scale-95"
+              className="bg-white hover:bg-slate-100 text-slate-950 px-6 py-2.5 sm:px-7 sm:py-3 rounded-full text-[14px] font-semibold shadow-lg flex items-center justify-center gap-2 cursor-pointer transition-all active:scale-95 border border-white"
             >
-              <Lock className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#8c6d37]" />
+              <Lock className="w-4 h-4 text-[#8c6d37]" />
               <span>Access Client Portal</span>
             </button>
 
             <button
               id="hero-open-account-btn"
               onClick={() => setCurrentView('AUTH_ENROLL')}
-              className="px-4 py-2 sm:px-6 sm:py-3 rounded-xl bg-[#0a192f]/90 hover:bg-[#112a4a] text-[#f7e6b5] border border-[#c5a880]/60 font-bold text-xs sm:text-sm transition-all flex items-center justify-center gap-1.5 sm:gap-2 cursor-pointer shadow-lg backdrop-blur-sm active:scale-95"
+              className="bg-transparent hover:bg-white/10 text-white border border-white/50 hover:border-white px-6 py-2.5 sm:px-7 sm:py-3 rounded-full text-[14px] font-semibold transition-all flex items-center justify-center gap-2 cursor-pointer backdrop-blur-xs active:scale-95"
             >
               <span>Apply for Private Account</span>
-              <ArrowRight className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#c5a880]" />
+              <ArrowRight className="w-4 h-4 text-[#e5ca95]" />
             </button>
           </motion.div>
 
-          {/* Sliding Venue Info Card */}
-          <div className="pt-0.5 flex flex-col items-center gap-2">
-            <div className="inline-flex items-center gap-2 px-3 py-1 sm:px-3.5 sm:py-1.5 rounded-xl bg-slate-950/70 border border-slate-800 text-[11px] sm:text-xs backdrop-blur-md shadow-md">
-              <Building className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-[#d4af37]" />
+          {/* Sliding Venue Info & Slide Navigation */}
+          <div className="pt-2 flex flex-col items-center gap-3">
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-slate-950/70 border border-slate-800 text-[12px] backdrop-blur-md shadow-md">
+              <Building className="w-3.5 h-3.5 text-[#d4af37]" />
               <span className="text-slate-200 font-sans font-medium">
                 <span className="text-[#e5ca95] font-bold">{heroSlides[currentSlide].accent}:</span> {heroSlides[currentSlide].location}
               </span>
             </div>
 
             {/* Slide Navigation Dots */}
-            <div className="flex items-center gap-1.5 sm:gap-2">
+            <div className="flex items-center gap-2">
               <button
                 onClick={() => setCurrentSlide((prev) => (prev - 1 + heroSlides.length) % heroSlides.length)}
-                className="p-1 rounded-full text-slate-300 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
+                className="p-1.5 rounded-full text-slate-300 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
                 title="Previous Slide"
               >
-                <ChevronLeft className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                <ChevronLeft className="w-4 h-4" />
               </button>
               {heroSlides.map((slide, index) => (
                 <button
                   key={index}
                   onClick={() => setCurrentSlide(index)}
-                  className={`h-1 sm:h-1.5 transition-all duration-300 rounded-full cursor-pointer ${
-                    currentSlide === index ? 'w-5 sm:w-6 bg-[#d4af37]' : 'w-1.5 sm:w-2 bg-slate-500 hover:bg-slate-300'
+                  className={`h-1.5 transition-all duration-300 rounded-full cursor-pointer ${
+                    currentSlide === index ? 'w-6 bg-[#d4af37]' : 'w-2 bg-slate-500 hover:bg-slate-300'
                   }`}
                   title={slide.location}
                 />
               ))}
               <button
                 onClick={() => setCurrentSlide((prev) => (prev + 1) % heroSlides.length)}
-                className="p-1 rounded-full text-slate-300 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
+                className="p-1.5 rounded-full text-slate-300 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
                 title="Next Slide"
               >
-                <ChevronRight className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                <ChevronRight className="w-4 h-4" />
               </button>
             </div>
           </div>
-
-          {/* Compact Responsive Metrics Bar */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.6, delay: 0.25 }}
-            className="pt-3 sm:pt-6 grid grid-cols-2 md:grid-cols-4 gap-1.5 sm:gap-3 max-w-2xl sm:max-w-3xl mx-auto border-t border-slate-800/80 text-left px-0.5"
-          >
-            <div className="px-2.5 py-1.5 sm:px-3 sm:py-2.5 rounded-lg sm:rounded-xl bg-[#091b30]/85 border border-slate-800/90 backdrop-blur-xs">
-              <span className="text-[8px] sm:text-[10px] uppercase font-mono text-slate-400 block leading-tight truncate">Apex Yield</span>
-              <span className="text-[11px] sm:text-sm md:text-base font-bold font-mono text-[#e5ca95] block mt-0.5 truncate">5.15% APY</span>
-            </div>
-            <div className="px-2.5 py-1.5 sm:px-3 sm:py-2.5 rounded-lg sm:rounded-xl bg-[#091b30]/85 border border-slate-800/90 backdrop-blur-xs">
-              <span className="text-[8px] sm:text-[10px] uppercase font-mono text-slate-400 block leading-tight truncate">Currencies</span>
-              <span className="text-[11px] sm:text-sm md:text-base font-bold font-mono text-white block mt-0.5 truncate">USD • EUR • GBP</span>
-            </div>
-            <div className="px-2.5 py-1.5 sm:px-3 sm:py-2.5 rounded-lg sm:rounded-xl bg-[#091b30]/85 border border-slate-800/90 backdrop-blur-xs">
-              <span className="text-[8px] sm:text-[10px] uppercase font-mono text-slate-400 block leading-tight truncate">Interbank Wires</span>
-              <span className="text-[11px] sm:text-sm md:text-base font-bold font-mono text-white block mt-0.5 truncate">Real-Time</span>
-            </div>
-            <div className="px-2.5 py-1.5 sm:px-3 sm:py-2.5 rounded-lg sm:rounded-xl bg-[#091b30]/85 border border-slate-800/90 backdrop-blur-xs">
-              <span className="text-[8px] sm:text-[10px] uppercase font-mono text-slate-400 block leading-tight truncate">Custody Safety</span>
-              <span className="text-[11px] sm:text-sm md:text-base font-bold font-mono text-emerald-400 block mt-0.5 truncate">FDIC / FSCS / DGS</span>
-            </div>
-          </motion.div>
         </div>
       </section>
 

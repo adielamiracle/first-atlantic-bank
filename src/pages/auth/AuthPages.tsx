@@ -212,15 +212,12 @@ export const LoginPage: React.FC = () => {
       }
 
       // If backend is unavailable or returned non-JSON (e.g. static host/Vercel)
-      // Provide instant local authentication fallback for demo and registered accounts
+      // Provide instant local authentication fallback ONLY for exact demo account
       const isDemoClient =
         emailOrUser.toLowerCase() === 'j.sterling@atlantic-client.com' ||
-        emailOrUser.toLowerCase() === 'jsterling' ||
-        emailOrUser.toLowerCase().includes('sterling') ||
-        enteredPassword === '1234' ||
-        enteredPassword === 'AtlanticSecure2026!';
+        emailOrUser.toLowerCase() === 'jsterling';
 
-      if (isDemoClient) {
+      if (isDemoClient && (enteredPassword === '1234' || enteredPassword === 'AtlanticSecure2026!')) {
         setPassportCheckpoint({
           required: true,
           userId: DEMO_CLIENT_USER.id,

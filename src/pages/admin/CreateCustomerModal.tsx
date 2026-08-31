@@ -110,6 +110,40 @@ export const CreateCustomerModal: React.FC<CreateCustomerModalProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [activeStep, setActiveStep] = useState<'IDENTITY' | 'CREDENTIALS' | 'ADDRESS' | 'BANKING'>('IDENTITY');
 
+  // Reset form to pristine state
+  const resetForm = () => {
+    setFirstName('');
+    setLastName('');
+    setEmail('');
+    setUsername('');
+    setPassword('AtlanticSecure2026!');
+    setLoginPin('1234');
+    setPhone('');
+    setPassportNumber('');
+    setSsnOrTaxId('');
+    setInitialDepositDollars('25000');
+    setPassportPhoto(PASSPORT_PRESETS[0].url);
+    setActiveStep('IDENTITY');
+  };
+
+  // Quick auto-populate for rapid client provisioning
+  const autoFillSampleClient = () => {
+    const randomSuffix = Math.floor(100 + Math.random() * 900);
+    const sampleFirst = 'Marcus';
+    const sampleLast = `Rothschild${randomSuffix}`;
+    setFirstName(sampleFirst);
+    setLastName(sampleLast);
+    setEmail(`m.rothschild${randomSuffix}@atlantic-client.com`);
+    setUsername(`mrothschild${randomSuffix}`);
+    setPassword('AtlanticSecure2026!');
+    setLoginPin('1234');
+    setPhone('+1 (555) 392-1084');
+    setPassportNumber(`US${Date.now().toString().slice(-8)}`);
+    setSsnOrTaxId(`987-65-${Date.now().toString().slice(-4)}`);
+    setInitialDepositDollars('50000');
+    showToast('INFO', 'Sample Profile Loaded', 'Pre-filled executive sample client for quick testing.');
+  };
+
   // Adjust defaults when region changes
   const handleRegionChange = (newRegion: BankRegion) => {
     setRegion(newRegion);
@@ -193,47 +227,86 @@ export const CreateCustomerModal: React.FC<CreateCustomerModalProps> = ({
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  // Step validation helpers
+  const validateStep1 = () => {
+    if (!firstName.trim()) {
+      showToast('ERROR', 'First Name Required', 'Please enter the applicant’s legal first name.');
+      return false;
+    }
+    if (!lastName.trim()) {
+      showToast('ERROR', 'Last Name Required', 'Please enter the applicant’s legal last name.');
+      return false;
+    }
+    if (!email.trim() || !email.includes('@')) {
+      showToast('ERROR', 'Valid Email Required', 'Please enter a valid email address.');
+      return false;
+    }
+    if (!username.trim()) {
+      setUsername(`${firstName.toLowerCase().slice(0, 1)}${lastName.toLowerCase()}`.replace(/[^a-z0-9]/g, '') || `user${Date.now().toString().slice(-4)}`);
+    }
+    return true;
+  };
 
-    if (!firstName.trim() || !lastName.trim() || !email.trim() || !username.trim()) {
-      showToast('ERROR', 'Validation Error', 'Please complete the applicant first name, last name, email, and username.');
+  const validateStep2 = () => {
+    if (!username.trim()) {
+      showToast('ERROR', 'Username Required', 'Please set a username for online banking.');
+      return false;
+    }
+    if (!password.trim()) {
+      setPassword('AtlanticSecure2026!');
+    }
+    return true;
+  };
+
+  const handleNextStep = (currentStep: 'IDENTITY' | 'CREDENTIALS' | 'ADDRESS') => {
+    if (currentStep === 'IDENTITY') {
+      if (validateStep1()) setActiveStep('CREDENTIALS');
+    } else if (currentStep === 'CREDENTIALS') {
+      if (validateStep2()) setActiveStep('ADDRESS');
+    } else if (currentStep === 'ADDRESS') {
+      setActiveStep('BANKING');
+    }
+  };
+
+  const handleSubmit = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+
+    if (!firstName.trim() || !lastName.trim() || !email.trim()) {
+      showToast('ERROR', 'Validation Error', 'Please complete the applicant first name, last name, and email.');
       setActiveStep('IDENTITY');
       return;
     }
 
-    if (!password.trim()) {
-      showToast('ERROR', 'Validation Error', 'Please set an initial access password for the customer.');
-      setActiveStep('CREDENTIALS');
-      return;
-    }
+    const effectiveUsername = username.trim() || `${firstName.toLowerCase().slice(0, 1)}${lastName.toLowerCase()}`.replace(/[^a-z0-9]/g, '') || `client${Date.now().toString().slice(-4)}`;
+    const effectivePassword = password.trim() || 'AtlanticSecure2026!';
 
     setIsSubmitting(true);
     try {
-      const depositMinor = Math.round((parseFloat(initialDepositDollars) || 0) * 100);
+      const depositParsed = parseFloat(String(initialDepositDollars).replace(/[^0-9.]/g, '')) || 0;
+      const depositMinor = Math.round(depositParsed * 100);
 
       const res = await createCustomerByAdmin({
         firstName: firstName.trim(),
         lastName: lastName.trim(),
         email: email.trim(),
-        username: username.trim(),
-        password: password.trim() || 'AtlanticSecure2026!',
+        username: effectiveUsername,
+        password: effectivePassword,
         loginPin: loginPin.trim() || '1234',
         phone: phone.trim() || `${dialCode} 555-0199`,
         dialCode,
-        dateOfBirth,
-        nationality,
+        dateOfBirth: dateOfBirth || '1988-06-15',
+        nationality: nationality || 'United States',
         passportNumber: passportNumber.trim() || `PASSPORT-${Date.now().toString().slice(-6)}`,
-        passportPhoto,
+        passportPhoto: passportPhoto || PASSPORT_PRESETS[0].url,
         ssnOrTaxId: ssnOrTaxId.trim() || (region === 'US' ? '•••-••-8899' : 'GB-123456'),
         region,
         address: {
-          line1: addressLine1.trim(),
+          line1: addressLine1.trim() || '100 Atlantic Plaza',
           line2: addressLine2.trim(),
-          city: city.trim(),
-          stateOrCounty: stateOrCounty.trim(),
-          postalCode: postalCode.trim(),
-          country: country.trim()
+          city: city.trim() || 'New York',
+          stateOrCounty: stateOrCounty.trim() || 'NY',
+          postalCode: postalCode.trim() || '10001',
+          country: country.trim() || 'United States'
         },
         kycTier,
         approvalStatus,
@@ -242,12 +315,13 @@ export const CreateCustomerModal: React.FC<CreateCustomerModalProps> = ({
         initialDepositMinor: depositMinor,
         issueDebitCard,
         employmentStatus,
-        employerOrBusinessName,
+        employerOrBusinessName: employerOrBusinessName || 'Atlantic Wealth Client',
         sourceOfWealth,
         annualIncomeRange
       });
 
       if (res.success) {
+        resetForm();
         onClose();
         if (onSuccess) onSuccess();
       }
@@ -283,12 +357,23 @@ export const CreateCustomerModal: React.FC<CreateCustomerModalProps> = ({
               </p>
             </div>
           </div>
-          <button
-            onClick={onClose}
-            className="p-1 rounded-lg text-blue-200 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
-          >
-            <X className="w-5 h-5" />
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={autoFillSampleClient}
+              className="px-2.5 py-1 text-[11px] font-semibold bg-white/15 hover:bg-white/25 text-white rounded-lg transition-colors flex items-center gap-1 cursor-pointer"
+              title="Auto-fill sample executive profile"
+            >
+              <Sparkles className="w-3 h-3 text-[#00A651]" />
+              <span className="hidden sm:inline">Auto-Fill Sample</span>
+            </button>
+            <button
+              onClick={onClose}
+              className="p-1 rounded-lg text-blue-200 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
         </div>
 
         {/* Step Navigation Tabs - Mobile First & Responsive */}
@@ -552,10 +637,19 @@ export const CreateCustomerModal: React.FC<CreateCustomerModalProps> = ({
                 </div>
               </div>
 
-              <div className="flex justify-end pt-2">
+              <div className="flex items-center justify-between pt-2">
                 <button
                   type="button"
-                  onClick={() => setActiveStep('CREDENTIALS')}
+                  onClick={() => handleSubmit()}
+                  disabled={isSubmitting || !firstName.trim() || !lastName.trim() || !email.trim()}
+                  className="text-[11px] font-semibold text-[#00A651] hover:underline flex items-center gap-1 disabled:opacity-40 cursor-pointer"
+                >
+                  <CheckCircle2 className="w-3 h-3" />
+                  <span>Quick Provision with Defaults</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleNextStep('IDENTITY')}
                   className="px-4 py-2 rounded-lg bg-[#004281] hover:bg-[#003366] text-white font-bold transition-colors cursor-pointer flex items-center gap-1.5"
                 >
                   <span>Next: Password &amp; Security</span>
@@ -655,7 +749,7 @@ export const CreateCustomerModal: React.FC<CreateCustomerModalProps> = ({
                 </div>
               </div>
 
-              <div className="flex justify-between pt-2">
+              <div className="flex items-center justify-between pt-2">
                 <button
                   type="button"
                   onClick={() => setActiveStep('IDENTITY')}
@@ -663,14 +757,25 @@ export const CreateCustomerModal: React.FC<CreateCustomerModalProps> = ({
                 >
                   &larr; Back
                 </button>
-                <button
-                  type="button"
-                  onClick={() => setActiveStep('ADDRESS')}
-                  className="px-4 py-2 rounded-lg bg-[#004281] hover:bg-[#003366] text-white font-bold transition-colors cursor-pointer flex items-center gap-1.5"
-                >
-                  <span>Next: Residential Address</span>
-                  <span>&rarr;</span>
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => handleSubmit()}
+                    disabled={isSubmitting}
+                    className="text-[11px] font-semibold text-[#00A651] hover:underline flex items-center gap-1 disabled:opacity-40 cursor-pointer hidden sm:flex"
+                  >
+                    <CheckCircle2 className="w-3 h-3" />
+                    <span>Quick Provision</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleNextStep('CREDENTIALS')}
+                    className="px-4 py-2 rounded-lg bg-[#004281] hover:bg-[#003366] text-white font-bold transition-colors cursor-pointer flex items-center gap-1.5"
+                  >
+                    <span>Next: Address</span>
+                    <span>&rarr;</span>
+                  </button>
+                </div>
               </div>
             </div>
           )}
@@ -747,7 +852,7 @@ export const CreateCustomerModal: React.FC<CreateCustomerModalProps> = ({
                 </div>
               </div>
 
-              <div className="flex justify-between pt-2">
+              <div className="flex items-center justify-between pt-2">
                 <button
                   type="button"
                   onClick={() => setActiveStep('CREDENTIALS')}
@@ -755,14 +860,25 @@ export const CreateCustomerModal: React.FC<CreateCustomerModalProps> = ({
                 >
                   &larr; Back
                 </button>
-                <button
-                  type="button"
-                  onClick={() => setActiveStep('BANKING')}
-                  className="px-4 py-2 rounded-lg bg-[#004281] hover:bg-[#003366] text-white font-bold transition-colors cursor-pointer flex items-center gap-1.5"
-                >
-                  <span>Next: Banking Setup</span>
-                  <span>&rarr;</span>
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => handleSubmit()}
+                    disabled={isSubmitting}
+                    className="text-[11px] font-semibold text-[#00A651] hover:underline flex items-center gap-1 disabled:opacity-40 cursor-pointer hidden sm:flex"
+                  >
+                    <CheckCircle2 className="w-3 h-3" />
+                    <span>Quick Provision</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleNextStep('ADDRESS')}
+                    className="px-4 py-2 rounded-lg bg-[#004281] hover:bg-[#003366] text-white font-bold transition-colors cursor-pointer flex items-center gap-1.5"
+                  >
+                    <span>Next: Banking Setup</span>
+                    <span>&rarr;</span>
+                  </button>
+                </div>
               </div>
             </div>
           )}
