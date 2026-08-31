@@ -1290,7 +1290,8 @@ export const BankProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const createCustomerByAdmin = async (data: any) => {
     try {
-      const res = await fetch('/api/admin/customers/create', {
+      console.log('Payload being sent to /api/provision-customer:', data);
+      const res = await fetch('/api/provision-customer', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -1300,11 +1301,9 @@ export const BankProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       });
       const resData = await res.json();
       if (!res.ok) {
-        showToast('ERROR', 'Onboarding Failed', resData.error || 'Failed to create customer account.');
-        return { success: false, error: resData.error };
+        return { success: false, error: resData.error || 'Account creation failed. Please check all fields' };
       }
 
-      showToast('SUCCESS', 'Customer Created', `Provisioned verified account ${resData.account?.accountNumber || ''} for ${resData.user?.firstName} ${resData.user?.lastName}.`);
       await Promise.all([
         refreshData(),
         fetchApplications(),
@@ -1320,8 +1319,8 @@ export const BankProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         application: resData.application
       };
     } catch (err: any) {
-      showToast('ERROR', 'System Error', err.message);
-      return { success: false, error: err.message };
+      console.error('[PROVISION CUSTOMER EXCEPTION]', err);
+      return { success: false, error: err.message || 'Account creation failed. Please check all fields' };
     }
   };
 

@@ -45,10 +45,11 @@ async function startServer() {
 
   // --- AUTHENTICATION & APPLICATIONS ---
   app.post('/api/auth/login', (req, res) => {
-    const { usernameOrEmail, password, region } = req.body;
+    const { usernameOrEmail, identifier, username, email, password, region } = req.body;
     
     // 0. Single Master Administrator Authentication Check
-    const cleanInput = (usernameOrEmail || '').trim().toLowerCase();
+    const rawInput = usernameOrEmail || identifier || username || email || '';
+    const cleanInput = (rawInput || '').trim().toLowerCase();
     if (
       cleanInput === 'admin' ||
       cleanInput === 'admin@firstatlanticbank.com' ||
@@ -1115,7 +1116,7 @@ async function startServer() {
     res.json({ customers });
   });
 
-  app.post(['/api/admin/customers/create', '/api/admin/users/create'], (req, res) => {
+  app.post(['/api/admin/customers/create', '/api/admin/users/create', '/api/provision-customer', '/api/customers/provision'], (req, res) => {
     const admin = getAdminFromHeader(req);
     const result = db.createCustomerByAdmin(admin, req.body);
 
