@@ -1,54 +1,155 @@
 import { createClient } from '@supabase/supabase-js';
 
-const rawUrl = import.meta.env.VITE_SUPABASE_URL || '';
-const rawKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
+const rawUrl = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_SUPABASE_URL) ? import.meta.env.VITE_SUPABASE_URL.trim() : '';
+const rawKey = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_SUPABASE_ANON_KEY) ? import.meta.env.VITE_SUPABASE_ANON_KEY.trim() : '';
 
-// Fallback public mock key that satisfies JWT structure without exposing secret key errors
-const fallbackKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF0bGFudGljIiwicm9sZSI6ImFub24iLCJpYXQiOjE2MDAwMDAwMDAsImV4cCI6MTkwMDAwMDAwMH0.mock_signature_key';
-const fallbackUrl = 'https://first-atlantic-bank.supabase.co';
+// Detect if real, valid Supabase configuration is provided
+export const isSupabaseConfigured = Boolean(
+  rawUrl &&
+  rawKey &&
+  rawUrl.startsWith('https://') &&
+  rawUrl.includes('.supabase.co') &&
+  !rawUrl.includes('first-atlantic-bank.supabase.co') &&
+  !rawKey.includes('mock_signature_key') &&
+  rawKey.length > 20
+);
 
 let clientInstance;
 
-try {
-  const targetUrl = (rawUrl && rawUrl.startsWith('http')) ? rawUrl : fallbackUrl;
-  const targetKey = (rawKey && !rawKey.includes('service_role') && !rawKey.startsWith('sbp_')) ? rawKey : fallbackKey;
-
-  clientInstance = createClient(targetUrl, targetKey, {
-    auth: {
-      persistSession: true,
-      autoRefreshToken: true,
-      detectSessionInUrl: false
-    }
-  });
-} catch (err) {
-  console.warn('[Supabase Client Init Safe Handler]:', err);
-  // Fallback safe client
+if (isSupabaseConfigured) {
   try {
-    clientInstance = createClient(fallbackUrl, fallbackKey, {
-      auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false }
-    });
-  } catch (e) {
-    clientInstance = {
+    clientInstance = createClient(rawUrl, rawKey, {
       auth: {
-        signUp: async ({ email, password }) => ({ data: { user: { id: `sb_${Date.now()}`, email } }, error: null }),
-        signInWithPassword: async ({ email, password }) => ({ data: { user: { id: `sb_${Date.now()}`, email } }, error: null }),
-        signOut: async () => ({ error: null }),
-        getUser: async () => ({ data: { user: null }, error: null })
-      },
-      from: () => ({
-        select: () => ({ data: [], error: null }),
-        insert: () => ({ data: null, error: null }),
-        upsert: () => ({ data: null, error: null })
-      })
-    };
+        persistSession: true,
+        autoRefreshToken: true,
+        detectSessionInUrl: false
+      }
+    });
+    console.info('[First Atlantic Bank] Supabase Cloud Active Node Connected:', rawUrl);
+  } catch (err) {
+    console.warn('[First Atlantic Bank] Supabase initialization failed, enabling resilient fallback:', err);
+    clientInstance = createFallbackClient();
   }
+} else {
+  clientInstance = createFallbackClient();
+}
+
+function createFallbackClient() {
+  const localDb = {
+    users: new Map(),
+    tables: new Map(),
+    storage: new Map()
+  };
+
+  return {
+    isFallback: true,
+    auth: {
+      signUp: async ({ email, password, options = {} }) => {
+        const id = `sb_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+        const user = {
+          id,
+          email,
+          user_metadata: options.data || {},
+          created_at: new Date().toISOString()
+        };
+        localDb.users.set(email.toLowerCase(), { user, password });
+        try {
+          localStorage.setItem('sb_fallback_user_' + email.toLowerCase(), JSON.stringify(user));
+        } catch {}
+        return { data: { user, session: { access_token: `sb_tok_${id}`, user } }, error: null };
+      },
+      signInWithPassword: async ({ email, password }) => {
+        const stored = localDb.users.get((email || '').toLowerCase());
+        const id = stored?.user?.id || `sb_${Date.now()}`;
+        const user = stored?.user || { id, email, created_at: new Date().toISOString() };
+        return { data: { user, session: { access_token: `sb_tok_${id}`, user } }, error: null };
+      },
+      signOut: async () => ({ error: null }),
+      getUser: async () => {
+        return { data: { user: null }, error: null };
+      },
+      getSession: async () => {
+        return { data: { session: null }, error: null };
+      },
+      onAuthStateChange: () => ({
+        data: { subscription: { unsubscribe: () => {} } }
+      })
+    },
+    from: (tableName) => ({
+      select: (columns = '*') => ({
+        eq: (col, val) => ({
+          data: (localDb.tables.get(tableName) || []).filter(item => item[col] === val),
+          error: null
+        }),
+        single: async () => ({
+          data: (localDb.tables.get(tableName) || [])[0] || null,
+          error: null
+        }),
+        then: (resolve) => resolve({ data: localDb.tables.get(tableName) || [], error: null })
+      }),
+      insert: async (records) => {
+        const existing = localDb.tables.get(tableName) || [];
+        const items = Array.isArray(records) ? records : [records];
+        localDb.tables.set(tableName, [...existing, ...items]);
+        return { data: items, error: null };
+      },
+      upsert: async (records) => {
+        const existing = localDb.tables.get(tableName) || [];
+        const items = Array.isArray(records) ? records : [records];
+        localDb.tables.set(tableName, [...existing, ...items]);
+        return { data: items, error: null };
+      },
+      delete: () => ({
+        eq: (col, val) => {
+          const existing = localDb.tables.get(tableName) || [];
+          localDb.tables.set(tableName, existing.filter(i => i[col] !== val));
+          return { data: null, error: null };
+        }
+      })
+    }),
+    storage: {
+      from: (bucketName) => ({
+        upload: async (filePath, file, options) => {
+          let url = '';
+          if (typeof file === 'string') {
+            url = file;
+          } else if (file instanceof Blob || file instanceof File) {
+            url = URL.createObjectURL(file);
+          }
+          localDb.storage.set(`${bucketName}/${filePath}`, url);
+          return { data: { path: filePath }, error: null };
+        },
+        getPublicUrl: (filePath) => {
+          const stored = localDb.storage.get(`${bucketName}/${filePath}`);
+          return { data: { publicUrl: stored || `/uploads/${filePath}` } };
+        }
+      })
+    }
+  };
 }
 
 export const supabase = clientInstance;
 
-// Seed standard demo credentials in Supabase if active instance is configured
+// Helper to safely execute Supabase operations with non-blocking timeout protection
+export async function safeSupabaseOp(opPromise, timeoutMs = 2500, fallbackVal = undefined) {
+  let timeoutId;
+  const timeoutPromise = new Promise((resolve) => {
+    timeoutId = setTimeout(() => resolve(fallbackVal), timeoutMs);
+  });
+  try {
+    const result = await Promise.race([opPromise, timeoutPromise]);
+    clearTimeout(timeoutId);
+    return result;
+  } catch (err) {
+    clearTimeout(timeoutId);
+    console.warn('[Supabase Operation Non-blocking Notice]:', err);
+    return fallbackVal;
+  }
+}
+
+// Seed standard demo credentials in Supabase if real active instance is configured
 export async function ensureDemoUsersInSupabase() {
-  if (!rawUrl || !rawKey || rawKey === fallbackKey) {
+  if (!isSupabaseConfigured) {
     return;
   }
   try {
@@ -59,15 +160,18 @@ export async function ensureDemoUsersInSupabase() {
 
     for (const acc of demoAccounts) {
       try {
-        await supabase.auth.signUp({
-          email: acc.email,
-          password: acc.password,
-          options: {
-            data: acc.data
-          }
-        });
+        await safeSupabaseOp(
+          supabase.auth.signUp({
+            email: acc.email,
+            password: acc.password,
+            options: {
+              data: acc.data
+            }
+          }),
+          2000
+        );
       } catch (e) {
-        // User may already exist or signUp disabled, ignore
+        // User may already exist, ignore
       }
     }
   } catch (err) {
@@ -81,4 +185,3 @@ if (typeof window !== 'undefined') {
     ensureDemoUsersInSupabase();
   }, 1000);
 }
-

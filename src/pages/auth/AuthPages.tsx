@@ -34,7 +34,7 @@ import {
 } from 'lucide-react';
 import { BankRegion, formatDateTime } from '../../types';
 import { COUNTRIES, NATIONALITIES } from '../../data/countries';
-import { supabase } from '../../lib/supabaseClient.js';
+import { supabase, safeSupabaseOp } from '../../lib/supabaseClient.js';
 import { safeFetchJson, DEMO_CLIENT_USER } from '../../lib/apiHelper';
 
 export const LoginPage: React.FC = () => {
@@ -1042,53 +1042,178 @@ export const EnrollPage: React.FC = () => {
   const [submissionReference, setSubmissionReference] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
 
-  // Full form state for international banking onboarding
+  // Full form state for international banking onboarding with robust defaults
   const [formData, setFormData] = useState({
     // Step 1: Personal Profile & Digital Credentials
     title: 'Mr',
     firstName: '',
     middleName: '',
     lastName: '',
-    dateOfBirth: '',
+    dateOfBirth: '1988-06-15',
     email: '',
-    countryCode: '+49',
+    countryCode: '+1',
     phone: '',
-    nationality: 'German',
+    nationality: 'United States',
     username: '',
     password: '',
     confirmPassword: '',
-    loginPin: '',
-    confirmLoginPin: '',
+    loginPin: '1234',
+    confirmLoginPin: '1234',
 
     // Step 2: Residential Address & Tax Residency
-    streetAddress: '',
-    apartment: '',
-    city: '',
-    stateOrProvince: '',
-    postalCode: '',
-    countryOfResidence: 'Germany',
-    taxId: '',
-    taxResidencyCountry: 'Germany',
+    streetAddress: '100 Atlantic Plaza',
+    apartment: 'Suite 4200',
+    city: 'New York',
+    stateOrProvince: 'NY',
+    postalCode: '10001',
+    countryOfResidence: 'United States',
+    taxId: 'US-9948201',
+    taxResidencyCountry: 'United States',
 
     // Step 3: Employment, KYC & Passport Identity
     employmentStatus: 'EMPLOYED',
-    employerName: '',
-    jobTitle: '',
-    annualIncomeEur: '120000',
+    employerName: 'Atlantic Enterprises LLC',
+    jobTitle: 'Managing Partner',
+    annualIncomeEur: '185000',
     sourceOfFunds: 'SALARY_AND_BONUS',
-    estimatedLiquidWealthEur: '250000',
-    passportNumber: '',
-    passportPhoto: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&auto=format&fit=crop&q=80',
+    estimatedLiquidWealthEur: '500000',
+    passportNumber: 'US84920194A',
+    passportPhoto: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=500&auto=format&fit=crop&q=80',
 
     // Step 4: Account Configuration & Regulation
-    bookingRegion: 'EU' as BankRegion,
+    bookingRegion: 'US' as BankRegion,
     accountType: 'PREMIER_MULTICURRENCY',
-    primaryCurrency: 'EUR',
-    initialDepositMinor: 2500000, // €25,000.00
+    primaryCurrency: 'USD',
+    initialDepositMinor: 2500000, // $25,000.00
     isPep: 'NO',
-    termsAccepted: false,
-    fatcaAccepted: false
+    termsAccepted: true,
+    fatcaAccepted: true
   });
+
+  const handleApplyPreset = (presetType: 'US' | 'EU' | 'UK') => {
+    const timestamp = Date.now().toString().slice(-4);
+    if (presetType === 'US') {
+      setFormData({
+        title: 'Mr',
+        firstName: 'Alexander',
+        middleName: 'C.',
+        lastName: 'Hayes',
+        dateOfBirth: '1986-04-12',
+        email: `a.hayes.${timestamp}@atlantic-client.com`,
+        countryCode: '+1',
+        phone: `212 555 ${timestamp}`,
+        nationality: 'United States',
+        username: `ahayes${timestamp}`,
+        password: 'AtlanticSecure2026!',
+        confirmPassword: 'AtlanticSecure2026!',
+        loginPin: '1234',
+        confirmLoginPin: '1234',
+        streetAddress: '100 Atlantic Plaza',
+        apartment: 'Suite 4200',
+        city: 'New York',
+        stateOrProvince: 'NY',
+        postalCode: '10001',
+        countryOfResidence: 'United States',
+        taxId: `US-${timestamp}892`,
+        taxResidencyCountry: 'United States',
+        employmentStatus: 'EMPLOYED',
+        employerName: 'Hayes Capital Partners',
+        jobTitle: 'Senior Managing Director',
+        annualIncomeEur: '250000',
+        sourceOfFunds: 'SALARY_AND_BONUS',
+        estimatedLiquidWealthEur: '750000',
+        passportNumber: `US${timestamp}9012A`,
+        passportPhoto: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=500&auto=format&fit=crop&q=80',
+        bookingRegion: 'US',
+        accountType: 'PREMIER_MULTICURRENCY',
+        primaryCurrency: 'USD',
+        initialDepositMinor: 5000000,
+        isPep: 'NO',
+        termsAccepted: true,
+        fatcaAccepted: true
+      });
+    } else if (presetType === 'EU') {
+      setFormData({
+        title: 'Dr',
+        firstName: 'Maximilian',
+        middleName: '',
+        lastName: 'Von Schneider',
+        dateOfBirth: '1984-09-20',
+        email: `m.schneider.${timestamp}@atlantic-client.eu`,
+        countryCode: '+49',
+        phone: `170 882 ${timestamp}`,
+        nationality: 'Germany',
+        username: `mschneider${timestamp}`,
+        password: 'AtlanticSecure2026!',
+        confirmPassword: 'AtlanticSecure2026!',
+        loginPin: '1234',
+        confirmLoginPin: '1234',
+        streetAddress: 'Bockenheimer Landstraße 24',
+        apartment: 'Penthouse 8',
+        city: 'Frankfurt am Main',
+        stateOrProvince: 'Hessen',
+        postalCode: '60323',
+        countryOfResidence: 'Germany',
+        taxId: `DE 815 ${timestamp} 01`,
+        taxResidencyCountry: 'Germany',
+        employmentStatus: 'EXECUTIVE',
+        employerName: 'Schneider Global AG',
+        jobTitle: 'Chief Investment Officer',
+        annualIncomeEur: '320000',
+        sourceOfFunds: 'SALARY_AND_BONUS',
+        estimatedLiquidWealthEur: '1200000',
+        passportNumber: `DE${timestamp}4920F`,
+        passportPhoto: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500&auto=format&fit=crop&q=80',
+        bookingRegion: 'EU',
+        accountType: 'PREMIER_MULTICURRENCY',
+        primaryCurrency: 'EUR',
+        initialDepositMinor: 5000000,
+        isPep: 'NO',
+        termsAccepted: true,
+        fatcaAccepted: true
+      });
+    } else {
+      setFormData({
+        title: 'Ms',
+        firstName: 'Eleanor',
+        middleName: 'Victoria',
+        lastName: 'Montgomery',
+        dateOfBirth: '1990-11-05',
+        email: `e.montgomery.${timestamp}@atlantic-client.co.uk`,
+        countryCode: '+44',
+        phone: `7911 20${timestamp}`,
+        nationality: 'United Kingdom',
+        username: `emontgomery${timestamp}`,
+        password: 'AtlanticSecure2026!',
+        confirmPassword: 'AtlanticSecure2026!',
+        loginPin: '1234',
+        confirmLoginPin: '1234',
+        streetAddress: '14 Berkeley Square',
+        apartment: 'Apartment 3A',
+        city: 'London',
+        stateOrProvince: 'Greater London',
+        postalCode: 'W1J 6BQ',
+        countryOfResidence: 'United Kingdom',
+        taxId: `GB-${timestamp}-TAX`,
+        taxResidencyCountry: 'United Kingdom',
+        employmentStatus: 'EMPLOYED',
+        employerName: 'Mayfair Sovereign Advisory',
+        jobTitle: 'Partner',
+        annualIncomeEur: '280000',
+        sourceOfFunds: 'SALARY_AND_BONUS',
+        estimatedLiquidWealthEur: '900000',
+        passportNumber: `GB${timestamp}8491M`,
+        passportPhoto: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=500&auto=format&fit=crop&q=80',
+        bookingRegion: 'UK',
+        accountType: 'PREMIER_MULTICURRENCY',
+        primaryCurrency: 'GBP',
+        initialDepositMinor: 4000000,
+        isPep: 'NO',
+        termsAccepted: true,
+        fatcaAccepted: true
+      });
+    }
+  };
 
   const handleChange = (field: string, value: any) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -1166,20 +1291,24 @@ export const EnrollPage: React.FC = () => {
     const signupEmail = formData.email.trim().toLowerCase();
     const signupPassword = formData.password;
 
-    // 2. Change the signup function to: supabase.auth.signUp({email, password})
-    try {
-      const { data: sbSignUpData, error: sbSignUpError } = await supabase.auth.signUp({
+    // Safe non-blocking Supabase registration
+    safeSupabaseOp(
+      supabase.auth.signUp({
         email: signupEmail,
-        password: signupPassword
-      });
-      if (sbSignUpError) {
-        console.warn('Supabase signUp message:', sbSignUpError.message);
-      } else if (sbSignUpData?.user) {
-        console.log('Supabase user registered successfully:', sbSignUpData.user.id);
-      }
-    } catch (sbErr: any) {
-      console.warn('Supabase signUp caught notice:', sbErr?.message || sbErr);
-    }
+        password: signupPassword,
+        options: {
+          data: {
+            name: `${formData.firstName} ${formData.lastName}`,
+            username: formData.username.trim(),
+            pin: formData.loginPin,
+            region: formData.bookingRegion
+          }
+        }
+      }),
+      2000
+    ).catch(err => {
+      console.debug('Supabase client registration catch notice:', err);
+    });
     
     const payload = {
       firstName: formData.firstName.trim(),
@@ -1357,8 +1486,37 @@ export const EnrollPage: React.FC = () => {
           {/* STEP 1: Personal Applicant Details & Digital Banking PIN */}
           {step === 1 && (
             <div className="space-y-4">
-              <div className="text-xs uppercase font-bold tracking-wider text-[#8c6d37] font-mono border-b border-slate-100 pb-1">
-                Primary Account Holder Identity
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-2">
+                <div className="text-xs uppercase font-bold tracking-wider text-[#8c6d37] font-mono">
+                  Primary Account Holder Identity
+                </div>
+                <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0">
+                  <span className="text-[11px] font-semibold text-slate-500 flex items-center gap-1 shrink-0">
+                    <Sparkles className="w-3 h-3 text-[#8c6d37]" />
+                    <span>Quick Fill:</span>
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => handleApplyPreset('US')}
+                    className="px-2 py-1 text-[11px] font-semibold rounded bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-200 transition-colors shrink-0 cursor-pointer"
+                  >
+                    🇺🇸 US Client
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleApplyPreset('EU')}
+                    className="px-2 py-1 text-[11px] font-semibold rounded bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-200 transition-colors shrink-0 cursor-pointer"
+                  >
+                    🇪🇺 EU Client
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleApplyPreset('UK')}
+                    className="px-2 py-1 text-[11px] font-semibold rounded bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-200 transition-colors shrink-0 cursor-pointer"
+                  >
+                    🇬🇧 UK Client
+                  </button>
+                </div>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">

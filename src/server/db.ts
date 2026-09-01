@@ -23,6 +23,7 @@ import {
 } from '../types';
 import { doubleEntryLedger, JournalLine } from './ledger/DoubleEntryLedger';
 import { adminNotificationService } from './notifications';
+import { syncNewRegistrationToSupabase, syncRecordToSupabase } from './supabase';
 
 // Exchange rates (live locked institutional rates)
 export const EXCHANGE_RATES: Record<CurrencyCode, Record<CurrencyCode, number>> = {
@@ -1183,6 +1184,10 @@ export class BankDatabase {
     if (initialDepositMinor > 10000000) riskScore += 10;
     if (sourceOfWealth === 'INVESTMENTS' || sourceOfWealth === 'BUSINESS_PROCEEDS') riskScore += 5;
 
+    // Persist passport photo safely to disk if base64 provided
+    const rawPhoto = raw.passportPhoto || raw.passportPhotoUrl || '';
+    const savedPhoto = rawPhoto ? this.saveImageToDisk(rawPhoto, `passport_${id}`) : 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500&auto=format&fit=crop&q=80';
+
     const application: AccountApplication = {
       id,
       referenceNumber,
@@ -1198,7 +1203,7 @@ export class BankDatabase {
       idDocumentType: raw.idDocumentType || 'PASSPORT',
       idDocumentNumber: raw.idDocumentNumber || raw.passportNumber || 'PASSPORT_ON_FILE',
       idDocumentFileName: raw.idDocumentFileName,
-      passportPhoto: raw.passportPhoto || raw.passportPhotoUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500&auto=format&fit=crop&q=80',
+      passportPhoto: savedPhoto,
       proofOfAddressFileName: raw.proofOfAddressFileName,
       address,
       employmentStatus,
@@ -1240,7 +1245,7 @@ export class BankDatabase {
       dateOfBirth: application.dateOfBirth,
       nationality: application.nationality || 'United States',
       passportNumber: application.idDocumentNumber || 'US84920194A',
-      passportPhoto: application.passportPhoto || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500&auto=format&fit=crop&q=80',
+      passportPhoto: savedPhoto,
       loginPin: application.loginPin || '1234',
       region: application.requestedRegion,
       approval_status: 'APPROVED',
@@ -1408,7 +1413,12 @@ export class BankDatabase {
       }
     }
 
-    this.saveToDisk();
+    this.saveToDiskSync();
+
+    // Asynchronously synchronize application & user dossier to Supabase Cloud if configured
+    syncNewRegistrationToSupabase(newUser, application, [primaryChecking, savingsAcc]).catch((err) => {
+      console.debug('Supabase background enrollment sync notice:', err);
+    });
 
     this.addAuditLog({
       actorId: newUser.id,

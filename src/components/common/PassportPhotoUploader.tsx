@@ -56,10 +56,42 @@ export const PassportPhotoUploader: React.FC<PassportPhotoUploaderProps> = ({
     const reader = new FileReader();
     reader.onload = (e) => {
       const dataUrl = e.target?.result as string;
-      if (dataUrl) {
+      if (!dataUrl) return;
+
+      // Downscale high-resolution mobile camera photos (e.g. 12MP/8MB) to optimal portrait dimensions
+      const img = new Image();
+      img.onload = () => {
+        const maxDim = 800;
+        let width = img.width;
+        let height = img.height;
+        if (width > maxDim || height > maxDim) {
+          if (width > height) {
+            height = Math.round((height * maxDim) / width);
+            width = maxDim;
+          } else {
+            width = Math.round((width * maxDim) / height);
+            height = maxDim;
+          }
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.drawImage(img, 0, 0, width, height);
+          const compressed = canvas.toDataURL('image/jpeg', 0.88);
+          setPreviewPhoto(compressed);
+          onPhotoChange(compressed);
+        } else {
+          setPreviewPhoto(dataUrl);
+          onPhotoChange(dataUrl);
+        }
+      };
+      img.onerror = () => {
         setPreviewPhoto(dataUrl);
         onPhotoChange(dataUrl);
-      }
+      };
+      img.src = dataUrl;
     };
     reader.readAsDataURL(file);
   };
