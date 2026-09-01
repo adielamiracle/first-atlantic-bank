@@ -384,11 +384,59 @@ export const BankProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setIsInitialSplash(false);
   };
 
-  const getAuthHeader = () => {
-    if (token) return { Authorization: `Bearer ${token}` };
-    if (currentUser) return { Authorization: `Bearer usr_${currentUser.id}` };
-    return { Authorization: 'Bearer usr_sterling_01' };
+  const getAuthHeader = (overrideToken?: string, overrideUserId?: string) => {
+    const activeToken = overrideToken || token;
+    const activeUserId = overrideUserId || (currentUser ? currentUser.id : undefined);
+    const headers: Record<string, string> = {};
+    if (activeToken) {
+      headers['Authorization'] = `Bearer ${activeToken}`;
+    } else if (activeUserId) {
+      headers['Authorization'] = `Bearer ${activeUserId}`;
+    }
+    if (activeUserId) {
+      headers['x-user-id'] = activeUserId;
+    }
+    return headers;
   };
+
+  // Restore authenticated session & user data on initial mount
+  useEffect(() => {
+    const initSession = async () => {
+      try {
+        const savedToken = localStorage.getItem('fab_session_token');
+        const savedUserStr = localStorage.getItem('fab_current_user');
+        
+        if (savedToken) {
+          const res = await safeFetchJson<any>('/api/auth/me', {
+            headers: { Authorization: `Bearer ${savedToken}` }
+          });
+          if (res.data?.user) {
+            setToken(savedToken);
+            setCurrentUser(res.data.user);
+            setCurrentRole('CUSTOMER');
+            setRegion(res.data.user.region || 'US');
+            await fetchUserData(savedToken, res.data.user.id);
+            return;
+          }
+        }
+        
+        if (savedUserStr) {
+          try {
+            const parsed = JSON.parse(savedUserStr);
+            if (parsed && parsed.id) {
+              setCurrentUser(parsed);
+              setRegion(parsed.region || 'US');
+              setCurrentRole('CUSTOMER');
+              await fetchUserData(token || parsed.id, parsed.id);
+            }
+          } catch (e) {}
+        }
+      } catch (e) {
+        console.warn('Session init error:', e);
+      }
+    };
+    initSession();
+  }, []);
 
   const fetchApplications = async () => {
     try {
@@ -879,12 +927,10 @@ export const BankProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
-  const refreshData = async () => {
-    if (!currentUser && currentRole !== 'ADMIN') return;
-
+  const fetchUserData = async (activeToken?: string | null, activeUserId?: string | null) => {
     try {
       setIsLoading(true);
-      const headers = getAuthHeader();
+      const headers = getAuthHeader(activeToken || undefined, activeUserId || undefined);
       
       const [accResult, cardResult, rateResult] = await Promise.all([
         safeFetchJson<any>('/api/accounts', { headers }),
@@ -892,29 +938,25 @@ export const BankProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         safeFetchJson<any>('/api/rates/exchange')
       ]);
 
-      if (accResult.data?.accounts && Array.isArray(accResult.data.accounts) && accResult.data.accounts.length > 0) {
+      if (accResult.data?.accounts && Array.isArray(accResult.data.accounts)) {
         setAccounts(accResult.data.accounts);
         setTotalNetWorthUsdMinor(accResult.data.totalNetWorthUsdMinor || 0);
 
-        // Fetch ledger entries for primary account
-        const firstAccId = selectedAccountId || accResult.data.accounts[0]?.id;
-        if (firstAccId) {
-          const txResult = await safeFetchJson<any>(`/api/accounts/${firstAccId}/transactions?limit=25`, { headers });
-          if (txResult.data?.transactions) {
-            setRecentTransactions(txResult.data.transactions);
+        if (accResult.data.accounts.length > 0) {
+          const firstAccId = selectedAccountId || accResult.data.accounts[0]?.id;
+          if (firstAccId) {
+            const txResult = await safeFetchJson<any>(`/api/accounts/${firstAccId}/transactions?limit=25`, { headers });
+            if (txResult.data?.transactions) {
+              setRecentTransactions(txResult.data.transactions);
+            }
           }
+        } else {
+          setRecentTransactions([]);
         }
-      } else {
-        // Fallback default accounts if offline or backend returns non-JSON
-        setAccounts(DEMO_CLIENT_ACCOUNTS);
-        setTotalNetWorthUsdMinor(842050000);
-        setRecentTransactions(DEMO_CLIENT_TRANSACTIONS);
       }
 
-      if (cardResult.data?.cards && Array.isArray(cardResult.data.cards) && cardResult.data.cards.length > 0) {
+      if (cardResult.data?.cards && Array.isArray(cardResult.data.cards)) {
         setCards(cardResult.data.cards);
-      } else {
-        setCards(DEMO_CLIENT_CARDS);
       }
 
       if (rateResult.data?.rates) {
@@ -922,27 +964,28 @@ export const BankProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       }
     } catch (err) {
       console.warn('Bank core refresh notice:', err);
-      // Ensure UI remains populated
-      setAccounts(DEMO_CLIENT_ACCOUNTS);
-      setTotalNetWorthUsdMinor(842050000);
-      setCards(DEMO_CLIENT_CARDS);
-      setRecentTransactions(DEMO_CLIENT_TRANSACTIONS);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const login = (newToken: string, user: UserProfile) => {
+  const refreshData = async () => {
+    if (!currentUser && currentRole !== 'ADMIN') return;
+    await fetchUserData(token, currentUser?.id);
+  };
+
+  const login = async (newToken: string, user: UserProfile) => {
     setToken(newToken);
     setCurrentUser(user);
     setCurrentRole('CUSTOMER');
-    setRegion(user.region);
+    setRegion(user.region || 'US');
     setCurrentView('DASHBOARD_OVERVIEW');
-    setAccounts(DEMO_CLIENT_ACCOUNTS);
-    setCards(DEMO_CLIENT_CARDS);
-    setRecentTransactions(DEMO_CLIENT_TRANSACTIONS);
-    setTotalNetWorthUsdMinor(842050000);
+    try {
+      localStorage.setItem('fab_session_token', newToken);
+      localStorage.setItem('fab_current_user', JSON.stringify(user));
+    } catch {}
     showToast('SUCCESS', 'Secure Session Established', `Welcome back, ${user.firstName}. You are authenticated with First Atlantic Bank.`);
+    await fetchUserData(newToken, user.id);
   };
 
   const logout = () => {
@@ -950,6 +993,14 @@ export const BankProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setCurrentUser(null);
     setCurrentRole('GUEST');
     setCurrentView('PUBLIC_HOME');
+    setAccounts([]);
+    setCards([]);
+    setRecentTransactions([]);
+    setTotalNetWorthUsdMinor(0);
+    try {
+      localStorage.removeItem('fab_session_token');
+      localStorage.removeItem('fab_current_user');
+    } catch {}
     showToast('INFO', 'Session Terminated', 'You have been safely signed out.');
   };
 
@@ -962,18 +1013,13 @@ export const BankProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         body: JSON.stringify({ userId })
       });
       if (result.data?.user && result.data?.token) {
-        setToken(result.data.token);
-        setCurrentUser(result.data.user);
-        setCurrentRole('CUSTOMER');
-        setRegion(result.data.user.region);
-        setCurrentView('DASHBOARD_OVERVIEW');
-        showToast('SUCCESS', 'Switched Persona', `Active client session: ${result.data.user.firstName} ${result.data.user.lastName} (${result.data.user.region})`);
+        await login(result.data.token, result.data.user);
+        showToast('SUCCESS', 'Switched Persona', `Active client session: ${result.data.user.firstName} ${result.data.user.lastName} (${result.data.user.region || 'US'})`);
       } else {
-        // Fallback
-        login('token_demo_' + Date.now(), DEMO_CLIENT_USER);
+        showToast('ERROR', 'Switch Failed', result.errorMessage || 'Failed to switch user session.');
       }
-    } catch (e) {
-      login('token_demo_' + Date.now(), DEMO_CLIENT_USER);
+    } catch (e: any) {
+      showToast('ERROR', 'Switch Error', e?.message || 'Error occurred while switching user persona.');
     } finally {
       setIsLoading(false);
     }

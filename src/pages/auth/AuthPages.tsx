@@ -287,7 +287,11 @@ export const LoginPage: React.FC = () => {
         if (success) {
           setIsLoading(true);
           try {
-            const targetUser = username.trim() || localStorage.getItem('last_registered_username') || 'jsterling';
+            const targetUser = username.trim() || localStorage.getItem('last_registered_username');
+            if (!targetUser) {
+              showToast('INFO', 'Passkey Setup Required', 'Please sign in with your email/username and password first to pair your biometric passkey.');
+              return;
+            }
             const result = await safeFetchJson<any>('/api/auth/login', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
@@ -303,9 +307,7 @@ export const LoginPage: React.FC = () => {
               return;
             }
 
-            // Fallback for biometric passkey
-            showToast('SUCCESS', 'Biometric Passkey Verified', `Welcome back, ${DEMO_CLIENT_USER.firstName}. Hardware key approved.`);
-            login('token_demo_biometric_' + Date.now(), DEMO_CLIENT_USER);
+            showToast('ERROR', 'Passkey Verification Failed', result.errorMessage || 'No enrolled passkey found for this user.');
           } catch (err: any) {
             showToast('ERROR', 'Passkey Login Failed', err?.message || 'Passkey authentication failed');
           } finally {
@@ -322,7 +324,7 @@ export const LoginPage: React.FC = () => {
     setErrorMessage('');
 
     try {
-      const pinToSend = useBiometric ? '1234' : (enteredPin || passportCheckpoint.loginPin || '1234');
+      const pinToSend = useBiometric ? (passportCheckpoint.loginPin || '1234') : (enteredPin || passportCheckpoint.loginPin || '1234');
       const result = await safeFetchJson<any>('/api/auth/verify-pin', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -338,26 +340,9 @@ export const LoginPage: React.FC = () => {
         return;
       }
 
-      // Offline / standalone fallback PIN validation
-      if (pinToSend === '1234' || pinToSend === passportCheckpoint.loginPin || pinToSend.length === 4) {
-        const verifiedUser = passportCheckpoint.userId === DEMO_CLIENT_USER.id ? DEMO_CLIENT_USER : {
-          ...DEMO_CLIENT_USER,
-          id: passportCheckpoint.userId,
-          firstName: passportCheckpoint.firstName || DEMO_CLIENT_USER.firstName,
-          lastName: passportCheckpoint.lastName || DEMO_CLIENT_USER.lastName,
-          passportPhoto: passportCheckpoint.passportPhoto || DEMO_CLIENT_USER.passportPhoto,
-          passportNumber: passportCheckpoint.passportNumber || DEMO_CLIENT_USER.passportNumber,
-          nationality: passportCheckpoint.nationality || DEMO_CLIENT_USER.nationality,
-          region: passportCheckpoint.region || DEMO_CLIENT_USER.region,
-          loginPin: pinToSend
-        };
-
-        showToast('SUCCESS', 'Identity Verified', `Welcome to your Private Wealth Dashboard, ${verifiedUser.firstName}.`);
-        login('token_client_' + Date.now(), verifiedUser);
-        return;
-      }
-
-      setErrorMessage('Invalid 4-digit PIN. (Demo default PIN is 1234)');
+      const msg = result.errorMessage || 'Invalid 4-digit PIN.';
+      setErrorMessage(msg);
+      showToast('ERROR', 'PIN Verification Failed', msg);
     } catch (err: any) {
       setErrorMessage(err?.message || 'Verification exception occurred.');
     } finally {
@@ -387,8 +372,9 @@ export const LoginPage: React.FC = () => {
         return;
       }
 
-      // Fallback
-      login('token_mfa_' + Date.now(), DEMO_CLIENT_USER);
+      const msg = result.errorMessage || 'Invalid MFA security code. Please check SMS / Authenticator app.';
+      setErrorMessage(msg);
+      showToast('ERROR', 'MFA Failed', msg);
     } catch (err: any) {
       setErrorMessage(err?.message || 'MFA validation exception.');
     } finally {
@@ -397,12 +383,11 @@ export const LoginPage: React.FC = () => {
   };
 
   const handleGoogleAuth = () => {
-    setIsLoading(true);
-    setTimeout(() => {
-      setIsLoading(false);
-      showToast('SUCCESS', 'Google Identity Verified', 'Authenticated seamlessly via Google Sovereign Single Sign-On.');
-      login('token_google_' + Date.now(), DEMO_CLIENT_USER);
-    }, 600);
+    showToast(
+      'INFO',
+      'Google Login Coming Soon',
+      'Google Sovereign Single Sign-On is currently undergoing final institutional SOC2 compliance review. Please sign in with your email and password.'
+    );
   };
 
   return (
@@ -706,10 +691,11 @@ export const LoginPage: React.FC = () => {
                 <div className="grow border-t border-slate-200 dark:border-slate-800" />
               </div>
 
-              {/* Google SSO Button matching uploaded screenshot */}
+              {/* Google SSO Button */}
               <button
                 type="button"
                 onClick={handleGoogleAuth}
+                title="Google Login Coming Soon"
                 className="w-full py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#161B22] hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-800 dark:text-slate-100 font-semibold text-[13px] sm:text-[14px] flex items-center justify-center gap-2.5 cursor-pointer transition-all shadow-xs active:scale-[0.99]"
               >
                 <svg className="w-4 h-4" viewBox="0 0 24 24">

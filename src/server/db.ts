@@ -67,6 +67,40 @@ export class BankDatabase {
     this.initDatabase();
   }
 
+  saveImageToDisk(base64OrUrl: string, prefix: string = 'profile'): string {
+    if (!base64OrUrl) return '';
+    if (!base64OrUrl.startsWith('data:image/')) {
+      return base64OrUrl;
+    }
+    try {
+      const match = base64OrUrl.match(/^data:image\/([a-zA-Z0-9+]+);base64,(.+)$/);
+      if (!match) return base64OrUrl;
+      const rawExt = match[1].toLowerCase();
+      const ext = rawExt === 'jpeg' ? 'jpg' : rawExt === 'png' ? 'png' : rawExt === 'webp' ? 'webp' : 'jpg';
+      const base64Data = match[2];
+      const buffer = Buffer.from(base64Data, 'base64');
+      
+      const fileName = `${prefix}_${Date.now()}_${Math.random().toString(36).substring(2, 7)}.${ext}`;
+      
+      const dataUploadsDir = path.join(process.cwd(), 'data', 'uploads');
+      if (!fs.existsSync(dataUploadsDir)) {
+        fs.mkdirSync(dataUploadsDir, { recursive: true });
+      }
+      fs.writeFileSync(path.join(dataUploadsDir, fileName), buffer);
+
+      const publicUploadsDir = path.join(process.cwd(), 'public', 'uploads');
+      if (!fs.existsSync(publicUploadsDir)) {
+        fs.mkdirSync(publicUploadsDir, { recursive: true });
+      }
+      fs.writeFileSync(path.join(publicUploadsDir, fileName), buffer);
+
+      return `/uploads/${fileName}`;
+    } catch (e) {
+      console.error('Failed to save image to disk:', e);
+      return base64OrUrl;
+    }
+  }
+
   initDatabase() {
     try {
       const dataDir = path.join(process.cwd(), 'data');
@@ -85,7 +119,37 @@ export class BankDatabase {
       console.warn('Could not load existing database file, seeding defaults:', e);
     }
     this.seedInitialData();
-    this.saveToDisk();
+    this.saveToDiskSync();
+  }
+
+  saveToDiskSync() {
+    try {
+      const dataDir = path.join(process.cwd(), 'data');
+      if (!fs.existsSync(dataDir)) {
+        fs.mkdirSync(dataDir, { recursive: true });
+      }
+      const serialized = {
+        users: Array.from(this.users.entries()),
+        accounts: Array.from(this.accounts.entries()),
+        cards: Array.from(this.cards.entries()),
+        ledger: this.ledger,
+        auditLogs: this.auditLogs,
+        adjustments: this.adjustments,
+        activationRequests: this.activationRequests,
+        riskEvents: this.riskEvents,
+        supportCases: this.supportCases,
+        mobileDeposits: this.mobileDeposits,
+        adminUsers: Array.from(this.adminUsers.entries()),
+        applications: Array.from(this.applications.entries()),
+        receivingAccounts: Array.from(this.receivingAccounts.entries()),
+        userPasswords: Array.from(this.userPasswords.entries()),
+        activeSessions: Array.from(this.activeSessions.entries()),
+        savedAt: new Date().toISOString()
+      };
+      fs.writeFileSync(this.dbFilePath, JSON.stringify(serialized, null, 2), 'utf-8');
+    } catch (e) {
+      console.error('Failed to persist database synchronously to disk:', e);
+    }
   }
 
   saveToDisk() {
@@ -93,32 +157,7 @@ export class BankDatabase {
       clearTimeout(this.saveTimeout);
     }
     this.saveTimeout = setTimeout(() => {
-      try {
-        const dataDir = path.join(process.cwd(), 'data');
-        if (!fs.existsSync(dataDir)) {
-          fs.mkdirSync(dataDir, { recursive: true });
-        }
-        const serialized = {
-          users: Array.from(this.users.entries()),
-          accounts: Array.from(this.accounts.entries()),
-          cards: Array.from(this.cards.entries()),
-          ledger: this.ledger,
-          auditLogs: this.auditLogs,
-          adjustments: this.adjustments,
-          activationRequests: this.activationRequests,
-          riskEvents: this.riskEvents,
-          supportCases: this.supportCases,
-          mobileDeposits: this.mobileDeposits,
-          adminUsers: Array.from(this.adminUsers.entries()),
-          applications: Array.from(this.applications.entries()),
-          receivingAccounts: Array.from(this.receivingAccounts.entries()),
-          userPasswords: Array.from(this.userPasswords.entries()),
-          savedAt: new Date().toISOString()
-        };
-        fs.writeFileSync(this.dbFilePath, JSON.stringify(serialized, null, 2), 'utf-8');
-      } catch (e) {
-        console.error('Failed to persist database to disk:', e);
-      }
+      this.saveToDiskSync();
     }, 100);
   }
 
@@ -137,6 +176,7 @@ export class BankDatabase {
     if (data.applications) this.applications = new Map(data.applications);
     if (data.receivingAccounts) this.receivingAccounts = new Map(data.receivingAccounts);
     if (data.userPasswords) this.userPasswords = new Map(data.userPasswords);
+    if (data.activeSessions) this.activeSessions = new Map(data.activeSessions);
   }
 
   seedInitialData() {
@@ -1864,6 +1904,8 @@ export class BankDatabase {
       details: `Transferred ${this.formatMinor(amountMinor, sourceAcc.currency)} from ${sourceAcc.name} to ${destAcc.name} (Ref: ${ref})`
     });
 
+    this.saveToDiskSync();
+
     return { success: true, transactionId: txId };
   }
 
@@ -2036,6 +2078,8 @@ export class BankDatabase {
       userAgent: 'First Atlantic Secure Web Platform',
       details: `Dispatched ${transferType} of ${this.formatMinor(amountMinor, sourceAcc.currency)} to ${recipient.name} at ${recipient.bankName}`
     });
+
+    this.saveToDiskSync();
 
     return { success: true, transactionId: txId, feeMinor };
   }
@@ -3127,7 +3171,7 @@ export class BankDatabase {
       dateOfBirth: data.dateOfBirth || '1988-06-15',
       nationality: data.nationality || (region === 'UK' ? 'British' : region === 'EU' ? 'German' : 'American'),
       passportNumber: data.passportNumber || `ID-${Date.now().toString().slice(-6)}`,
-      passportPhoto: data.passportPhoto || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500&auto=format&fit=crop&q=80',
+      passportPhoto: this.saveImageToDisk(data.passportPhoto || '', 'profile_' + newUserId) || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500&auto=format&fit=crop&q=80',
       loginPin: data.loginPin || '1234',
       ssnMasked: region === 'US' ? (data.ssnOrTaxId ? `•••-••-${data.ssnOrTaxId.slice(-4)}` : '•••-••-8899') : undefined,
       nationalInsuranceMasked: region === 'UK' ? (data.ssnOrTaxId || 'QQ 12 34 56 A') : undefined,
@@ -3375,7 +3419,7 @@ export class BankDatabase {
       console.warn('Customer creation alert dispatch warning:', e);
     }
 
-    this.saveToDisk();
+    this.saveToDiskSync();
 
     return {
       success: true,

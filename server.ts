@@ -1,5 +1,6 @@
 import express from 'express';
 import path from 'path';
+import fs from 'fs';
 import { createServer as createViteServer } from 'vite';
 import { db, BILL_PAY_VENDORS, EXCHANGE_RATES } from './src/server/db';
 import { doubleEntryLedger, ledgerRouter } from './src/server/ledger';
@@ -11,15 +12,69 @@ async function startServer() {
   const app = express();
   const PORT = 3000;
 
-  app.use(express.json({ limit: '10mb' }));
+  app.use(express.json({ limit: '50mb' }));
+  app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
-  // Helper auth extractor
+  // Ensure and statically serve uploads directory for cross-device avatar/passport persistence
+  const dataUploadsDir = path.join(process.cwd(), 'data', 'uploads');
+  if (!fs.existsSync(dataUploadsDir)) {
+    fs.mkdirSync(dataUploadsDir, { recursive: true });
+  }
+  const publicUploadsDir = path.join(process.cwd(), 'public', 'uploads');
+  if (!fs.existsSync(publicUploadsDir)) {
+    fs.mkdirSync(publicUploadsDir, { recursive: true });
+  }
+
+  app.use('/uploads', express.static(dataUploadsDir));
+  app.use('/uploads', express.static(publicUploadsDir));
+
+  // Helper auth extractor supporting JWT-style session tokens, custom user headers, and user IDs
   const getUserIdFromHeader = (req: express.Request): string => {
-    const auth = req.headers.authorization;
-    if (auth && auth.startsWith('Bearer usr_')) {
-      return auth.replace('Bearer ', '');
+    // 1. Direct explicit user header
+    const customUserHeader = (req.headers['x-user-id'] as string || '').trim();
+    if (customUserHeader) {
+      if (db.users.has(customUserHeader)) return customUserHeader;
+      const clean = customUserHeader.replace(/^usr_usr_/, 'usr_');
+      if (db.users.has(clean)) return clean;
     }
-    // Default fallback to primary demo client
+
+    // 2. Authorization Bearer Token
+    const auth = req.headers.authorization;
+    if (auth && auth.startsWith('Bearer ')) {
+      let raw = auth.substring(7).trim();
+      
+      // Check active sessions map
+      if (db.activeSessions.has(raw)) {
+        return db.activeSessions.get(raw)!.userId;
+      }
+
+      // Check direct user ID
+      if (db.users.has(raw)) {
+        return raw;
+      }
+
+      // Clean double prefix if any
+      if (raw.startsWith('usr_usr_')) {
+        const clean = raw.replace(/^usr_usr_/, 'usr_');
+        if (db.users.has(clean)) return clean;
+      }
+
+      // Single prefix stripping/matching
+      if (raw.startsWith('usr_')) {
+        if (db.users.has(raw)) return raw;
+        const stripped = raw.substring(4);
+        if (db.users.has(stripped)) return stripped;
+      }
+
+      // Check all registered users by ID or username matching in token
+      for (const [id] of db.users.entries()) {
+        if (raw.includes(id)) {
+          return id;
+        }
+      }
+    }
+
+    // If still not matched, check if primary demo user exists
     return 'usr_sterling_01';
   };
 
@@ -41,6 +96,37 @@ async function startServer() {
 
   app.get('/api/rates/exchange', (req, res) => {
     res.json({ rates: EXCHANGE_RATES, timestamp: new Date().toISOString() });
+  });
+
+  // --- FILE & PROFILE PICTURE UPLOADS (Persisted to Server Storage) ---
+  app.post('/api/upload/profile-picture', (req, res) => {
+    const { imageBase64, photoUrl, userId } = req.body;
+    const resolvedUserId = userId || getUserIdFromHeader(req);
+    const rawImage = imageBase64 || photoUrl;
+
+    if (!rawImage) {
+      return res.status(400).json({ error: 'No image data payload provided.' });
+    }
+
+    const savedUrl = db.saveImageToDisk(rawImage, `profile_${resolvedUserId || 'client'}`);
+
+    if (resolvedUserId && db.users.has(resolvedUserId)) {
+      const user = db.users.get(resolvedUserId)!;
+      user.passportPhoto = savedUrl;
+      db.saveToDiskSync();
+    }
+
+    res.json({ success: true, url: savedUrl, photoUrl: savedUrl });
+  });
+
+  app.post('/api/upload', (req, res) => {
+    const { fileBase64, dataUrl, prefix } = req.body;
+    const payload = fileBase64 || dataUrl;
+    if (!payload) {
+      return res.status(400).json({ error: 'No file data provided.' });
+    }
+    const savedUrl = db.saveImageToDisk(payload, prefix || 'document');
+    res.json({ success: true, url: savedUrl });
   });
 
   // --- AUTHENTICATION & APPLICATIONS ---
@@ -478,7 +564,7 @@ async function startServer() {
     if (email) user.email = email;
     if (phone) user.phone = phone;
     if (passportPhoto !== undefined) {
-      user.passportPhoto = passportPhoto;
+      user.passportPhoto = db.saveImageToDisk(passportPhoto, `profile_${user.id}`) || passportPhoto;
     }
     if (passportNumber) user.passportNumber = passportNumber;
     if (nationality) user.nationality = nationality;
@@ -505,7 +591,7 @@ async function startServer() {
       if (lastName) application.lastName = lastName;
       if (email) application.email = email;
       if (phone) application.phone = phone;
-      if (passportPhoto) application.passportPhoto = passportPhoto;
+      if (passportPhoto) application.passportPhoto = user.passportPhoto;
       if (passportNumber) application.idDocumentNumber = passportNumber;
       if (nationality) application.nationality = nationality;
       if (loginPin) application.loginPin = loginPin;
@@ -523,6 +609,8 @@ async function startServer() {
       details: `Profile details and passport identity photo updated.`
     });
 
+    db.saveToDiskSync();
+
     res.json({ success: true, user, message: 'Profile updated successfully.' });
   });
 
@@ -533,7 +621,7 @@ async function startServer() {
 
     const { passportPhoto, passportNumber, nationality } = req.body;
     if (passportPhoto !== undefined) {
-      user.passportPhoto = passportPhoto;
+      user.passportPhoto = db.saveImageToDisk(passportPhoto, `profile_${user.id}`) || passportPhoto;
     }
     if (passportNumber) user.passportNumber = passportNumber;
     if (nationality) user.nationality = nationality;
@@ -543,7 +631,7 @@ async function startServer() {
       a => a.email.toLowerCase() === user.email.toLowerCase()
     );
     if (appRecord) {
-      if (passportPhoto) appRecord.passportPhoto = passportPhoto;
+      if (passportPhoto) appRecord.passportPhoto = user.passportPhoto;
       if (passportNumber) appRecord.idDocumentNumber = passportNumber;
       if (nationality) appRecord.nationality = nationality;
     }
@@ -559,6 +647,8 @@ async function startServer() {
       userAgent: req.headers['user-agent'] || 'First Atlantic Web Client',
       details: `Customer updated verified passport photo and credentials.`
     });
+
+    db.saveToDiskSync();
 
     res.json({ success: true, user, message: 'Passport identity profile updated.' });
   });
