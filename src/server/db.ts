@@ -1214,7 +1214,7 @@ export class BankDatabase {
       requestedCurrency,
       requestedAccountType: raw.requestedAccountType || raw.product || 'CHECKING_PREMIER',
       requestedRegion,
-      initialDepositAmountMinor: initialDepositMinor > 0 ? initialDepositMinor : 2500000, // Default opening balance €25,000.00 if 0
+      initialDepositAmountMinor: Math.max(0, Number(initialDepositMinor) || 0), // Starts at 0 unless explicitly specified
       requestDebitCard: raw.requestDebitCard !== false,
       username: (raw.username || `user_${Math.random().toString(36).slice(2, 7)}`).trim(),
       passwordHashed: raw.password || raw.passwordHashed || 'AtlanticSecure2026!',

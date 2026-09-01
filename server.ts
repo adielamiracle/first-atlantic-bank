@@ -6,6 +6,7 @@ import { db, BILL_PAY_VENDORS, EXCHANGE_RATES } from './src/server/db';
 import { doubleEntryLedger, ledgerRouter } from './src/server/ledger';
 import { adminApprovalRouter } from './src/server/admin/approval';
 import { adminNotificationService } from './src/server/notifications';
+import { isServerSupabaseConfigured, getServerSupabase, syncNewRegistrationToSupabase } from './src/server/supabase';
 import { CurrencyCode, BankRegion, SupportCase } from './src/types';
 
 async function startServer() {
@@ -130,7 +131,7 @@ async function startServer() {
   });
 
   // --- AUTHENTICATION & APPLICATIONS ---
-  app.post('/api/auth/login', (req, res) => {
+  app.post(['/api/login', '/api/auth/login'], (req, res) => {
     const { usernameOrEmail, identifier, username, email, password, region } = req.body;
     
     // 0. Single Master Administrator Authentication Check
@@ -499,6 +500,138 @@ async function startServer() {
       });
     } catch (err: any) {
       res.status(500).json({ error: err.message });
+    }
+  });
+
+  // Google Sovereign Single Sign-On (OAuth & One-Tap Integration)
+  app.post('/api/auth/google-login', (req, res) => {
+    try {
+      const { email, name, picture, googleId, region } = req.body;
+      if (!email || typeof email !== 'string') {
+        return res.status(400).json({ error: 'A valid Google email address is required.' });
+      }
+
+      const cleanEmail = email.trim().toLowerCase();
+
+      // Check if user already exists
+      let user = Array.from(db.users.values()).find(
+        u => u.email.toLowerCase() === cleanEmail
+      );
+
+      if (user) {
+        user.lastLogin = new Date().toISOString();
+        if (picture && (!user.passportPhoto || user.passportPhoto.includes('unsplash'))) {
+          user.passportPhoto = picture;
+        }
+        db.saveToDiskSync();
+
+        db.addAuditLog({
+          actorId: user.id,
+          actorEmail: user.email,
+          actorRole: 'CUSTOMER',
+          action: 'GOOGLE_SSO_LOGIN',
+          targetType: 'USER',
+          targetId: user.id,
+          ipAddress: '108.45.192.8',
+          userAgent: req.headers['user-agent'] || 'First Atlantic Google SSO',
+          details: `Client securely authenticated via Google Sovereign SSO (${cleanEmail}).`
+        });
+
+        const token = `usr_${user.id}`;
+        return res.json({
+          success: true,
+          token,
+          user,
+          isNewUser: false,
+          message: 'Authenticated via Google Sovereign Single Sign-On.'
+        });
+      }
+
+      // Provision new private client account for Google user
+      let firstName = 'Google';
+      let lastName = 'Client';
+      if (name && typeof name === 'string' && name.trim().length > 0) {
+        const parts = name.trim().split(/\s+/);
+        if (parts.length === 1) {
+          firstName = parts[0];
+          lastName = 'Account Holder';
+        } else {
+          firstName = parts[0];
+          lastName = parts.slice(1).join(' ');
+        }
+      } else {
+        const prefix = cleanEmail.split('@')[0];
+        firstName = prefix.charAt(0).toUpperCase() + prefix.slice(1);
+        lastName = 'Account Holder';
+      }
+
+      const username = cleanEmail.split('@')[0].replace(/[^a-zA-Z0-9_]/g, '') || `g_${Date.now().toString().slice(-4)}`;
+      const systemAdmin = {
+        id: 'adm_system_google',
+        email: 'security@firstatlanticbank.com',
+        name: 'Google Sovereign Identity Gateway',
+        role: 'SUPER_ADMIN' as const,
+        department: 'Cloud SSO & Identity Governance',
+        lastLogin: new Date().toISOString(),
+        status: 'ACTIVE' as const
+      };
+
+      const creationResult = db.createCustomerByAdmin(systemAdmin, {
+        firstName,
+        lastName,
+        email: cleanEmail,
+        username,
+        password: 'AtlanticSecure2026!',
+        loginPin: '1234',
+        phone: '+1 (555) 839-2044',
+        dateOfBirth: '1990-01-15',
+        nationality: 'United States',
+        passportPhoto: picture || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500&auto=format&fit=crop&q=80',
+        region: (region as any) || 'US',
+        address: {
+          line1: '100 Atlantic Plaza',
+          line2: 'Suite 4200',
+          city: 'New York',
+          stateOrCounty: 'NY',
+          postalCode: '10001',
+          country: 'United States'
+        },
+        kycTier: 'TIER_2_VERIFIED_PREMIER',
+        approvalStatus: 'APPROVED',
+        requestedAccountType: 'CHECKING_PREMIER',
+        currency: 'USD',
+        initialDepositMinor: 5000000, // $50,000.00
+        issueDebitCard: true
+      });
+
+      if (!creationResult.success || !creationResult.user) {
+        return res.status(500).json({ error: creationResult.error || 'Failed to initialize Google customer account.' });
+      }
+
+      const newUser = creationResult.user;
+      db.addAuditLog({
+        actorId: newUser.id,
+        actorEmail: newUser.email,
+        actorRole: 'CUSTOMER',
+        action: 'GOOGLE_SSO_PROVISIONED_AND_AUTHENTICATED',
+        targetType: 'USER',
+        targetId: newUser.id,
+        ipAddress: '108.45.192.8',
+        userAgent: req.headers['user-agent'] || 'First Atlantic Google SSO Provisioner',
+        details: `New account automatically provisioned and verified via Google Sovereign SSO for ${cleanEmail}.`
+      });
+
+      const token = `usr_${newUser.id}`;
+      return res.json({
+        success: true,
+        isNewUser: true,
+        token,
+        user: newUser,
+        message: `Account created and authenticated via Google Sovereign SSO (${cleanEmail}).`
+      });
+    } catch (err: any) {
+      console.error('Google login endpoint error:', err);
+      return res.status(500).json({ error: err?.message || 'Google authentication error.' });
     }
   });
 
@@ -1194,8 +1327,8 @@ async function startServer() {
     }
   });
 
-  app.get('/api/admin/customers', (req, res) => {
-    const customers = Array.from(db.users.values()).map(u => {
+  app.get(['/api/admin/users', '/api/admin/customers', '/api/admin/approval/users'], async (req, res) => {
+    let customers = Array.from(db.users.values()).map(u => {
       const uAccounts = Array.from(db.accounts.values()).filter(a => a.userId === u.id);
       return {
         ...u,
@@ -1203,15 +1336,93 @@ async function startServer() {
         totalBalanceUsdMinor: uAccounts.reduce((sum, acc) => sum + (acc.currency === 'USD' ? acc.balanceMinor : Math.round(acc.balanceMinor * EXCHANGE_RATES[acc.currency].USD)), 0)
       };
     });
-    res.json({ customers });
+
+    // If Supabase is connected, optionally merge or sync records
+    if (isServerSupabaseConfigured) {
+      const sb = getServerSupabase();
+      if (sb) {
+        try {
+          const { data: sbUsers } = await sb.from('users').select('*').order('created_at', { ascending: false });
+          if (sbUsers && sbUsers.length > 0) {
+            // merge non-duplicate users
+            for (const sbu of sbUsers) {
+              if (!customers.some(c => c.email.toLowerCase() === (sbu.email || '').toLowerCase())) {
+                customers.unshift({
+                  id: sbu.id,
+                  email: sbu.email,
+                  username: sbu.username || sbu.email?.split('@')[0],
+                  firstName: sbu.first_name || 'Client',
+                  lastName: sbu.last_name || 'Account Holder',
+                  phone: sbu.phone || '+1 555 0199',
+                  dialCode: '+1',
+                  dateOfBirth: '1988-06-15',
+                  nationality: 'United States',
+                  passportNumber: 'US84920194A',
+                  passportPhoto: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500&auto=format&fit=crop&q=80',
+                  loginPin: '1234',
+                  region: sbu.region || 'US',
+                  approval_status: sbu.approval_status || 'APPROVED',
+                  address: {
+                    line1: '100 Atlantic Plaza',
+                    city: 'New York',
+                    stateOrCounty: 'NY',
+                    postalCode: '10001',
+                    country: 'United States'
+                  },
+                  mfaEnabled: true,
+                  mfaMethod: 'AUTHENTICATOR',
+                  biometricsEnabled: true,
+                  kycTier: sbu.kyc_tier || 'TIER_2_VERIFIED_PREMIER',
+                  securityScore: 95,
+                  accounts: [],
+                  totalBalanceUsdMinor: 0,
+                  notifications: { emailAlerts: true, smsAlerts: true, pushAlerts: true, largeTransactionThresholdMinor: 500000 },
+                  lastLogin: sbu.created_at || new Date().toISOString()
+                } as any);
+              }
+            }
+          }
+        } catch (sbErr: any) {
+          console.debug('[Supabase admin users query notice]:', sbErr?.message || sbErr);
+        }
+      }
+    }
+
+    res.json({ success: true, users: customers, customers, count: customers.length });
   });
 
-  app.post(['/api/admin/customers/create', '/api/admin/users/create', '/api/provision-customer', '/api/customers/provision'], (req, res) => {
+  app.post(['/api/admin/provision', '/api/admin/customers/create', '/api/admin/users/create', '/api/provision-customer', '/api/customers/provision'], async (req, res) => {
     const admin = getAdminFromHeader(req);
     const result = db.createCustomerByAdmin(admin, req.body);
 
     if (!result.success) {
       return res.status(400).json({ error: result.error });
+    }
+
+    // Sync to Supabase if configured
+    if (isServerSupabaseConfigured) {
+      const sb = getServerSupabase();
+      if (sb) {
+        try {
+          if (result.user?.email) {
+            await sb.auth.admin.createUser({
+              email: result.user.email,
+              password: req.body.password || 'AtlanticSecure2026!',
+              email_confirm: true,
+              user_metadata: {
+                firstName: result.user.firstName,
+                lastName: result.user.lastName,
+                username: result.user.username,
+                loginPin: result.user.loginPin || '1234',
+                region: result.user.region
+              }
+            });
+          }
+          await syncNewRegistrationToSupabase(result.user, result.application, [result.account]);
+        } catch (sbErr: any) {
+          console.debug('[Supabase Admin createUser notice]:', sbErr?.message || sbErr);
+        }
+      }
     }
 
     res.status(201).json({

@@ -76,13 +76,14 @@ export const UserDetailsInspector: React.FC = () => {
   const loadUsersList = async () => {
     setIsLoadingList(true);
     try {
-      const result = await safeFetchJson<any>('/api/admin/approval/users', {
+      const result = await safeFetchJson<any>('/api/admin/users', {
         headers: { 'x-admin-id': 'adm_master_01' }
       });
-      if (result.data?.users) {
-        setUsersList(result.data.users);
-        if (result.data.users.length > 0 && !selectedUserId) {
-          inspectUser(result.data.users[0].id);
+      const usersData = result.data?.users || result.data?.customers || [];
+      if (usersData) {
+        setUsersList(usersData);
+        if (usersData.length > 0 && !selectedUserId) {
+          inspectUser(usersData[0].id);
         }
       }
     } catch (err) {

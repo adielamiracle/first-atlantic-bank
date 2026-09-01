@@ -165,6 +165,7 @@ interface BankContextType {
   // Actions
   refreshData: () => Promise<void>;
   login: (token: string, user: UserProfile) => void;
+  loginWithGoogle: (googleProfile: { email: string; name?: string; picture?: string; googleId?: string; region?: BankRegion }) => Promise<{ success: boolean; user?: UserProfile; error?: string }>;
   logout: () => void;
   switchDemoUser: (userId: string) => Promise<void>;
   switchToAdmin: () => void;
@@ -1025,6 +1026,45 @@ export const BankProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
+  const loginWithGoogle = async (googleProfile: {
+    email: string;
+    name?: string;
+    picture?: string;
+    googleId?: string;
+    region?: BankRegion;
+  }): Promise<{ success: boolean; user?: UserProfile; error?: string }> => {
+    try {
+      setIsLoading(true);
+      const result = await safeFetchJson<any>('/api/auth/google-login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(googleProfile)
+      });
+
+      if (result.data?.success && result.data?.user && result.data?.token) {
+        await login(result.data.token, result.data.user);
+        showToast(
+          'SUCCESS',
+          'Google Sovereign Authentication',
+          result.data.isNewUser
+            ? `Welcome to First Atlantic Bank, ${result.data.user.firstName}! Your private client account and multi-currency balances have been established.`
+            : `Welcome back, ${result.data.user.firstName}. Authenticated via Google Sovereign SSO.`
+        );
+        return { success: true, user: result.data.user };
+      } else {
+        const errorMsg = result.errorMessage || result.data?.error || 'Failed to authenticate with Google Single Sign-On.';
+        showToast('ERROR', 'Authentication Failed', errorMsg);
+        return { success: false, error: errorMsg };
+      }
+    } catch (err: any) {
+      const errorMsg = err?.message || 'Network error during Google authentication.';
+      showToast('ERROR', 'Authentication Error', errorMsg);
+      return { success: false, error: errorMsg };
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const switchToAdmin = () => {
     setCurrentRole('ADMIN');
     setCurrentView('ADMIN_DASHBOARD');
@@ -1336,8 +1376,8 @@ export const BankProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const createCustomerByAdmin = async (data: any) => {
     try {
-      console.log('Payload being sent to /api/provision-customer:', data);
-      const res = await fetch('/api/provision-customer', {
+      console.log('Payload being sent to /api/admin/provision:', data);
+      const res = await fetch('/api/admin/provision', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -1646,6 +1686,7 @@ export const BankProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         removeToast,
         refreshData,
         login,
+        loginWithGoogle,
         logout,
         switchDemoUser,
         switchToAdmin,

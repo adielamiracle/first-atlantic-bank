@@ -101,7 +101,7 @@ export const CreateCustomerModal: React.FC<CreateCustomerModalProps> = ({
   const [region, setRegion] = useState<BankRegion>('US');
   const [accountType, setAccountType] = useState<AccountType>('CHECKING_PREMIER');
   const [currency, setCurrency] = useState<CurrencyCode>('USD');
-  const [initialDepositDollars, setInitialDepositDollars] = useState('25000');
+  const [initialDepositDollars, setInitialDepositDollars] = useState('0');
   const [issueDebitCard, setIssueDebitCard] = useState(true);
   const [kycTier, setKycTier] = useState<'TIER_1_STANDARD' | 'TIER_2_VERIFIED_PREMIER' | 'TIER_3_INSTITUTIONAL'>('TIER_2_VERIFIED_PREMIER');
   const [approvalStatus, setApprovalStatus] = useState<UserApprovalStatus>('APPROVED');
@@ -392,8 +392,8 @@ export const CreateCustomerModal: React.FC<CreateCustomerModalProps> = ({
       annualIncomeRange
     };
 
-    // Requirement 4: Add console.log for payload being sent to /api/provision-customer
-    console.log('[PROVISION CUSTOMER PAYLOAD] Payload being sent to /api/provision-customer:', payload);
+    // Requirement 4: Add console.log for payload being sent to /api/admin/provision
+    console.log('[PROVISION CUSTOMER PAYLOAD] Payload being sent to /api/admin/provision:', payload);
 
     // Requirement 1: Add loading state to "Provision Customer" button. Show spinner "Creating Account..." for 2s
     setIsSubmitting(true);

@@ -36,6 +36,7 @@ import { BankRegion, formatDateTime } from '../../types';
 import { COUNTRIES, NATIONALITIES } from '../../data/countries';
 import { supabase, safeSupabaseOp } from '../../lib/supabaseClient.js';
 import { safeFetchJson, DEMO_CLIENT_USER } from '../../lib/apiHelper';
+import { GoogleSignInModal } from '../../components/auth/GoogleSignInModal';
 
 export const LoginPage: React.FC = () => {
   const { login, setCurrentView, showToast, openBiometricPrompt, switchToAdmin } = useBank();
@@ -146,10 +147,10 @@ export const LoginPage: React.FC = () => {
       }
 
       // Safe API login fetch
-      const result = await safeFetchJson<any>('/api/auth/login', {
+      const result = await safeFetchJson<any>('/api/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ usernameOrEmail: emailOrUser, password: enteredPassword })
+        body: JSON.stringify({ email: emailOrUser, usernameOrEmail: emailOrUser, password: enteredPassword })
       });
 
       // If backend returned valid JSON
@@ -171,14 +172,17 @@ export const LoginPage: React.FC = () => {
             showToast('ERROR', 'Account Suspended', suspMsg);
             return;
           }
-          const failMessage = data.message || data.error || 'Invalid credentials. Please verify your username/email and password.';
+          const failMessage = data.message || data.error || 'Invalid credentials. Please verify your email/username and password.';
           setErrorMessage(failMessage);
           showToast('ERROR', 'Login Failed', failMessage);
           return;
         }
 
-        // Checkpoint with verified Passport & 4-Digit PIN
-        if (data.passportCheckpointRequired) {
+        // Direct login success or checkpoint with verified credentials
+        if (data.token && data.user) {
+          login(data.token, data.user);
+          return;
+        } else if (data.passportCheckpointRequired) {
           setPassportCheckpoint({
             required: true,
             userId: data.userId,
@@ -193,7 +197,7 @@ export const LoginPage: React.FC = () => {
             phoneMasked: data.phoneMasked,
             loginPin: data.loginPin
           });
-          const savedPin = localStorage.getItem('last_registered_pin') || data.loginPin || '1234';
+          const savedPin = data.loginPin || '1234';
           setEnteredPin(savedPin.trim());
           return;
         } else if (data.mfaRequired) {
@@ -205,68 +209,11 @@ export const LoginPage: React.FC = () => {
             code: '849201'
           });
           return;
-        } else if (data.token && data.user) {
-          login(data.token, data.user);
-          return;
         }
       }
-
-      // If backend is unavailable or returned non-JSON (e.g. static host/Vercel)
-      // Provide instant local authentication fallback ONLY for exact demo account
-      const isDemoClient =
-        emailOrUser.toLowerCase() === 'j.sterling@atlantic-client.com' ||
-        emailOrUser.toLowerCase() === 'jsterling';
-
-      if (isDemoClient && (enteredPassword === '1234' || enteredPassword === 'AtlanticSecure2026!')) {
-        setPassportCheckpoint({
-          required: true,
-          userId: DEMO_CLIENT_USER.id,
-          username: DEMO_CLIENT_USER.username,
-          firstName: DEMO_CLIENT_USER.firstName,
-          lastName: DEMO_CLIENT_USER.lastName,
-          passportPhoto: DEMO_CLIENT_USER.passportPhoto,
-          passportNumber: DEMO_CLIENT_USER.passportNumber,
-          nationality: DEMO_CLIENT_USER.nationality,
-          kycTier: DEMO_CLIENT_USER.kycTier,
-          region: DEMO_CLIENT_USER.region,
-          phoneMasked: DEMO_CLIENT_USER.phone,
-          loginPin: DEMO_CLIENT_USER.loginPin
-        });
-        setEnteredPin('1234');
-        return;
-      }
-
-      // Check localStorage for registered user
-      try {
-        const localUserStr = localStorage.getItem('fab_current_user_profile');
-        if (localUserStr) {
-          const localUser = JSON.parse(localUserStr);
-          if (
-            localUser.email?.toLowerCase() === emailOrUser.toLowerCase() ||
-            localUser.username?.toLowerCase() === emailOrUser.toLowerCase()
-          ) {
-            setPassportCheckpoint({
-              required: true,
-              userId: localUser.id,
-              username: localUser.username,
-              firstName: localUser.firstName,
-              lastName: localUser.lastName,
-              passportPhoto: localUser.passportPhoto,
-              passportNumber: localUser.passportNumber,
-              nationality: localUser.nationality,
-              kycTier: localUser.kycTier,
-              region: localUser.region,
-              phoneMasked: localUser.phone,
-              loginPin: localUser.loginPin || '1234'
-            });
-            setEnteredPin(localUser.loginPin || '1234');
-            return;
-          }
-        }
-      } catch {}
 
       // If credentials do not match
-      const failMsg = result.errorMessage || 'Invalid credentials. Please verify your username/email and password.';
+      const failMsg = result.errorMessage || result.data?.error || 'Invalid credentials. Please verify your username/email and password.';
       setErrorMessage(failMsg);
       showToast('ERROR', 'Login Failed', failMsg);
     } catch (err: any) {
@@ -382,12 +329,10 @@ export const LoginPage: React.FC = () => {
     }
   };
 
+  const [isGoogleModalOpen, setIsGoogleModalOpen] = useState(false);
+
   const handleGoogleAuth = () => {
-    showToast(
-      'INFO',
-      'Google Login Coming Soon',
-      'Google Sovereign Single Sign-On is currently undergoing final institutional SOC2 compliance review. Please sign in with your email and password.'
-    );
+    setIsGoogleModalOpen(true);
   };
 
   return (
@@ -695,7 +640,7 @@ export const LoginPage: React.FC = () => {
               <button
                 type="button"
                 onClick={handleGoogleAuth}
-                title="Google Login Coming Soon"
+                title="Sign in with Google Sovereign Single Sign-On"
                 className="w-full py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#161B22] hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-800 dark:text-slate-100 font-semibold text-[13px] sm:text-[14px] flex items-center justify-center gap-2.5 cursor-pointer transition-all shadow-xs active:scale-[0.99]"
               >
                 <svg className="w-4 h-4" viewBox="0 0 24 24">
@@ -798,6 +743,13 @@ export const LoginPage: React.FC = () => {
           First Atlantic Private Banking Gateway
         </span>
       </div>
+
+      {/* Google Sovereign SSO Authentication Modal */}
+      <GoogleSignInModal
+        isOpen={isGoogleModalOpen}
+        onClose={() => setIsGoogleModalOpen(false)}
+        isSignUp={isSignUpMode}
+      />
     </div>
   );
 };

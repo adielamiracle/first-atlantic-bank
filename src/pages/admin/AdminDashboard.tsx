@@ -45,6 +45,7 @@ import { AdminNotificationsTab } from './AdminNotificationsTab';
 import { EnrollmentTrendWidget } from './EnrollmentTrendWidget';
 import { CreateCustomerModal } from './CreateCustomerModal';
 import { EditApplicationModal } from './EditApplicationModal';
+import { SupabaseStatusChecker } from '../../components/common/SupabaseStatusChecker';
 import { AccountApplication, formatAddress, formatDateTime } from '../../types';
 
 export const AdminDashboard: React.FC = () => {
@@ -318,6 +319,10 @@ export const AdminDashboard: React.FC = () => {
           </div>
 
           <div className="flex items-center gap-2 sm:gap-3">
+            <div className="hidden md:block">
+              <SupabaseStatusChecker compact showCard />
+            </div>
+
             <button
               onClick={() => {
                 fetchAdminStats();
@@ -522,58 +527,62 @@ export const AdminDashboard: React.FC = () => {
             {/* TAB 6: NOTIFICATIONS */}
             {activeTab === 'NOTIFICATIONS' && <AdminNotificationsTab />}
 
-            {/* TAB 7: SECURITY AUDIT LOGS */}
+            {/* TAB 7: SECURITY AUDIT LOGS & CLOUD DIAGNOSTICS */}
             {activeTab === 'AUDIT_LOGS' && (
-              <div className="bg-white dark:bg-[#0f172a] rounded-2xl border border-slate-200/80 dark:border-slate-800 p-6 shadow-2xs space-y-4">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                  <div>
-                    <h2 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                      <ShieldCheck className="w-5 h-5 text-[#004281] dark:text-blue-400" />
-                      <span>Security &amp; Audit Journal</span>
-                    </h2>
-                    <p className="text-xs text-slate-500">
-                      Authoritative cryptographic log of administrative and ledger changes
-                    </p>
+              <div className="space-y-6">
+                <SupabaseStatusChecker autoCheck showCard />
+
+                <div className="bg-white dark:bg-[#0f172a] rounded-2xl border border-slate-200/80 dark:border-slate-800 p-6 shadow-2xs space-y-4">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div>
+                      <h2 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                        <ShieldCheck className="w-5 h-5 text-[#004281] dark:text-blue-400" />
+                        <span>Security &amp; Audit Journal</span>
+                      </h2>
+                      <p className="text-xs text-slate-500">
+                        Authoritative cryptographic log of administrative and ledger changes
+                      </p>
+                    </div>
+
+                    <div className="relative w-full sm:w-64">
+                      <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
+                      <input
+                        type="text"
+                        placeholder="Search audit logs..."
+                        value={auditSearch}
+                        onChange={e => setAuditSearch(e.target.value)}
+                        className="w-full pl-9 pr-3 py-1.5 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white"
+                      />
+                    </div>
                   </div>
 
-                  <div className="relative w-full sm:w-64">
-                    <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
-                    <input
-                      type="text"
-                      placeholder="Search audit logs..."
-                      value={auditSearch}
-                      onChange={e => setAuditSearch(e.target.value)}
-                      className="w-full pl-9 pr-3 py-1.5 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white"
-                    />
+                  <div className="divide-y divide-slate-100 dark:divide-slate-800 max-h-[600px] overflow-y-auto">
+                    {auditLogs
+                      .filter(l =>
+                        (l.action || '').toLowerCase().includes(auditSearch.toLowerCase()) ||
+                        (l.details || '').toLowerCase().includes(auditSearch.toLowerCase()) ||
+                        (l.actorEmail || l.actorUsername || l.actorId || (l as any).adminId || '').toLowerCase().includes(auditSearch.toLowerCase())
+                      )
+                      .map(log => (
+                        <div key={log.id} className="py-3 text-xs flex items-start gap-3">
+                          <div className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-[#004281] dark:text-blue-400 shrink-0 mt-0.5">
+                            <FileCode className="w-4 h-4" />
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center justify-between gap-2">
+                              <span className="font-bold text-slate-900 dark:text-white font-mono">{log.action}</span>
+                              <span className="text-[10px] text-slate-400 font-mono">
+                                {log.timestamp ? `${new Date(log.timestamp).toLocaleTimeString()} • ${new Date(log.timestamp).toLocaleDateString()}` : 'Recent'}
+                              </span>
+                            </div>
+                            <p className="text-slate-600 dark:text-slate-300 text-[11px] mt-0.5">{log.details}</p>
+                            <div className="text-[10px] text-slate-400 font-mono mt-1">
+                              Actor: {log.actorEmail || log.actorUsername || log.actorId || (log as any).adminId || 'System'} • IP: {log.ipAddress || '127.0.0.1'} • Hash: {(log.signatureHash || (log as any).checksumHash || (log as any).checksum || log.id || '').slice(0, 16)}...
+                            </div>
+                          </div>
+                        </div>
+                      ))}
                   </div>
-                </div>
-
-                <div className="divide-y divide-slate-100 dark:divide-slate-800 max-h-[600px] overflow-y-auto">
-                  {auditLogs
-                    .filter(l =>
-                      (l.action || '').toLowerCase().includes(auditSearch.toLowerCase()) ||
-                      (l.details || '').toLowerCase().includes(auditSearch.toLowerCase()) ||
-                      (l.actorEmail || l.actorUsername || l.actorId || (l as any).adminId || '').toLowerCase().includes(auditSearch.toLowerCase())
-                    )
-                    .map(log => (
-                      <div key={log.id} className="py-3 text-xs flex items-start gap-3">
-                        <div className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-[#004281] dark:text-blue-400 shrink-0 mt-0.5">
-                          <FileCode className="w-4 h-4" />
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <div className="flex items-center justify-between gap-2">
-                            <span className="font-bold text-slate-900 dark:text-white font-mono">{log.action}</span>
-                            <span className="text-[10px] text-slate-400 font-mono">
-                              {log.timestamp ? `${new Date(log.timestamp).toLocaleTimeString()} • ${new Date(log.timestamp).toLocaleDateString()}` : 'Recent'}
-                            </span>
-                          </div>
-                          <p className="text-slate-600 dark:text-slate-300 text-[11px] mt-0.5">{log.details}</p>
-                          <div className="text-[10px] text-slate-400 font-mono mt-1">
-                            Actor: {log.actorEmail || log.actorUsername || log.actorId || (log as any).adminId || 'System'} • IP: {log.ipAddress || '127.0.0.1'} • Hash: {(log.signatureHash || (log as any).checksumHash || (log as any).checksum || log.id || '').slice(0, 16)}...
-                          </div>
-                        </div>
-                      </div>
-                    ))}
                 </div>
               </div>
             )}
