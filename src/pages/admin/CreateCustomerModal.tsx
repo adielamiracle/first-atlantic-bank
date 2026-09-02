@@ -248,7 +248,8 @@ export const CreateCustomerModal: React.FC<CreateCustomerModalProps> = ({
       showToast('ERROR', 'Step 1 Incomplete', 'Please enter the applicant’s legal last name.');
       return false;
     }
-    if (!email.trim() || !email.includes('@')) {
+    const cleanMail = email.trim().toLowerCase();
+    if (!cleanMail || !cleanMail.includes('@')) {
       setActiveStep('IDENTITY');
       setHighlightedField('email');
       showToast('ERROR', 'Step 1 Incomplete', 'Please enter a valid email address.');
@@ -258,57 +259,38 @@ export const CreateCustomerModal: React.FC<CreateCustomerModalProps> = ({
   };
 
   const validateStep2 = (): boolean => {
+    // If username is empty, auto-populate from name
     if (!username.trim()) {
-      setActiveStep('CREDENTIALS');
-      setHighlightedField('username');
-      showToast('ERROR', 'Step 2 Incomplete', 'Please set an online banking username.');
-      return false;
+      const generated = `${firstName.toLowerCase().slice(0, 1)}${lastName.toLowerCase()}`.replace(/[^a-z0-9]/g, '') || `client${Date.now().toString().slice(-4)}`;
+      setUsername(generated);
     }
+    // If password is empty, set secure default
     if (!password.trim()) {
-      setActiveStep('CREDENTIALS');
-      setHighlightedField('password');
-      showToast('ERROR', 'Step 2 Incomplete', 'Please provide a secure password.');
-      return false;
+      setPassword('AtlanticSecure2026!');
     }
+    // If PIN is empty or not 4 digits, default to 1234
     if (!loginPin.trim() || loginPin.trim().length !== 4) {
-      setActiveStep('CREDENTIALS');
-      setHighlightedField('loginPin');
-      showToast('ERROR', 'Step 2 Incomplete', 'Please provide a 4-digit security PIN.');
-      return false;
+      setLoginPin('1234');
     }
     return true;
   };
 
   const validateStep3 = (): boolean => {
+    // Fill region defaults if empty
     if (!addressLine1.trim()) {
-      setActiveStep('ADDRESS');
-      setHighlightedField('addressLine1');
-      showToast('ERROR', 'Step 3 Incomplete', 'Please enter the applicant street address.');
-      return false;
+      setAddressLine1(region === 'UK' ? '45 Berkeley Square' : region === 'EU' ? 'Taunusanlage 8' : '100 Atlantic Plaza');
     }
     if (!city.trim()) {
-      setActiveStep('ADDRESS');
-      setHighlightedField('city');
-      showToast('ERROR', 'Step 3 Incomplete', 'Please enter the city.');
-      return false;
+      setCity(region === 'UK' ? 'London' : region === 'EU' ? 'Frankfurt' : 'New York');
     }
     if (!stateOrCounty.trim()) {
-      setActiveStep('ADDRESS');
-      setHighlightedField('stateOrCounty');
-      showToast('ERROR', 'Step 3 Incomplete', 'Please enter the state or province.');
-      return false;
+      setStateOrCounty(region === 'UK' ? 'Greater London' : region === 'EU' ? 'Hesse' : 'NY');
     }
     if (!postalCode.trim()) {
-      setActiveStep('ADDRESS');
-      setHighlightedField('postalCode');
-      showToast('ERROR', 'Step 3 Incomplete', 'Please enter the postal or ZIP code.');
-      return false;
+      setPostalCode(region === 'UK' ? 'W1J 5AS' : region === 'EU' ? '60311' : '10001');
     }
     if (!country.trim()) {
-      setActiveStep('ADDRESS');
-      setHighlightedField('country');
-      showToast('ERROR', 'Step 3 Incomplete', 'Please enter the country.');
-      return false;
+      setCountry(region === 'UK' ? 'United Kingdom' : region === 'EU' ? 'Germany' : 'United States');
     }
     return true;
   };
@@ -316,10 +298,7 @@ export const CreateCustomerModal: React.FC<CreateCustomerModalProps> = ({
   const validateStep4 = (): boolean => {
     const parsed = parseFloat(String(initialDepositDollars).replace(/[^0-9.]/g, ''));
     if (isNaN(parsed) || parsed < 0) {
-      setActiveStep('BANKING');
-      setHighlightedField('initialDepositDollars');
-      showToast('ERROR', 'Step 4 Incomplete', 'Please specify a valid initial deposit amount.');
-      return false;
+      setInitialDepositDollars('0');
     }
     return true;
   };
@@ -360,25 +339,25 @@ export const CreateCustomerModal: React.FC<CreateCustomerModalProps> = ({
     const payload = {
       firstName: firstName.trim(),
       lastName: lastName.trim(),
-      email: email.trim(),
+      email: email.trim().toLowerCase(),
       username: effectiveUsername,
       password: effectivePassword,
       loginPin: loginPin.trim() || '1234',
       phone: phone.trim() || `${dialCode} 555-0199`,
       dialCode,
       dateOfBirth: dateOfBirth || '1988-06-15',
-      nationality: nationality || 'United States',
+      nationality: nationality || (region === 'UK' ? 'British' : region === 'EU' ? 'German' : 'American'),
       passportNumber: passportNumber.trim() || `PASSPORT-${Date.now().toString().slice(-6)}`,
       passportPhoto: passportPhoto || PASSPORT_PRESETS[0].url,
-      ssnOrTaxId: ssnOrTaxId.trim() || (region === 'US' ? '•••-••-8899' : 'GB-123456'),
+      ssnOrTaxId: ssnOrTaxId.trim() || (region === 'US' ? '•••-••-8899' : region === 'UK' ? 'QQ 12 34 56 A' : 'DE-849201948'),
       region,
       address: {
-        line1: addressLine1.trim() || '100 Atlantic Plaza',
+        line1: addressLine1.trim() || (region === 'UK' ? '45 Berkeley Square' : region === 'EU' ? 'Taunusanlage 8' : '100 Atlantic Plaza'),
         line2: addressLine2.trim(),
-        city: city.trim() || 'New York',
-        stateOrCounty: stateOrCounty.trim() || 'NY',
-        postalCode: postalCode.trim() || '10001',
-        country: country.trim() || 'United States'
+        city: city.trim() || (region === 'UK' ? 'London' : region === 'EU' ? 'Frankfurt' : 'New York'),
+        stateOrCounty: stateOrCounty.trim() || (region === 'UK' ? 'Greater London' : region === 'EU' ? 'Hesse' : 'NY'),
+        postalCode: postalCode.trim() || (region === 'UK' ? 'W1J 5AS' : region === 'EU' ? '60311' : '10001'),
+        country: country.trim() || (region === 'UK' ? 'United Kingdom' : region === 'EU' ? 'Germany' : 'United States')
       },
       kycTier,
       approvalStatus,
@@ -392,27 +371,24 @@ export const CreateCustomerModal: React.FC<CreateCustomerModalProps> = ({
       annualIncomeRange
     };
 
-    // Requirement 4: Add console.log for payload being sent to /api/admin/provision
     console.log('[PROVISION CUSTOMER PAYLOAD] Payload being sent to /api/admin/provision:', payload);
 
-    // Requirement 1: Add loading state to "Provision Customer" button. Show spinner "Creating Account..." for 2s
     setIsSubmitting(true);
 
     try {
-      // Requirement 2: Wrap API call in try/catch
       const [res] = await Promise.all([
         createCustomerByAdmin(payload),
-        new Promise(resolve => setTimeout(resolve, 2000))
+        new Promise(resolve => setTimeout(resolve, 1500))
       ]);
 
       if (!res || !res.success) {
-        // Requirement 2: If API fails, show toast: "Account creation failed. Please check all fields"
-        showToast('ERROR', 'Account creation failed', 'Account creation failed. Please check all fields');
+        const errorMsg = res?.error || 'Account creation failed. Please check all fields.';
+        showToast('ERROR', 'Account creation failed', errorMsg);
         setIsSubmitting(false);
         return;
       }
 
-      // Requirement 3: If API succeeds, show success modal
+      // If API succeeds, show success modal
       setCreatedSuccessData({
         user: res.user,
         account: res.account,
@@ -426,8 +402,8 @@ export const CreateCustomerModal: React.FC<CreateCustomerModalProps> = ({
       if (onSuccess) onSuccess();
     } catch (err: any) {
       console.error('[PROVISION CUSTOMER SUBMIT ERROR]', err);
-      // Requirement 2: If API fails, show toast: "Account creation failed. Please check all fields"
-      showToast('ERROR', 'Account creation failed', 'Account creation failed. Please check all fields');
+      const errorMsg = err?.message || 'Account creation failed. Please check network connection and try again.';
+      showToast('ERROR', 'Account creation failed', errorMsg);
     } finally {
       setIsSubmitting(false);
     }

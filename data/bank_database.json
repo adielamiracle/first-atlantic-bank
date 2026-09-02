@@ -312,6 +312,46 @@
         },
         "lastLogin": "2026-09-02T07:52:47.681Z"
       }
+    ],
+    [
+      "usr_tester_6242",
+      {
+        "id": "usr_tester_6242",
+        "email": "mobile.test.8899@gmail.com",
+        "username": "mobiletest8899",
+        "firstName": "Mobile",
+        "lastName": "Tester",
+        "phone": "+1 (555) 019-2830",
+        "dialCode": "+1",
+        "dateOfBirth": "1988-06-15",
+        "nationality": "American",
+        "passportNumber": "ID-646242",
+        "passportPhoto": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500&auto=format&fit=crop&q=80",
+        "loginPin": "1234",
+        "ssnMasked": "•••-••-8899",
+        "region": "US",
+        "approval_status": "APPROVED",
+        "address": {
+          "line1": "100 Atlantic Plaza",
+          "line2": "",
+          "city": "New York",
+          "stateOrCounty": "NY",
+          "postalCode": "10001",
+          "country": "United States"
+        },
+        "mfaEnabled": true,
+        "mfaMethod": "AUTHENTICATOR",
+        "biometricsEnabled": true,
+        "kycTier": "TIER_2_VERIFIED_PREMIER",
+        "securityScore": 95,
+        "notifications": {
+          "emailAlerts": true,
+          "smsAlerts": true,
+          "pushAlerts": true,
+          "largeTransactionThresholdMinor": 500000
+        },
+        "lastLogin": "2026-09-02T09:00:46.242Z"
+      }
     ]
   ],
   "accounts": [
@@ -521,6 +561,29 @@
         "dailyTransferLimitMinor": 50000000,
         "statementCycleDay": 28
       }
+    ],
+    [
+      "acc_usr_tester_6242_usd_01",
+      {
+        "id": "acc_usr_tester_6242_usd_01",
+        "userId": "usr_tester_6242",
+        "accountNumber": "•••• 8970",
+        "accountNumberFull": "340885208970",
+        "routingNumber": "021000089",
+        "swiftBic": "FATLUS33NYC",
+        "name": "Premier Private Client Checking",
+        "type": "CHECKING_PREMIER",
+        "currency": "USD",
+        "balanceMinor": 50000,
+        "availableBalanceMinor": 50000,
+        "pendingHoldMinor": 0,
+        "interestRateAPY": 1.25,
+        "status": "ACTIVE",
+        "region": "US",
+        "openedDate": "2026-09-02",
+        "dailyTransferLimitMinor": 50000000,
+        "statementCycleDay": 28
+      }
     ]
   ],
   "cards": [
@@ -690,9 +753,50 @@
         "dailySpendLimitMinor": 2500000,
         "travelNotices": []
       }
+    ],
+    [
+      "crd_usr_tester_6242_01",
+      {
+        "id": "crd_usr_tester_6242_01",
+        "accountId": "acc_usr_tester_6242_usd_01",
+        "userId": "usr_tester_6242",
+        "cardNumberMasked": "•••• •••• •••• 8970",
+        "cardNumberFull": "4111 1261 7234 8970",
+        "cardHolderName": "MOBILE TESTER",
+        "expiryMonth": 12,
+        "expiryYear": 2031,
+        "cvv": "863",
+        "cardType": "DEBIT_VISA_SIGNATURE",
+        "status": "ACTIVE",
+        "isVirtual": false,
+        "contactlessEnabled": true,
+        "onlineTransactionsEnabled": true,
+        "internationalSpendEnabled": true,
+        "dailyAtmLimitMinor": 500000,
+        "dailySpendLimitMinor": 2500000,
+        "travelNotices": []
+      }
     ]
   ],
   "ledger": [
+    {
+      "id": "led_init_1788339646243",
+      "transactionId": "tx_init_1788339646243",
+      "accountId": "acc_usr_tester_6242_usd_01",
+      "direction": "CREDIT",
+      "amountMinor": 50000,
+      "currency": "USD",
+      "balanceAfterMinor": 50000,
+      "description": "Initial Account Opening Deposit (Executive Clearance)",
+      "category": "Deposits",
+      "counterparty": "First Atlantic Bank Treasury Direct",
+      "status": "SETTLED",
+      "channel": "ADMIN_PORTAL",
+      "referenceNumber": "DEP-ADM-646243",
+      "createdTimestamp": "2026-09-02T09:00:46.243Z",
+      "effectiveTimestamp": "2026-09-02T09:00:46.243Z",
+      "settledTimestamp": "2026-09-02T09:00:46.243Z"
+    },
     {
       "id": "led_init_1788284755428",
       "transactionId": "tx_init_1788284755428",
@@ -820,6 +924,20 @@
     }
   ],
   "auditLogs": [
+    {
+      "actorId": "adm_master_01",
+      "actorEmail": "admin@firstatlanticbank.com",
+      "actorRole": "SUPER_ADMIN",
+      "action": "ADMIN_CUSTOMER_CREATED",
+      "targetType": "USER",
+      "targetId": "usr_tester_6242",
+      "ipAddress": "199.16.156.12",
+      "userAgent": "First Atlantic Master Admin Suite v4.9",
+      "details": "Administrator Alexandra Vance created new customer account for Mobile Tester (mobile.test.8899@gmail.com). Provisioned CHECKING_PREMIER (•••• 8970, USD) with initial balance $500.00.",
+      "id": "aud_1788339646243_150",
+      "timestamp": "2026-09-02T09:00:46.243Z",
+      "signatureHash": "000000000000000000000000000000000000000000000000000000005efbf8c6"
+    },
     {
       "actorId": "adm_master_01",
       "actorEmail": "admin@firstatlanticbank.com",
@@ -2518,6 +2636,56 @@
         "provisionedRoutingNumber": "021000089",
         "provisionedAccountNumber": "853495521004"
       }
+    ],
+    [
+      "app_1788339646243_302",
+      {
+        "id": "app_1788339646243_302",
+        "referenceNumber": "FAB-US-2026-21055",
+        "firstName": "Mobile",
+        "lastName": "Tester",
+        "email": "mobile.test.8899@gmail.com",
+        "phone": "+1 (555) 019-2830",
+        "dialCode": "+1",
+        "dateOfBirth": "1988-06-15",
+        "nationality": "American",
+        "taxIdOrSsn": "987-65-4321",
+        "idDocumentType": "PASSPORT",
+        "idDocumentNumber": "ID-646242",
+        "passportPhoto": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500&auto=format&fit=crop&q=80",
+        "address": {
+          "line1": "100 Atlantic Plaza",
+          "line2": "",
+          "city": "New York",
+          "stateOrProvince": "NY",
+          "postalCode": "10001",
+          "country": "United States"
+        },
+        "employmentStatus": "EXECUTIVE",
+        "employerOrBusinessName": "Private Wealth Holding",
+        "sourceOfWealth": "INVESTMENTS",
+        "annualIncomeRange": "$250,000+",
+        "isPep": false,
+        "requestedCurrency": "USD",
+        "requestedAccountType": "CHECKING_PREMIER",
+        "requestedRegion": "US",
+        "initialDepositAmountMinor": 50000,
+        "requestDebitCard": true,
+        "username": "mobiletest8899",
+        "passwordHashed": "AtlanticSecure2026!",
+        "loginPin": "1234",
+        "mfaPreference": "AUTHENTICATOR",
+        "status": "APPROVED",
+        "riskScore": 8,
+        "submittedAt": "2026-09-02T09:00:46.243Z",
+        "reviewedAt": "2026-09-02T09:00:46.243Z",
+        "reviewedByAdminId": "adm_master_01",
+        "reviewedByAdminName": "Alexandra Vance",
+        "complianceNotes": "Directly onboarded and provisioned by Administrator Alexandra Vance. Verified KYC and account clearance.",
+        "createdUserId": "usr_tester_6242",
+        "provisionedRoutingNumber": "021000089",
+        "provisionedAccountNumber": "340885208970"
+      }
     ]
   ],
   "receivingAccounts": [
@@ -2666,8 +2834,20 @@
     [
       "devin.hayes@atlantic-client.com",
       "AtlanticSecure2026!"
+    ],
+    [
+      "usr_tester_6242",
+      "AtlanticSecure2026!"
+    ],
+    [
+      "mobiletest8899",
+      "AtlanticSecure2026!"
+    ],
+    [
+      "mobile.test.8899@gmail.com",
+      "AtlanticSecure2026!"
     ]
   ],
   "activeSessions": [],
-  "savedAt": "2026-09-02T07:52:47.682Z"
+  "savedAt": "2026-09-02T09:00:46.344Z"
 }

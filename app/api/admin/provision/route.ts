@@ -42,7 +42,7 @@ export async function POST(req: Request) {
       });
 
       // 1. Create user in Supabase Auth via Admin API
-      const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
+      let { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
         email: cleanEmail,
         password: userPassword,
         email_confirm: true,
@@ -56,12 +56,26 @@ export async function POST(req: Request) {
       });
 
       if (authError) {
-        console.error("PROVISION ERROR:", authError);
-        // If auth user creation fails, return exact error message
-        return Response.json({ success: false, error: authError.message }, { status: 400 });
-      }
-
-      if (authData?.user) {
+        if (authError.message?.toLowerCase().includes('already') || (authError as any).status === 422) {
+          try {
+            const { data: listData } = await supabaseAdmin.auth.admin.listUsers();
+            const existingAuth = listData?.users?.find((u: any) => u.email?.toLowerCase() === cleanEmail);
+            if (existingAuth) {
+              authUser = existingAuth;
+              userId = existingAuth.id;
+            } else {
+              console.error("PROVISION ERROR:", authError);
+              return Response.json({ success: false, error: authError.message }, { status: 400 });
+            }
+          } catch (listErr) {
+            console.error("PROVISION ERROR:", authError);
+            return Response.json({ success: false, error: authError.message }, { status: 400 });
+          }
+        } else {
+          console.error("PROVISION ERROR:", authError);
+          return Response.json({ success: false, error: authError.message }, { status: 400 });
+        }
+      } else if (authData?.user) {
         authUser = authData.user;
         userId = authData.user.id;
       }
@@ -72,15 +86,15 @@ export async function POST(req: Request) {
         .upsert({
           id: userId,
           email: cleanEmail,
-          first_name: firstName,
-          last_name: lastName,
+          first_name: firstName || '',
+          last_name: lastName || '',
           username: cleanUsername,
           phone: phone || '',
           region,
           approval_status: 'APPROVED',
           kyc_tier: 'TIER_2_VERIFIED_PREMIER',
           created_at: new Date().toISOString()
-        }, { onConflict: 'email' })
+        }, { onConflict: 'id' })
         .select()
         .single();
 
@@ -98,9 +112,9 @@ export async function POST(req: Request) {
           account_number: `•••• ${accountNumber.slice(-4)}`,
           account_number_full: accountNumber,
           name: region === 'EU' ? 'European Premier Private Checking' : region === 'UK' ? 'UK Premier Sterling Current Account' : 'Premier Private Checking (USD)',
-          type: accountType,
-          currency,
-          balance_minor: 0,
+          type: accountType || 'CHECKING_PREMIER',
+          currency: currency || 'USD',
+          balance_minor: initialDepositMinor || 0,
           status: 'ACTIVE',
           region,
           created_at: new Date().toISOString()

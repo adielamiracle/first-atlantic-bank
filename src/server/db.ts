@@ -3128,14 +3128,22 @@ export class BankDatabase {
     }
 
     const cleanEmail = data.email.trim().toLowerCase();
-    const cleanUsername = data.username.trim().toLowerCase();
+    let cleanUsername = (data.username || `${data.firstName.toLowerCase().slice(0, 1)}${data.lastName.toLowerCase()}` || cleanEmail.split('@')[0]).trim().toLowerCase().replace(/[^a-z0-9]/g, '');
 
-    // Check duplicate
+    // Check duplicate email
     const existingUser = Array.from(this.users.values()).find(
-      u => u.email.toLowerCase() === cleanEmail || u.username.toLowerCase() === cleanUsername
+      u => u.email.toLowerCase() === cleanEmail
     );
     if (existingUser) {
-      return { success: false, error: `A customer with email ${data.email} or username ${data.username} already exists.` };
+      return { success: false, error: `A customer with email ${data.email} already exists. Please provide a different email or manage the existing account.` };
+    }
+
+    // If username exists, append a random suffix rather than rejecting
+    const usernameTaken = Array.from(this.users.values()).some(
+      u => u.username.toLowerCase() === cleanUsername
+    );
+    if (usernameTaken) {
+      cleanUsername = `${cleanUsername}${Math.floor(100 + Math.random() * 900)}`;
     }
 
     const cleanLastName = data.lastName.toLowerCase().replace(/[^a-z0-9]/g, '') || 'client';
