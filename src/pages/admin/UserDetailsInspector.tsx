@@ -580,7 +580,7 @@ export const UserDetailsInspector: React.FC = () => {
               </button>
             </div>
 
-            <form onSubmit={handleSaveProfile} className="p-5 space-y-3">
+            <form noValidate onSubmit={handleSaveProfile} className="p-5 space-y-3">
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1">
                   <label className="text-xs font-bold text-slate-700">First Name</label>

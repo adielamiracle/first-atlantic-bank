@@ -390,7 +390,7 @@ export const TransactionHistoryManager: React.FC = () => {
               </button>
             </div>
 
-            <form onSubmit={handleSaveEdit} className="p-5 space-y-4 max-h-[80vh] overflow-y-auto">
+            <form noValidate onSubmit={handleSaveEdit} className="p-5 space-y-4 max-h-[80vh] overflow-y-auto">
               {/* Amount & Direction */}
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1">

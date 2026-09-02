@@ -281,7 +281,7 @@ export const AdminUserDetailsTab: React.FC = () => {
 
                 {/* Edit Form or Readonly Grid */}
                 {isEditingUser ? (
-                  <form onSubmit={handleSaveUser} className="space-y-4 pt-2">
+                  <form noValidate onSubmit={handleSaveUser} className="space-y-4 pt-2">
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
                         <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">

@@ -353,7 +353,7 @@ ${acc.specialInstructions ? `Special Instructions: ${acc.specialInstructions}` :
               </button>
             </div>
 
-            <form onSubmit={handleSave} className="p-5 space-y-4 max-h-[80vh] overflow-y-auto">
+            <form noValidate onSubmit={handleSave} className="p-5 space-y-4 max-h-[80vh] overflow-y-auto">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="sm:col-span-2 space-y-1">
                   <label className="block text-xs font-bold text-slate-700">

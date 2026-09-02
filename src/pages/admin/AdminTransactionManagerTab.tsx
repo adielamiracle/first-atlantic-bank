@@ -338,7 +338,7 @@ export const AdminTransactionManagerTab: React.FC = () => {
               </button>
             </div>
 
-            <form onSubmit={handleSaveEdit} className="p-5 sm:p-6 space-y-4 max-h-[80vh] overflow-y-auto">
+            <form noValidate onSubmit={handleSaveEdit} className="p-5 sm:p-6 space-y-4 max-h-[80vh] overflow-y-auto">
               <div className="bg-slate-950 p-3.5 rounded-xl border border-slate-800 text-xs text-slate-400 space-y-1">
                 <div><strong>Transaction ID:</strong> <span className="font-mono text-slate-300">{editingTx.id}</span></div>
                 <div><strong>Account:</strong> <span className="text-white">{editingTx.accountName}</span></div>

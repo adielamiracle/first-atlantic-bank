@@ -5,15 +5,47 @@ const rawUrl = (typeof process !== 'undefined' && process.env?.NEXT_PUBLIC_SUPAB
 const rawKey = (typeof process !== 'undefined' && process.env?.NEXT_PUBLIC_SUPABASE_ANON_KEY) ? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY.trim() : 
   (typeof window !== 'undefined' && window.__ENV__?.NEXT_PUBLIC_SUPABASE_ANON_KEY) ? window.__ENV__.NEXT_PUBLIC_SUPABASE_ANON_KEY.trim() : '';
 
+export function isValidSupabaseKey(key) {
+  if (!key || typeof key !== 'string') return false;
+  const trimmed = key.trim();
+  if (trimmed.length < 20) return false;
+  for (let i = 0; i < trimmed.length; i++) {
+    if (trimmed.charCodeAt(i) > 127) return false;
+  }
+  if (
+    trimmed.includes('••••') ||
+    trimmed.includes('****') ||
+    trimmed.includes('mock_signature_key') ||
+    trimmed.includes('your-supabase-key') ||
+    trimmed.includes('placeholder')
+  ) {
+    return false;
+  }
+  return /^[A-Za-z0-9_\-\.]+$/.test(trimmed);
+}
+
+export function isValidSupabaseUrl(url) {
+  if (!url || typeof url !== 'string') return false;
+  const trimmed = url.trim();
+  if (!trimmed.startsWith('https://') && !trimmed.startsWith('http://localhost')) return false;
+  for (let i = 0; i < trimmed.length; i++) {
+    if (trimmed.charCodeAt(i) > 127) return false;
+  }
+  if (
+    trimmed.includes('••••') ||
+    trimmed.includes('****') ||
+    trimmed.includes('first-atlantic-bank.supabase.co') ||
+    trimmed.includes('your-project-id.supabase.co') ||
+    trimmed.includes('placeholder')
+  ) {
+    return false;
+  }
+  return true;
+}
+
 // Detect if real, valid Supabase configuration is provided
 export const isSupabaseConfigured = Boolean(
-  rawUrl &&
-  rawKey &&
-  rawUrl.startsWith('https://') &&
-  rawUrl.includes('.supabase.co') &&
-  !rawUrl.includes('first-atlantic-bank.supabase.co') &&
-  !rawKey.includes('mock_signature_key') &&
-  rawKey.length > 20
+  isValidSupabaseUrl(rawUrl) && isValidSupabaseKey(rawKey)
 );
 
 let clientInstance;

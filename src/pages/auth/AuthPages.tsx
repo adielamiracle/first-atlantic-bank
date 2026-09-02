@@ -519,7 +519,7 @@ export const LoginPage: React.FC = () => {
             </div>
           ) : !mfaChallenge ? (
             /* Main Form with Input Box Badges matching uploaded design */
-            <form onSubmit={handleInitialSubmit} className="space-y-3.5">
+            <form noValidate onSubmit={handleInitialSubmit} className="space-y-3.5">
               
               {/* Full name (Visible in Sign Up mode) */}
               {isSignUpMode && (
@@ -857,7 +857,7 @@ export const ForgotPasswordPage: React.FC = () => {
 
         {/* Form Steps */}
         {step === 'REQUEST' && (
-          <form onSubmit={handleSendCode} className="space-y-4">
+          <form noValidate onSubmit={handleSendCode} className="space-y-4">
             <div className="space-y-1">
               <div className="relative flex items-center">
                 <div className="absolute left-3 w-7 h-7 rounded-md bg-[#00593B]/10 dark:bg-[#00593B]/30 flex items-center justify-center text-[#00593B] dark:text-[#34D399]">
@@ -892,7 +892,7 @@ export const ForgotPasswordPage: React.FC = () => {
         )}
 
         {step === 'VERIFY' && (
-          <form onSubmit={handleVerifyCode} className="space-y-4">
+          <form noValidate onSubmit={handleVerifyCode} className="space-y-4">
             <div className="space-y-1">
               <input
                 type="text"
@@ -919,7 +919,7 @@ export const ForgotPasswordPage: React.FC = () => {
         )}
 
         {step === 'RESET' && (
-          <form onSubmit={handleResetPassword} className="space-y-3.5">
+          <form noValidate onSubmit={handleResetPassword} className="space-y-3.5">
             <div className="space-y-1">
               <div className="relative flex items-center">
                 <div className="absolute left-3 w-7 h-7 rounded-md bg-[#00593B]/10 dark:bg-[#00593B]/30 flex items-center justify-center text-[#00593B] dark:text-[#34D399]">

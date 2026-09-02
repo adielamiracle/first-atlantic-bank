@@ -2,17 +2,56 @@ import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import fs from 'fs';
 import path from 'path';
 
+export function isValidSupabaseKey(key?: string | null): boolean {
+  if (!key || typeof key !== 'string') return false;
+  const trimmed = key.trim();
+  if (trimmed.length < 20) return false;
+  // Reject keys with non-ASCII characters (e.g. Unicode bullet points like • char code 8226 / > 127)
+  for (let i = 0; i < trimmed.length; i++) {
+    if (trimmed.charCodeAt(i) > 127) {
+      return false;
+    }
+  }
+  // Reject placeholder or masked keys
+  if (
+    trimmed.includes('••••') ||
+    trimmed.includes('****') ||
+    trimmed.includes('mock_signature_key') ||
+    trimmed.includes('your-supabase-key') ||
+    trimmed.includes('placeholder')
+  ) {
+    return false;
+  }
+  // Standard valid JWT base64url or API key token format
+  return /^[A-Za-z0-9_\-\.]+$/.test(trimmed);
+}
+
+export function isValidSupabaseUrl(url?: string | null): boolean {
+  if (!url || typeof url !== 'string') return false;
+  const trimmed = url.trim();
+  if (!trimmed.startsWith('https://') && !trimmed.startsWith('http://localhost')) return false;
+  for (let i = 0; i < trimmed.length; i++) {
+    if (trimmed.charCodeAt(i) > 127) {
+      return false;
+    }
+  }
+  if (
+    trimmed.includes('••••') ||
+    trimmed.includes('****') ||
+    trimmed.includes('first-atlantic-bank.supabase.co') ||
+    trimmed.includes('your-project-id.supabase.co') ||
+    trimmed.includes('placeholder')
+  ) {
+    return false;
+  }
+  return true;
+}
+
 const sbUrl = (process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL || '').trim();
 const sbKey = (process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY || '').trim();
 
 export const isServerSupabaseConfigured = Boolean(
-  sbUrl &&
-  sbKey &&
-  sbUrl.startsWith('https://') &&
-  sbUrl.includes('.supabase.co') &&
-  !sbUrl.includes('first-atlantic-bank.supabase.co') &&
-  !sbKey.includes('mock_signature_key') &&
-  sbKey.length > 20
+  isValidSupabaseUrl(sbUrl) && isValidSupabaseKey(sbKey)
 );
 
 let serverSupabaseClient: SupabaseClient | null = null;

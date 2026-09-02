@@ -189,13 +189,36 @@ export const CreateCustomerModal: React.FC<CreateCustomerModalProps> = ({
     setPassword('AtlanticSecure2026!');
     setLoginPin('1234');
     setPhone('+1 (555) 392-1084');
+    setDateOfBirth('1988-06-15');
+    setNationality(region === 'UK' ? 'British' : region === 'EU' ? 'German' : 'American');
     setPassportNumber(`US${Date.now().toString().slice(-8)}`);
     setSsnOrTaxId(`987-65-${Date.now().toString().slice(-4)}`);
     setInitialDepositDollars('25000');
     setEmployerOrBusinessName('Atlantic Holdings Corp');
     setKycTier('TIER_2_VERIFIED_PREMIER');
     setApprovalStatus('APPROVED');
-    showToast('INFO', 'Sample Profile Loaded', 'Pre-filled executive sample client for quick testing.');
+    
+    if (region === 'UK') {
+      setAddressLine1('45 Berkeley Square');
+      setCity('London');
+      setStateOrCounty('Greater London');
+      setPostalCode('W1J 5AS');
+      setCountry('United Kingdom');
+    } else if (region === 'EU') {
+      setAddressLine1('Taunusanlage 8');
+      setCity('Frankfurt');
+      setStateOrCounty('Hesse');
+      setPostalCode('60311');
+      setCountry('Germany');
+    } else {
+      setAddressLine1('100 Atlantic Plaza');
+      setCity('New York');
+      setStateOrCounty('NY');
+      setPostalCode('10001');
+      setCountry('United States');
+    }
+    
+    showToast('INFO', 'Sample Profile Loaded', 'Pre-filled executive sample client for quick testing. You can now tap Provision Customer directly.');
   };
 
   // Generate strong random password
@@ -649,7 +672,7 @@ export const CreateCustomerModal: React.FC<CreateCustomerModalProps> = ({
                 </div>
               </div>
 
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap sm:flex-nowrap">
                 <button
                   type="button"
                   onClick={autoFillSampleClient}
@@ -658,6 +681,23 @@ export const CreateCustomerModal: React.FC<CreateCustomerModalProps> = ({
                 >
                   <Sparkles className="w-3 h-3" />
                   <span>Auto-Fill Sample</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (!firstName.trim() || !lastName.trim()) {
+                      autoFillSampleClient();
+                    }
+                    setTimeout(() => {
+                      handleSubmit();
+                    }, 50);
+                  }}
+                  disabled={isSubmitting}
+                  className="text-[10px] font-bold bg-[#d4af37] hover:bg-[#bfa030] text-slate-950 px-2.5 py-1 rounded-md transition-colors cursor-pointer flex items-center gap-1 shadow-xs disabled:opacity-50"
+                  title="Auto-fill and immediately create customer account"
+                >
+                  <CheckCircle2 className="w-3 h-3" />
+                  <span>⚡ Quick Provision</span>
                 </button>
                 <button
                   type="button"
@@ -737,7 +777,14 @@ export const CreateCustomerModal: React.FC<CreateCustomerModalProps> = ({
             </div>
 
             {/* Form Body */}
-            <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-3.5 sm:p-5 space-y-4 text-xs">
+            <form
+              noValidate
+              onSubmit={(e) => {
+                e.preventDefault();
+                handleSubmit(e);
+              }}
+              className="flex-1 overflow-y-auto p-3.5 sm:p-5 space-y-4 text-xs"
+            >
               {/* ========================================================================= */}
               {/* STEP 1: IDENTITY & PASSPORT PHOTO */}
               {/* ========================================================================= */}
@@ -841,7 +888,6 @@ export const CreateCustomerModal: React.FC<CreateCustomerModalProps> = ({
                       <label className="font-bold text-slate-300">First Name *</label>
                       <input
                         type="text"
-                        required
                         placeholder="e.g. Alistair"
                         value={firstName}
                         onChange={e => handleFirstNameChange(e.target.value)}
@@ -855,7 +901,6 @@ export const CreateCustomerModal: React.FC<CreateCustomerModalProps> = ({
                       <label className="font-bold text-slate-300">Last Name *</label>
                       <input
                         type="text"
-                        required
                         placeholder="e.g. Vance"
                         value={lastName}
                         onChange={e => handleLastNameChange(e.target.value)}
@@ -868,8 +913,8 @@ export const CreateCustomerModal: React.FC<CreateCustomerModalProps> = ({
                     <div className="space-y-1">
                       <label className="font-bold text-slate-300">Email Address *</label>
                       <input
-                        type="email"
-                        required
+                        type="text"
+                        inputMode="email"
                         placeholder="e.g. a.vance@atlantic-wealth.com"
                         value={email}
                         onChange={e => setEmail(e.target.value)}
@@ -884,6 +929,7 @@ export const CreateCustomerModal: React.FC<CreateCustomerModalProps> = ({
                       <div className="flex gap-1.5">
                         <input
                           type="text"
+                          inputMode="tel"
                           value={dialCode}
                           onChange={e => setDialCode(e.target.value)}
                           className="w-16 px-2 py-2 rounded-lg border border-slate-700 bg-slate-900 text-center font-mono"
@@ -891,6 +937,7 @@ export const CreateCustomerModal: React.FC<CreateCustomerModalProps> = ({
                         />
                         <input
                           type="text"
+                          inputMode="tel"
                           placeholder="(555) 019-2830"
                           value={phone}
                           onChange={e => setPhone(e.target.value)}
@@ -902,10 +949,11 @@ export const CreateCustomerModal: React.FC<CreateCustomerModalProps> = ({
                     <div className="space-y-1">
                       <label className="font-bold text-slate-300">Date of Birth</label>
                       <input
-                        type="date"
+                        type="text"
+                        placeholder="YYYY-MM-DD (e.g. 1988-06-15)"
                         value={dateOfBirth}
                         onChange={e => setDateOfBirth(e.target.value)}
-                        className="w-full px-3 py-2 rounded-lg border border-slate-700 bg-slate-900 text-slate-200"
+                        className="w-full px-3 py-2 rounded-lg border border-slate-700 bg-slate-900 text-slate-200 font-mono"
                       />
                     </div>
 
@@ -943,7 +991,7 @@ export const CreateCustomerModal: React.FC<CreateCustomerModalProps> = ({
                   </div>
 
                   {/* Step 1 Footer Buttons */}
-                  <div className="flex items-center justify-between pt-2 border-t border-slate-800">
+                  <div className="flex items-center justify-between pt-2 border-t border-slate-800 flex-wrap gap-2">
                     <button
                       type="button"
                       onClick={onClose}
@@ -951,14 +999,29 @@ export const CreateCustomerModal: React.FC<CreateCustomerModalProps> = ({
                     >
                       Cancel
                     </button>
-                    <button
-                      type="button"
-                      onClick={() => handleNextStep('IDENTITY')}
-                      className="px-4 py-2 rounded-lg bg-[#004281] hover:bg-[#003366] text-white font-bold transition-colors cursor-pointer flex items-center gap-1.5"
-                    >
-                      <span>Next: Password &amp; Security</span>
-                      <span>&rarr;</span>
-                    </button>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (validateStep1()) {
+                            handleSubmit();
+                          }
+                        }}
+                        disabled={isSubmitting}
+                        className="px-3.5 py-2 rounded-lg bg-[#d4af37] hover:bg-[#bfa030] text-slate-950 font-bold transition-colors cursor-pointer flex items-center gap-1 text-[11px] shadow-xs disabled:opacity-50"
+                      >
+                        <CheckCircle2 className="w-3.5 h-3.5" />
+                        <span>Provision Now</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleNextStep('IDENTITY')}
+                        className="px-4 py-2 rounded-lg bg-[#004281] hover:bg-[#003366] text-white font-bold transition-colors cursor-pointer flex items-center gap-1.5"
+                      >
+                        <span>Next: Security</span>
+                        <span>&rarr;</span>
+                      </button>
+                    </div>
                   </div>
                 </div>
               )}
@@ -984,7 +1047,6 @@ export const CreateCustomerModal: React.FC<CreateCustomerModalProps> = ({
                       <label className="font-bold text-slate-300">Client Portal Username *</label>
                       <input
                         type="text"
-                        required
                         placeholder="e.g. avance"
                         value={username}
                         onChange={e => setUsername(e.target.value)}
@@ -1014,7 +1076,6 @@ export const CreateCustomerModal: React.FC<CreateCustomerModalProps> = ({
                       <div className="relative">
                         <input
                           type={showPassword ? 'text' : 'password'}
-                          required
                           value={password}
                           onChange={e => setPassword(e.target.value)}
                           placeholder="Enter customer login password"
@@ -1050,6 +1111,7 @@ export const CreateCustomerModal: React.FC<CreateCustomerModalProps> = ({
 
                       <input
                         type="text"
+                        inputMode="numeric"
                         maxLength={4}
                         value={loginPin}
                         onChange={e => setLoginPin(e.target.value.replace(/\D/g, ''))}
@@ -1062,7 +1124,7 @@ export const CreateCustomerModal: React.FC<CreateCustomerModalProps> = ({
                   </div>
 
                   {/* Step 2 Footer Buttons */}
-                  <div className="flex items-center justify-between pt-2 border-t border-slate-800">
+                  <div className="flex items-center justify-between pt-2 border-t border-slate-800 flex-wrap gap-2">
                     <button
                       type="button"
                       onClick={() => setActiveStep('IDENTITY')}
@@ -1070,14 +1132,29 @@ export const CreateCustomerModal: React.FC<CreateCustomerModalProps> = ({
                     >
                       &larr; Back
                     </button>
-                    <button
-                      type="button"
-                      onClick={() => handleNextStep('CREDENTIALS')}
-                      className="px-4 py-2 rounded-lg bg-[#004281] hover:bg-[#003366] text-white font-bold transition-colors cursor-pointer flex items-center gap-1.5"
-                    >
-                      <span>Next: Address</span>
-                      <span>&rarr;</span>
-                    </button>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (validateStep1() && validateStep2()) {
+                            handleSubmit();
+                          }
+                        }}
+                        disabled={isSubmitting}
+                        className="px-3.5 py-2 rounded-lg bg-[#d4af37] hover:bg-[#bfa030] text-slate-950 font-bold transition-colors cursor-pointer flex items-center gap-1 text-[11px] shadow-xs disabled:opacity-50"
+                      >
+                        <CheckCircle2 className="w-3.5 h-3.5" />
+                        <span>Provision Now</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleNextStep('CREDENTIALS')}
+                        className="px-4 py-2 rounded-lg bg-[#004281] hover:bg-[#003366] text-white font-bold transition-colors cursor-pointer flex items-center gap-1.5"
+                      >
+                        <span>Next: Address</span>
+                        <span>&rarr;</span>
+                      </button>
+                    </div>
                   </div>
                 </div>
               )}
@@ -1092,7 +1169,6 @@ export const CreateCustomerModal: React.FC<CreateCustomerModalProps> = ({
                       <label className="font-bold text-slate-300">Address Line 1 *</label>
                       <input
                         type="text"
-                        required
                         placeholder="Street Address, P.O. Box"
                         value={addressLine1}
                         onChange={e => setAddressLine1(e.target.value)}
@@ -1117,7 +1193,6 @@ export const CreateCustomerModal: React.FC<CreateCustomerModalProps> = ({
                       <label className="font-bold text-slate-300">City *</label>
                       <input
                         type="text"
-                        required
                         value={city}
                         onChange={e => setCity(e.target.value)}
                         className={`w-full px-3 py-2 rounded-lg border bg-slate-900 ${
@@ -1130,7 +1205,6 @@ export const CreateCustomerModal: React.FC<CreateCustomerModalProps> = ({
                       <label className="font-bold text-slate-300">State / Province / County *</label>
                       <input
                         type="text"
-                        required
                         value={stateOrCounty}
                         onChange={e => setStateOrCounty(e.target.value)}
                         className={`w-full px-3 py-2 rounded-lg border bg-slate-900 ${
@@ -1143,7 +1217,6 @@ export const CreateCustomerModal: React.FC<CreateCustomerModalProps> = ({
                       <label className="font-bold text-slate-300">Postal / ZIP Code *</label>
                       <input
                         type="text"
-                        required
                         value={postalCode}
                         onChange={e => setPostalCode(e.target.value)}
                         className={`w-full px-3 py-2 rounded-lg border bg-slate-900 font-mono ${
@@ -1156,7 +1229,6 @@ export const CreateCustomerModal: React.FC<CreateCustomerModalProps> = ({
                       <label className="font-bold text-slate-300">Country *</label>
                       <input
                         type="text"
-                        required
                         value={country}
                         onChange={e => setCountry(e.target.value)}
                         className={`w-full px-3 py-2 rounded-lg border bg-slate-900 ${
@@ -1167,7 +1239,7 @@ export const CreateCustomerModal: React.FC<CreateCustomerModalProps> = ({
                   </div>
 
                   {/* Step 3 Footer Buttons */}
-                  <div className="flex items-center justify-between pt-2 border-t border-slate-800">
+                  <div className="flex items-center justify-between pt-2 border-t border-slate-800 flex-wrap gap-2">
                     <button
                       type="button"
                       onClick={() => setActiveStep('CREDENTIALS')}
@@ -1175,14 +1247,29 @@ export const CreateCustomerModal: React.FC<CreateCustomerModalProps> = ({
                     >
                       &larr; Back
                     </button>
-                    <button
-                      type="button"
-                      onClick={() => handleNextStep('ADDRESS')}
-                      className="px-4 py-2 rounded-lg bg-[#004281] hover:bg-[#003366] text-white font-bold transition-colors cursor-pointer flex items-center gap-1.5"
-                    >
-                      <span>Next: Banking Setup</span>
-                      <span>&rarr;</span>
-                    </button>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (validateStep1() && validateStep2() && validateStep3()) {
+                            handleSubmit();
+                          }
+                        }}
+                        disabled={isSubmitting}
+                        className="px-3.5 py-2 rounded-lg bg-[#d4af37] hover:bg-[#bfa030] text-slate-950 font-bold transition-colors cursor-pointer flex items-center gap-1 text-[11px] shadow-xs disabled:opacity-50"
+                      >
+                        <CheckCircle2 className="w-3.5 h-3.5" />
+                        <span>Provision Now</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleNextStep('ADDRESS')}
+                        className="px-4 py-2 rounded-lg bg-[#004281] hover:bg-[#003366] text-white font-bold transition-colors cursor-pointer flex items-center gap-1.5"
+                      >
+                        <span>Next: Banking Setup</span>
+                        <span>&rarr;</span>
+                      </button>
+                    </div>
                   </div>
                 </div>
               )}
@@ -1244,20 +1331,22 @@ export const CreateCustomerModal: React.FC<CreateCustomerModalProps> = ({
                           {currency === 'EUR' ? '€' : currency === 'GBP' ? '£' : '$'}
                         </span>
                         <input
-                          type="number"
-                          step="0.01"
-                          min="0"
+                          type="text"
+                          inputMode="decimal"
                           value={initialDepositDollars}
-                          onChange={e => setInitialDepositDollars(e.target.value)}
+                          onChange={e => {
+                            const val = e.target.value.replace(/[^0-9.]/g, '');
+                            setInitialDepositDollars(val);
+                          }}
                           className={`w-full pl-7 pr-3 py-2 rounded-lg border bg-slate-900 font-mono font-bold text-slate-100 ${
                             highlightedField === 'initialDepositDollars' ? 'border-red-500 ring-2 ring-red-500/50' : 'border-slate-700'
                           }`}
                           placeholder="25000"
                         />
                       </div>
-                      {Number(initialDepositDollars) > 0 && (
+                      {Number(parseFloat(initialDepositDollars) || 0) > 0 && (
                         <span className="text-xs text-[#00A651] font-mono font-semibold block mt-1">
-                          Formatted: {currency === 'EUR' ? '€' : currency === 'GBP' ? '£' : '$'}{Number(initialDepositDollars).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                          Formatted: {currency === 'EUR' ? '€' : currency === 'GBP' ? '£' : '$'}{Number(parseFloat(initialDepositDollars) || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                         </span>
                       )}
                     </div>
@@ -1392,9 +1481,9 @@ export const CreateCustomerModal: React.FC<CreateCustomerModalProps> = ({
                         Cancel
                       </button>
 
-                      {/* Requirement 1: Loading state spinner with "Creating Account..." for 2s */}
                       <button
-                        type="submit"
+                        type="button"
+                        onClick={() => handleSubmit()}
                         disabled={isSubmitting}
                         className="px-5 py-2.5 rounded-lg bg-[#00A651] hover:bg-[#008f45] text-white font-bold flex items-center gap-2 shadow-lg shadow-[#00A651]/20 transition-all cursor-pointer disabled:opacity-75 disabled:cursor-not-allowed"
                       >

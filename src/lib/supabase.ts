@@ -8,11 +8,49 @@ const supabaseAnonKey = (typeof process !== 'undefined' && process.env?.NEXT_PUB
   (typeof window !== 'undefined' && (window as any).__ENV__?.NEXT_PUBLIC_SUPABASE_ANON_KEY) || 
   '';
 
+export function isValidSupabaseKey(key?: string | null): boolean {
+  if (!key || typeof key !== 'string') return false;
+  const trimmed = key.trim();
+  if (trimmed.length < 20) return false;
+  for (let i = 0; i < trimmed.length; i++) {
+    if (trimmed.charCodeAt(i) > 127) return false;
+  }
+  if (
+    trimmed.includes('••••') ||
+    trimmed.includes('****') ||
+    trimmed.includes('mock_signature_key') ||
+    trimmed.includes('your-supabase-key') ||
+    trimmed.includes('placeholder')
+  ) {
+    return false;
+  }
+  return /^[A-Za-z0-9_\-\.]+$/.test(trimmed);
+}
+
+export function isValidSupabaseUrl(url?: string | null): boolean {
+  if (!url || typeof url !== 'string') return false;
+  const trimmed = url.trim();
+  if (!trimmed.startsWith('https://') && !trimmed.startsWith('http://localhost')) return false;
+  for (let i = 0; i < trimmed.length; i++) {
+    if (trimmed.charCodeAt(i) > 127) return false;
+  }
+  if (
+    trimmed.includes('••••') ||
+    trimmed.includes('****') ||
+    trimmed.includes('first-atlantic-bank.supabase.co') ||
+    trimmed.includes('your-project-id.supabase.co') ||
+    trimmed.includes('placeholder')
+  ) {
+    return false;
+  }
+  return true;
+}
+
 let supabaseInstance: SupabaseClient | null = null;
 
-if (supabaseUrl && supabaseAnonKey && supabaseUrl.startsWith('http')) {
+if (isValidSupabaseUrl(supabaseUrl) && isValidSupabaseKey(supabaseAnonKey)) {
   try {
-    supabaseInstance = createClient(supabaseUrl, supabaseAnonKey, {
+    supabaseInstance = createClient(supabaseUrl.trim(), supabaseAnonKey.trim(), {
       auth: {
         persistSession: true,
         autoRefreshToken: true,

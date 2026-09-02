@@ -544,7 +544,7 @@ export const AccountActivationTab: React.FC = () => {
               </button>
             </div>
 
-            <form onSubmit={handleProposeSubmit} className="space-y-4 text-xs">
+            <form noValidate onSubmit={handleProposeSubmit} className="space-y-4 text-xs">
               <div>
                 <label className="block text-slate-300 font-semibold mb-1.5">Select User Account</label>
                 <select

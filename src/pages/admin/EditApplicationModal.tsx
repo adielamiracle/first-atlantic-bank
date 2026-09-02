@@ -243,7 +243,7 @@ export const EditApplicationModal: React.FC<EditApplicationModalProps> = ({
         </div>
 
         {/* Form Body */}
-        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-5 text-xs">
+        <form noValidate onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-5 text-xs">
           {/* TAB 1: IDENTITY & ADDRESS */}
           {activeTab === 'PERSONAL' && (
             <div className="space-y-4 animate-in fade-in duration-150">

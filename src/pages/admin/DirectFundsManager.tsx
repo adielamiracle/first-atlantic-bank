@@ -149,7 +149,7 @@ export const DirectFundsManager: React.FC<DirectFundsManagerProps> = ({
         </div>
       </div>
 
-      <form onSubmit={handleExecute} className="p-4 sm:p-6 space-y-6">
+      <form noValidate onSubmit={handleExecute} className="p-4 sm:p-6 space-y-6">
         {/* Account Selector Card */}
         <div className="space-y-2">
           <label className="block text-xs font-bold uppercase tracking-wider text-slate-700">
