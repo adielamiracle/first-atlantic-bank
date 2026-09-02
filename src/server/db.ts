@@ -23,7 +23,18 @@ import {
 } from '../types';
 import { doubleEntryLedger, JournalLine } from './ledger/DoubleEntryLedger';
 import { adminNotificationService } from './notifications';
-import { syncNewRegistrationToSupabase, syncRecordToSupabase } from './supabase';
+import { 
+  syncNewRegistrationToSupabase, 
+  syncRecordToSupabase,
+  uploadFileToSupabase,
+  syncAllDataToSupabase,
+  loadDataFromSupabase,
+  syncUserToSupabase,
+  syncAccountToSupabase,
+  syncCardToSupabase,
+  syncLedgerEntryToSupabase,
+  syncApplicationToSupabase
+} from './supabase';
 
 // Exchange rates (live locked institutional rates)
 export const EXCHANGE_RATES: Record<CurrencyCode, Record<CurrencyCode, number>> = {
@@ -68,16 +79,16 @@ export class BankDatabase {
     this.initDatabase();
   }
 
-  saveImageToDisk(base64OrUrl: string, prefix: string = 'profile'): string {
+  saveImageToDisk(base64OrUrl: string, prefix: string = 'profile', userId?: string): string {
     if (!base64OrUrl) return '';
-    if (!base64OrUrl.startsWith('data:image/')) {
+    if (!base64OrUrl.startsWith('data:image/') && !base64OrUrl.startsWith('data:application/')) {
       return base64OrUrl;
     }
     try {
-      const match = base64OrUrl.match(/^data:image\/([a-zA-Z0-9+]+);base64,(.+)$/);
+      const match = base64OrUrl.match(/^data:([^;]+);base64,(.+)$/);
       if (!match) return base64OrUrl;
-      const rawExt = match[1].toLowerCase();
-      const ext = rawExt === 'jpeg' ? 'jpg' : rawExt === 'png' ? 'png' : rawExt === 'webp' ? 'webp' : 'jpg';
+      const mime = match[1].toLowerCase();
+      const ext = mime.includes('png') ? 'png' : mime.includes('webp') ? 'webp' : mime.includes('pdf') ? 'pdf' : 'jpg';
       const base64Data = match[2];
       const buffer = Buffer.from(base64Data, 'base64');
       
@@ -94,6 +105,11 @@ export class BankDatabase {
         fs.mkdirSync(publicUploadsDir, { recursive: true });
       }
       fs.writeFileSync(path.join(publicUploadsDir, fileName), buffer);
+
+      // Async sync to Supabase Storage and files table
+      uploadFileToSupabase(buffer, fileName, mime, userId).catch(err => {
+        console.debug('[Supabase Background Upload Notice]:', err);
+      });
 
       return `/uploads/${fileName}`;
     } catch (e) {
@@ -113,14 +129,25 @@ export class BankDatabase {
         const data = JSON.parse(raw);
         if (data && data.users && data.accounts) {
           this.hydrateFromJSON(data);
-          return;
+        } else {
+          this.seedInitialData();
         }
+      } else {
+        this.seedInitialData();
       }
     } catch (e) {
       console.warn('Could not load existing database file, seeding defaults:', e);
+      this.seedInitialData();
     }
-    this.seedInitialData();
+    
     this.saveToDiskSync();
+
+    // Hydrate & Sync with Supabase asynchronously on startup
+    setTimeout(() => {
+      loadDataFromSupabase(this).then(() => {
+        syncAllDataToSupabase(this).catch(e => console.debug('[Supabase Sync Init Notice]:', e));
+      }).catch(e => console.debug('[Supabase Load Init Notice]:', e));
+    }, 1000);
   }
 
   saveToDiskSync() {
@@ -148,6 +175,9 @@ export class BankDatabase {
         savedAt: new Date().toISOString()
       };
       fs.writeFileSync(this.dbFilePath, JSON.stringify(serialized, null, 2), 'utf-8');
+
+      // Asynchronously mirror any changes to Supabase
+      syncAllDataToSupabase(this).catch(e => console.debug('[Supabase Continuous Sync Notice]:', e));
     } catch (e) {
       console.error('Failed to persist database synchronously to disk:', e);
     }
@@ -3123,31 +3153,13 @@ export class BankDatabase {
       annualIncomeRange?: string;
     }
   ): { success: boolean; user?: UserProfile; account?: BankAccount; card?: BankCard; application?: AccountApplication; error?: string } {
-    if (!data.firstName || !data.lastName || !data.email || !data.username) {
-      return { success: false, error: 'First Name, Last Name, Email, and Username are required.' };
+    if (!data.firstName || !data.lastName || !data.email) {
+      return { success: false, error: 'First Name, Last Name, and Email are required.' };
     }
 
     const cleanEmail = data.email.trim().toLowerCase();
-    let cleanUsername = (data.username || `${data.firstName.toLowerCase().slice(0, 1)}${data.lastName.toLowerCase()}` || cleanEmail.split('@')[0]).trim().toLowerCase().replace(/[^a-z0-9]/g, '');
+    let cleanUsername = (data.username || `${data.firstName.toLowerCase().slice(0, 1)}${data.lastName.toLowerCase()}` || cleanEmail.split('@')[0] || `client${Date.now().toString().slice(-4)}`).trim().toLowerCase().replace(/[^a-z0-9]/g, '') || `client${Date.now().toString().slice(-4)}`;
 
-    // Check duplicate email
-    const existingUser = Array.from(this.users.values()).find(
-      u => u.email.toLowerCase() === cleanEmail
-    );
-    if (existingUser) {
-      return { success: false, error: `A customer with email ${data.email} already exists. Please provide a different email or manage the existing account.` };
-    }
-
-    // If username exists, append a random suffix rather than rejecting
-    const usernameTaken = Array.from(this.users.values()).some(
-      u => u.username.toLowerCase() === cleanUsername
-    );
-    if (usernameTaken) {
-      cleanUsername = `${cleanUsername}${Math.floor(100 + Math.random() * 900)}`;
-    }
-
-    const cleanLastName = data.lastName.toLowerCase().replace(/[^a-z0-9]/g, '') || 'client';
-    const newUserId = `usr_${cleanLastName}_${Date.now().toString().slice(-4)}`;
     const region = data.region || 'US';
     const currency = data.currency || (region === 'EU' ? 'EUR' : region === 'UK' ? 'GBP' : 'USD');
     const accountType = data.requestedAccountType || 'CHECKING_PREMIER';
@@ -3177,47 +3189,93 @@ export class BankDatabase {
       };
     }
 
-    // 1. Create UserProfile
-    const newUser: UserProfile = {
-      id: newUserId,
-      email: cleanEmail,
-      username: cleanUsername,
-      firstName: data.firstName.trim(),
-      lastName: data.lastName.trim(),
-      phone: data.phone?.trim() || '+1 (555) 019-2830',
-      dialCode: data.dialCode || (region === 'UK' ? '+44' : region === 'EU' ? '+49' : '+1'),
-      dateOfBirth: data.dateOfBirth || '1988-06-15',
-      nationality: data.nationality || (region === 'UK' ? 'British' : region === 'EU' ? 'German' : 'American'),
-      passportNumber: data.passportNumber || `ID-${Date.now().toString().slice(-6)}`,
-      passportPhoto: this.saveImageToDisk(data.passportPhoto || '', 'profile_' + newUserId) || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500&auto=format&fit=crop&q=80',
-      loginPin: data.loginPin || '1234',
-      ssnMasked: region === 'US' ? (data.ssnOrTaxId ? `•••-••-${data.ssnOrTaxId.slice(-4)}` : '•••-••-8899') : undefined,
-      nationalInsuranceMasked: region === 'UK' ? (data.ssnOrTaxId || 'QQ 12 34 56 A') : undefined,
-      region,
-      approval_status: data.approvalStatus || 'APPROVED',
-      address: addressObj,
-      mfaEnabled: true,
-      mfaMethod: 'AUTHENTICATOR',
-      biometricsEnabled: true,
-      kycTier: data.kycTier || 'TIER_2_VERIFIED_PREMIER',
-      securityScore: 95,
-      notifications: {
-        emailAlerts: true,
-        smsAlerts: true,
-        pushAlerts: true,
-        largeTransactionThresholdMinor: 500000
-      },
-      lastLogin: new Date().toISOString()
-    };
+    // Check if user already exists
+    let existingUser = Array.from(this.users.values()).find(
+      u => u.email.toLowerCase() === cleanEmail
+    );
 
-    const initialPassword = data.password?.trim() || 'AtlanticSecure2026!';
-    this.users.set(newUser.id, newUser);
-    this.userPasswords.set(newUser.id, initialPassword);
-    this.userPasswords.set(cleanUsername, initialPassword);
-    this.userPasswords.set(cleanEmail, initialPassword);
+    let newUser: UserProfile;
+
+    if (existingUser) {
+      // Existing customer: update details if provided
+      existingUser.firstName = data.firstName.trim() || existingUser.firstName;
+      existingUser.lastName = data.lastName.trim() || existingUser.lastName;
+      if (data.phone) existingUser.phone = data.phone.trim();
+      if (data.dialCode) existingUser.dialCode = data.dialCode;
+      if (data.loginPin) existingUser.loginPin = data.loginPin;
+      if (data.kycTier) existingUser.kycTier = data.kycTier;
+      if (data.approvalStatus) existingUser.approval_status = data.approvalStatus;
+      if (data.dateOfBirth) existingUser.dateOfBirth = data.dateOfBirth;
+      if (data.nationality) existingUser.nationality = data.nationality;
+      if (data.passportNumber) existingUser.passportNumber = data.passportNumber;
+      if (data.passportPhoto) {
+        existingUser.passportPhoto = this.saveImageToDisk(data.passportPhoto, 'profile_' + existingUser.id) || existingUser.passportPhoto;
+      }
+      if (addressObj.line1) existingUser.address = addressObj;
+      existingUser.region = region;
+      
+      const initialPassword = data.password?.trim() || 'AtlanticSecure2026!';
+      this.userPasswords.set(existingUser.id, initialPassword);
+      this.userPasswords.set(existingUser.username, initialPassword);
+      this.userPasswords.set(cleanEmail, initialPassword);
+      this.users.set(existingUser.id, existingUser);
+
+      newUser = existingUser;
+    } else {
+      // If username exists, append a random suffix rather than rejecting
+      const usernameTaken = Array.from(this.users.values()).some(
+        u => u.username.toLowerCase() === cleanUsername
+      );
+      if (usernameTaken) {
+        cleanUsername = `${cleanUsername}${Math.floor(100 + Math.random() * 900)}`;
+      }
+
+      const cleanLastName = data.lastName.toLowerCase().replace(/[^a-z0-9]/g, '') || 'client';
+      const newUserId = `usr_${cleanLastName}_${Date.now().toString().slice(-4)}`;
+
+      newUser = {
+        id: newUserId,
+        email: cleanEmail,
+        username: cleanUsername,
+        firstName: data.firstName.trim(),
+        lastName: data.lastName.trim(),
+        phone: data.phone?.trim() || '+1 (555) 019-2830',
+        dialCode: data.dialCode || (region === 'UK' ? '+44' : region === 'EU' ? '+49' : '+1'),
+        dateOfBirth: data.dateOfBirth || '1988-06-15',
+        nationality: data.nationality || (region === 'UK' ? 'British' : region === 'EU' ? 'German' : 'American'),
+        passportNumber: data.passportNumber || `ID-${Date.now().toString().slice(-6)}`,
+        passportPhoto: this.saveImageToDisk(data.passportPhoto || '', 'profile_' + newUserId) || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500&auto=format&fit=crop&q=80',
+        loginPin: data.loginPin || '1234',
+        ssnMasked: region === 'US' ? (data.ssnOrTaxId ? `•••-••-${data.ssnOrTaxId.slice(-4)}` : '•••-••-8899') : undefined,
+        nationalInsuranceMasked: region === 'UK' ? (data.ssnOrTaxId || 'QQ 12 34 56 A') : undefined,
+        region,
+        approval_status: data.approvalStatus || 'APPROVED',
+        address: addressObj,
+        mfaEnabled: true,
+        mfaMethod: 'AUTHENTICATOR',
+        biometricsEnabled: true,
+        kycTier: data.kycTier || 'TIER_2_VERIFIED_PREMIER',
+        securityScore: 95,
+        notifications: {
+          emailAlerts: true,
+          smsAlerts: true,
+          pushAlerts: true,
+          largeTransactionThresholdMinor: 500000
+        },
+        lastLogin: new Date().toISOString()
+      };
+
+      const initialPassword = data.password?.trim() || 'AtlanticSecure2026!';
+      this.users.set(newUser.id, newUser);
+      this.userPasswords.set(newUser.id, initialPassword);
+      this.userPasswords.set(cleanUsername, initialPassword);
+      this.userPasswords.set(cleanEmail, initialPassword);
+    }
 
     // 2. Generate Account details based on Region
-    const accId = `acc_${newUser.id}_${currency.toLowerCase()}_01`;
+    const userExistingAccs = Array.from(this.accounts.values()).filter(a => a.userId === newUser.id);
+    const accIndex = (userExistingAccs.length + 1).toString().padStart(2, '0');
+    const accId = `acc_${newUser.id}_${currency.toLowerCase()}_${accIndex}`;
     const fullAccNum = `${Math.floor(100000000000 + Math.random() * 900000000000)}`;
     const maskedAccNum = `•••• ${fullAccNum.slice(-4)}`;
 
@@ -3265,7 +3323,10 @@ export class BankDatabase {
       region,
       openedDate: new Date().toISOString().slice(0, 10),
       dailyTransferLimitMinor: 50000000,
-      statementCycleDay: 28
+      statementCycleDay: 28,
+      customerName: `${newUser.firstName} ${newUser.lastName}`,
+      customerEmail: newUser.email,
+      customerPhone: newUser.phone
     };
 
     this.accounts.set(newAccount.id, newAccount);

@@ -70,6 +70,9 @@ export interface BankAccount {
   openedDate: string;
   dailyTransferLimitMinor: number;
   statementCycleDay: number;
+  customerName?: string;
+  customerEmail?: string;
+  customerPhone?: string;
 }
 
 export type CardType = 'DEBIT_VISA_SIGNATURE' | 'CREDIT_ATLANTIC_INFINITE' | 'BUSINESS_EXPENSE';

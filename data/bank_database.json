@@ -352,6 +352,166 @@
         },
         "lastLogin": "2026-09-02T09:00:46.242Z"
       }
+    ],
+    [
+      "usr_jenkins_6699",
+      {
+        "id": "usr_jenkins_6699",
+        "email": "sarah.jenkins.mobile@atlantic-client.com",
+        "username": "sjenkinsmob",
+        "firstName": "Sarah",
+        "lastName": "Jenkins",
+        "phone": "+1 555-019-9944",
+        "dialCode": "+1",
+        "dateOfBirth": "1988-06-15",
+        "nationality": "American",
+        "passportNumber": "ID-266699",
+        "passportPhoto": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500&auto=format&fit=crop&q=80",
+        "loginPin": "1234",
+        "ssnMasked": "•••-••-8899",
+        "region": "US",
+        "approval_status": "APPROVED",
+        "address": {
+          "line1": "100 Atlantic Plaza",
+          "line2": "",
+          "city": "New York",
+          "stateOrCounty": "NY",
+          "postalCode": "10001",
+          "country": "United States"
+        },
+        "mfaEnabled": true,
+        "mfaMethod": "AUTHENTICATOR",
+        "biometricsEnabled": true,
+        "kycTier": "TIER_2_VERIFIED_PREMIER",
+        "securityScore": 95,
+        "notifications": {
+          "emailAlerts": true,
+          "smsAlerts": true,
+          "pushAlerts": true,
+          "largeTransactionThresholdMinor": 500000
+        },
+        "lastLogin": "2026-09-02T09:11:06.700Z"
+      }
+    ],
+    [
+      "usr_morgan_2054",
+      {
+        "id": "usr_morgan_2054",
+        "email": "alex.morgan@techcorp.io",
+        "username": "amorgan",
+        "firstName": "Alex",
+        "lastName": "Morgan",
+        "phone": "+1 (555) 019-2830",
+        "dialCode": "+1",
+        "dateOfBirth": "1988-06-15",
+        "nationality": "American",
+        "passportNumber": "ID-312054",
+        "passportPhoto": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500&auto=format&fit=crop&q=80",
+        "loginPin": "1234",
+        "ssnMasked": "•••-••-8899",
+        "region": "US",
+        "approval_status": "APPROVED",
+        "address": {
+          "line1": "100 Atlantic Plaza",
+          "line2": "",
+          "city": "New York",
+          "stateOrCounty": "NY",
+          "postalCode": "10001",
+          "country": "United States"
+        },
+        "mfaEnabled": true,
+        "mfaMethod": "AUTHENTICATOR",
+        "biometricsEnabled": true,
+        "kycTier": "TIER_2_VERIFIED_PREMIER",
+        "securityScore": 95,
+        "notifications": {
+          "emailAlerts": true,
+          "smsAlerts": true,
+          "pushAlerts": true,
+          "largeTransactionThresholdMinor": 500000
+        },
+        "lastLogin": "2026-09-02T09:11:52.054Z"
+      }
+    ],
+    [
+      "usr_rostova_6059",
+      {
+        "id": "usr_rostova_6059",
+        "email": "elena.rostova@premierbank.io",
+        "username": "erostova",
+        "firstName": "Elena",
+        "lastName": "Rostova",
+        "phone": "+1 (555) 749-2819",
+        "dialCode": "+1",
+        "dateOfBirth": "1991-04-12",
+        "nationality": "United States",
+        "passportNumber": "US88291044",
+        "passportPhoto": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500&auto=format&fit=crop&q=80",
+        "loginPin": "1234",
+        "ssnMasked": "•••-••-8899",
+        "region": "US",
+        "approval_status": "APPROVED",
+        "address": {
+          "line1": "100 Atlantic Plaza",
+          "line2": "",
+          "city": "Springfield",
+          "stateOrCounty": "NY",
+          "postalCode": "97477",
+          "country": "United States"
+        },
+        "mfaEnabled": true,
+        "mfaMethod": "AUTHENTICATOR",
+        "biometricsEnabled": true,
+        "kycTier": "TIER_2_VERIFIED_PREMIER",
+        "securityScore": 95,
+        "notifications": {
+          "emailAlerts": true,
+          "smsAlerts": true,
+          "pushAlerts": true,
+          "largeTransactionThresholdMinor": 500000
+        },
+        "lastLogin": "2026-09-02T09:19:36.059Z"
+      }
+    ],
+    [
+      "usr_sterling_9948",
+      {
+        "id": "usr_sterling_9948",
+        "email": "marcus.sterling@firstatlantic.com",
+        "username": "msterling",
+        "firstName": "Marcus",
+        "lastName": "Sterling",
+        "phone": "+15550192830",
+        "dialCode": "+1",
+        "dateOfBirth": "1988-06-15",
+        "nationality": "American",
+        "passportNumber": "ID-329948",
+        "passportPhoto": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500&auto=format&fit=crop&q=80",
+        "loginPin": "1234",
+        "ssnMasked": "•••-••-8899",
+        "region": "UK",
+        "approval_status": "APPROVED",
+        "address": {
+          "line1": "100 Atlantic Plaza",
+          "line2": "",
+          "city": "London",
+          "stateOrCounty": "Greater London",
+          "postalCode": "W1J 5AS",
+          "country": "United Kingdom"
+        },
+        "mfaEnabled": true,
+        "mfaMethod": "AUTHENTICATOR",
+        "biometricsEnabled": true,
+        "kycTier": "TIER_2_VERIFIED_PREMIER",
+        "securityScore": 95,
+        "notifications": {
+          "emailAlerts": true,
+          "smsAlerts": true,
+          "pushAlerts": true,
+          "largeTransactionThresholdMinor": 500000
+        },
+        "lastLogin": "2026-09-02T09:28:49.948Z"
+      }
     ]
   ],
   "accounts": [
@@ -584,6 +744,128 @@
         "dailyTransferLimitMinor": 50000000,
         "statementCycleDay": 28
       }
+    ],
+    [
+      "acc_usr_jenkins_6699_usd_01",
+      {
+        "id": "acc_usr_jenkins_6699_usd_01",
+        "userId": "usr_jenkins_6699",
+        "accountNumber": "•••• 3106",
+        "accountNumberFull": "981329703106",
+        "routingNumber": "021000089",
+        "swiftBic": "FATLUS33NYC",
+        "name": "Premier Private Client Checking",
+        "type": "CHECKING_PREMIER",
+        "currency": "USD",
+        "balanceMinor": 150000,
+        "availableBalanceMinor": 150000,
+        "pendingHoldMinor": 0,
+        "interestRateAPY": 1.25,
+        "status": "ACTIVE",
+        "region": "US",
+        "openedDate": "2026-09-02",
+        "dailyTransferLimitMinor": 50000000,
+        "statementCycleDay": 28
+      }
+    ],
+    [
+      "acc_usr_morgan_2054_usd_01",
+      {
+        "id": "acc_usr_morgan_2054_usd_01",
+        "userId": "usr_morgan_2054",
+        "accountNumber": "•••• 4515",
+        "accountNumberFull": "330162894515",
+        "routingNumber": "021000089",
+        "swiftBic": "FATLUS33NYC",
+        "name": "Premier Private Client Checking",
+        "type": "CHECKING_PREMIER",
+        "currency": "USD",
+        "balanceMinor": 0,
+        "availableBalanceMinor": 0,
+        "pendingHoldMinor": 0,
+        "interestRateAPY": 1.25,
+        "status": "ACTIVE",
+        "region": "US",
+        "openedDate": "2026-09-02",
+        "dailyTransferLimitMinor": 50000000,
+        "statementCycleDay": 28
+      }
+    ],
+    [
+      "acc_usr_rostova_6059_usd_01",
+      {
+        "id": "acc_usr_rostova_6059_usd_01",
+        "userId": "usr_rostova_6059",
+        "accountNumber": "•••• 5052",
+        "accountNumberFull": "590167695052",
+        "routingNumber": "021000089",
+        "swiftBic": "FATLUS33NYC",
+        "name": "Premier Private Client Checking",
+        "type": "CHECKING_PREMIER",
+        "currency": "USD",
+        "balanceMinor": 0,
+        "availableBalanceMinor": 0,
+        "pendingHoldMinor": 0,
+        "interestRateAPY": 1.25,
+        "status": "ACTIVE",
+        "region": "US",
+        "openedDate": "2026-09-02",
+        "dailyTransferLimitMinor": 50000000,
+        "statementCycleDay": 28
+      }
+    ],
+    [
+      "acc_usr_sterling_9948_usd_01",
+      {
+        "id": "acc_usr_sterling_9948_usd_01",
+        "userId": "usr_sterling_9948",
+        "accountNumber": "•••• 3329",
+        "accountNumberFull": "312173973329",
+        "routingNumber": "021000089",
+        "swiftBic": "FATLUS33NYC",
+        "name": "Premier Private Client Checking",
+        "type": "CHECKING_PREMIER",
+        "currency": "USD",
+        "balanceMinor": 500000,
+        "availableBalanceMinor": 500000,
+        "pendingHoldMinor": 0,
+        "interestRateAPY": 1.25,
+        "status": "ACTIVE",
+        "region": "US",
+        "openedDate": "2026-09-02",
+        "dailyTransferLimitMinor": 50000000,
+        "statementCycleDay": 28,
+        "customerName": "Marcus Sterling",
+        "customerEmail": "marcus.sterling@firstatlantic.com",
+        "customerPhone": "+15550192830"
+      }
+    ],
+    [
+      "acc_usr_sterling_9948_gbp_02",
+      {
+        "id": "acc_usr_sterling_9948_gbp_02",
+        "userId": "usr_sterling_9948",
+        "accountNumber": "•••• 6247",
+        "accountNumberFull": "956192006247",
+        "sortCode": "40-12-88",
+        "iban": "GB29FATL40128892006247",
+        "swiftBic": "FATLGB22LON",
+        "name": "Premier Private Client Checking",
+        "type": "CHECKING_PREMIER",
+        "currency": "GBP",
+        "balanceMinor": 250000,
+        "availableBalanceMinor": 250000,
+        "pendingHoldMinor": 0,
+        "interestRateAPY": 1.25,
+        "status": "ACTIVE",
+        "region": "UK",
+        "openedDate": "2026-09-02",
+        "dailyTransferLimitMinor": 50000000,
+        "statementCycleDay": 28,
+        "customerName": "Marcus Sterling",
+        "customerEmail": "marcus.sterling@firstatlantic.com",
+        "customerPhone": "+15550192830"
+      }
     ]
   ],
   "cards": [
@@ -776,9 +1058,155 @@
         "dailySpendLimitMinor": 2500000,
         "travelNotices": []
       }
+    ],
+    [
+      "crd_usr_jenkins_6699_01",
+      {
+        "id": "crd_usr_jenkins_6699_01",
+        "accountId": "acc_usr_jenkins_6699_usd_01",
+        "userId": "usr_jenkins_6699",
+        "cardNumberMasked": "•••• •••• •••• 3106",
+        "cardNumberFull": "4111 2571 6400 3106",
+        "cardHolderName": "SARAH JENKINS",
+        "expiryMonth": 12,
+        "expiryYear": 2031,
+        "cvv": "627",
+        "cardType": "DEBIT_VISA_SIGNATURE",
+        "status": "ACTIVE",
+        "isVirtual": false,
+        "contactlessEnabled": true,
+        "onlineTransactionsEnabled": true,
+        "internationalSpendEnabled": true,
+        "dailyAtmLimitMinor": 500000,
+        "dailySpendLimitMinor": 2500000,
+        "travelNotices": []
+      }
+    ],
+    [
+      "crd_usr_morgan_2054_01",
+      {
+        "id": "crd_usr_morgan_2054_01",
+        "accountId": "acc_usr_morgan_2054_usd_01",
+        "userId": "usr_morgan_2054",
+        "cardNumberMasked": "•••• •••• •••• 4515",
+        "cardNumberFull": "4111 5509 9763 4515",
+        "cardHolderName": "ALEX MORGAN",
+        "expiryMonth": 12,
+        "expiryYear": 2031,
+        "cvv": "601",
+        "cardType": "DEBIT_VISA_SIGNATURE",
+        "status": "ACTIVE",
+        "isVirtual": false,
+        "contactlessEnabled": true,
+        "onlineTransactionsEnabled": true,
+        "internationalSpendEnabled": true,
+        "dailyAtmLimitMinor": 500000,
+        "dailySpendLimitMinor": 2500000,
+        "travelNotices": []
+      }
+    ],
+    [
+      "crd_usr_rostova_6059_01",
+      {
+        "id": "crd_usr_rostova_6059_01",
+        "accountId": "acc_usr_rostova_6059_usd_01",
+        "userId": "usr_rostova_6059",
+        "cardNumberMasked": "•••• •••• •••• 5052",
+        "cardNumberFull": "4111 4842 2739 5052",
+        "cardHolderName": "ELENA ROSTOVA",
+        "expiryMonth": 12,
+        "expiryYear": 2031,
+        "cvv": "291",
+        "cardType": "DEBIT_VISA_SIGNATURE",
+        "status": "ACTIVE",
+        "isVirtual": false,
+        "contactlessEnabled": true,
+        "onlineTransactionsEnabled": true,
+        "internationalSpendEnabled": true,
+        "dailyAtmLimitMinor": 500000,
+        "dailySpendLimitMinor": 2500000,
+        "travelNotices": []
+      }
+    ],
+    [
+      "crd_usr_sterling_9948_01",
+      {
+        "id": "crd_usr_sterling_9948_01",
+        "accountId": "acc_usr_sterling_9948_gbp_02",
+        "userId": "usr_sterling_9948",
+        "cardNumberMasked": "•••• •••• •••• 6247",
+        "cardNumberFull": "4111 2425 1449 6247",
+        "cardHolderName": "MARCUS STERLING",
+        "expiryMonth": 12,
+        "expiryYear": 2031,
+        "cvv": "252",
+        "cardType": "DEBIT_VISA_SIGNATURE",
+        "status": "ACTIVE",
+        "isVirtual": false,
+        "contactlessEnabled": true,
+        "onlineTransactionsEnabled": true,
+        "internationalSpendEnabled": true,
+        "dailyAtmLimitMinor": 500000,
+        "dailySpendLimitMinor": 2500000,
+        "travelNotices": []
+      }
     ]
   ],
   "ledger": [
+    {
+      "id": "led_init_1788341333526",
+      "transactionId": "tx_init_1788341333526",
+      "accountId": "acc_usr_sterling_9948_gbp_02",
+      "direction": "CREDIT",
+      "amountMinor": 250000,
+      "currency": "GBP",
+      "balanceAfterMinor": 250000,
+      "description": "Initial Account Opening Deposit (Executive Clearance)",
+      "category": "Deposits",
+      "counterparty": "First Atlantic Bank Treasury Direct",
+      "status": "SETTLED",
+      "channel": "ADMIN_PORTAL",
+      "referenceNumber": "DEP-ADM-333526",
+      "createdTimestamp": "2026-09-02T09:28:53.526Z",
+      "effectiveTimestamp": "2026-09-02T09:28:53.526Z",
+      "settledTimestamp": "2026-09-02T09:28:53.526Z"
+    },
+    {
+      "id": "led_init_1788341329949",
+      "transactionId": "tx_init_1788341329949",
+      "accountId": "acc_usr_sterling_9948_usd_01",
+      "direction": "CREDIT",
+      "amountMinor": 500000,
+      "currency": "USD",
+      "balanceAfterMinor": 500000,
+      "description": "Initial Account Opening Deposit (Executive Clearance)",
+      "category": "Deposits",
+      "counterparty": "First Atlantic Bank Treasury Direct",
+      "status": "SETTLED",
+      "channel": "ADMIN_PORTAL",
+      "referenceNumber": "DEP-ADM-329949",
+      "createdTimestamp": "2026-09-02T09:28:49.949Z",
+      "effectiveTimestamp": "2026-09-02T09:28:49.949Z",
+      "settledTimestamp": "2026-09-02T09:28:49.949Z"
+    },
+    {
+      "id": "led_init_1788340266701",
+      "transactionId": "tx_init_1788340266701",
+      "accountId": "acc_usr_jenkins_6699_usd_01",
+      "direction": "CREDIT",
+      "amountMinor": 150000,
+      "currency": "USD",
+      "balanceAfterMinor": 150000,
+      "description": "Initial Account Opening Deposit (Executive Clearance)",
+      "category": "Deposits",
+      "counterparty": "First Atlantic Bank Treasury Direct",
+      "status": "SETTLED",
+      "channel": "ADMIN_PORTAL",
+      "referenceNumber": "DEP-ADM-266701",
+      "createdTimestamp": "2026-09-02T09:11:06.701Z",
+      "effectiveTimestamp": "2026-09-02T09:11:06.701Z",
+      "settledTimestamp": "2026-09-02T09:11:06.701Z"
+    },
     {
       "id": "led_init_1788339646243",
       "transactionId": "tx_init_1788339646243",
@@ -924,6 +1352,76 @@
     }
   ],
   "auditLogs": [
+    {
+      "actorId": "adm_master_01",
+      "actorEmail": "admin@firstatlanticbank.com",
+      "actorRole": "SUPER_ADMIN",
+      "action": "ADMIN_CUSTOMER_CREATED",
+      "targetType": "USER",
+      "targetId": "usr_sterling_9948",
+      "ipAddress": "199.16.156.12",
+      "userAgent": "First Atlantic Master Admin Suite v4.9",
+      "details": "Administrator Alexandra Vance created new customer account for Marcus Sterling (marcus.sterling@firstatlantic.com). Provisioned CHECKING_PREMIER (•••• 6247, GBP) with initial balance £2,500.00.",
+      "id": "aud_1788341333526_180",
+      "timestamp": "2026-09-02T09:28:53.526Z",
+      "signatureHash": "000000000000000000000000000000000000000000000000000000005c85669e"
+    },
+    {
+      "actorId": "adm_master_01",
+      "actorEmail": "admin@firstatlanticbank.com",
+      "actorRole": "SUPER_ADMIN",
+      "action": "ADMIN_CUSTOMER_CREATED",
+      "targetType": "USER",
+      "targetId": "usr_sterling_9948",
+      "ipAddress": "199.16.156.12",
+      "userAgent": "First Atlantic Master Admin Suite v4.9",
+      "details": "Administrator Alexandra Vance created new customer account for Marcus Sterling (marcus.sterling@firstatlantic.com). Provisioned CHECKING_PREMIER (•••• 3329, USD) with initial balance $5,000.00.",
+      "id": "aud_1788341329949_530",
+      "timestamp": "2026-09-02T09:28:49.949Z",
+      "signatureHash": "000000000000000000000000000000000000000000000000000000005c7a189c"
+    },
+    {
+      "actorId": "adm_master_01",
+      "actorEmail": "admin@firstatlanticbank.com",
+      "actorRole": "SUPER_ADMIN",
+      "action": "ADMIN_CUSTOMER_CREATED",
+      "targetType": "USER",
+      "targetId": "usr_rostova_6059",
+      "ipAddress": "199.16.156.12",
+      "userAgent": "First Atlantic Master Admin Suite v4.9",
+      "details": "Administrator Alexandra Vance created new customer account for Elena Rostova (elena.rostova@premierbank.io). Provisioned CHECKING_PREMIER (•••• 5052, USD) with initial balance $0.00.",
+      "id": "aud_1788340776060_751",
+      "timestamp": "2026-09-02T09:19:36.060Z",
+      "signatureHash": "000000000000000000000000000000000000000000000000000000002eac36ab"
+    },
+    {
+      "actorId": "adm_master_01",
+      "actorEmail": "admin@firstatlanticbank.com",
+      "actorRole": "SUPER_ADMIN",
+      "action": "ADMIN_CUSTOMER_CREATED",
+      "targetType": "USER",
+      "targetId": "usr_morgan_2054",
+      "ipAddress": "199.16.156.12",
+      "userAgent": "First Atlantic Master Admin Suite v4.9",
+      "details": "Administrator Alexandra Vance created new customer account for Alex Morgan (alex.morgan@techcorp.io). Provisioned CHECKING_PREMIER (•••• 4515, USD) with initial balance $0.00.",
+      "id": "aud_1788340312054_805",
+      "timestamp": "2026-09-02T09:11:52.054Z",
+      "signatureHash": "0000000000000000000000000000000000000000000000000000000027827592"
+    },
+    {
+      "actorId": "adm_master_01",
+      "actorEmail": "admin@firstatlanticbank.com",
+      "actorRole": "SUPER_ADMIN",
+      "action": "ADMIN_CUSTOMER_CREATED",
+      "targetType": "USER",
+      "targetId": "usr_jenkins_6699",
+      "ipAddress": "199.16.156.12",
+      "userAgent": "First Atlantic Master Admin Suite v4.9",
+      "details": "Administrator Alexandra Vance created new customer account for Sarah Jenkins (sarah.jenkins.mobile@atlantic-client.com). Provisioned CHECKING_PREMIER (•••• 3106, USD) with initial balance $1,500.00.",
+      "id": "aud_1788340266701_967",
+      "timestamp": "2026-09-02T09:11:06.701Z",
+      "signatureHash": "000000000000000000000000000000000000000000000000000000002615fd9d"
+    },
     {
       "actorId": "adm_master_01",
       "actorEmail": "admin@firstatlanticbank.com",
@@ -2686,6 +3184,257 @@
         "provisionedRoutingNumber": "021000089",
         "provisionedAccountNumber": "340885208970"
       }
+    ],
+    [
+      "app_1788340266701_104",
+      {
+        "id": "app_1788340266701_104",
+        "referenceNumber": "FAB-US-2026-40169",
+        "firstName": "Sarah",
+        "lastName": "Jenkins",
+        "email": "sarah.jenkins.mobile@atlantic-client.com",
+        "phone": "+1 555-019-9944",
+        "dialCode": "+1",
+        "dateOfBirth": "1988-06-15",
+        "nationality": "American",
+        "taxIdOrSsn": "987-65-4321",
+        "idDocumentType": "PASSPORT",
+        "idDocumentNumber": "ID-266699",
+        "passportPhoto": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500&auto=format&fit=crop&q=80",
+        "address": {
+          "line1": "100 Atlantic Plaza",
+          "line2": "",
+          "city": "New York",
+          "stateOrProvince": "NY",
+          "postalCode": "10001",
+          "country": "United States"
+        },
+        "employmentStatus": "EXECUTIVE",
+        "employerOrBusinessName": "Private Wealth Holding",
+        "sourceOfWealth": "INVESTMENTS",
+        "annualIncomeRange": "$250,000+",
+        "isPep": false,
+        "requestedCurrency": "USD",
+        "requestedAccountType": "CHECKING_PREMIER",
+        "requestedRegion": "US",
+        "initialDepositAmountMinor": 150000,
+        "requestDebitCard": true,
+        "username": "sjenkinsmob",
+        "passwordHashed": "AtlanticSecure2026!",
+        "loginPin": "1234",
+        "mfaPreference": "AUTHENTICATOR",
+        "status": "APPROVED",
+        "riskScore": 8,
+        "submittedAt": "2026-09-02T09:11:06.701Z",
+        "reviewedAt": "2026-09-02T09:11:06.701Z",
+        "reviewedByAdminId": "adm_master_01",
+        "reviewedByAdminName": "Alexandra Vance",
+        "complianceNotes": "Directly onboarded and provisioned by Administrator Alexandra Vance. Verified KYC and account clearance.",
+        "createdUserId": "usr_jenkins_6699",
+        "provisionedRoutingNumber": "021000089",
+        "provisionedAccountNumber": "981329703106"
+      }
+    ],
+    [
+      "app_1788340312054_757",
+      {
+        "id": "app_1788340312054_757",
+        "referenceNumber": "FAB-US-2026-18373",
+        "firstName": "Alex",
+        "lastName": "Morgan",
+        "email": "alex.morgan@techcorp.io",
+        "phone": "+1 (555) 019-2830",
+        "dialCode": "+1",
+        "dateOfBirth": "1988-06-15",
+        "nationality": "American",
+        "taxIdOrSsn": "987-65-4321",
+        "idDocumentType": "PASSPORT",
+        "idDocumentNumber": "ID-312054",
+        "passportPhoto": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500&auto=format&fit=crop&q=80",
+        "address": {
+          "line1": "100 Atlantic Plaza",
+          "line2": "",
+          "city": "New York",
+          "stateOrProvince": "NY",
+          "postalCode": "10001",
+          "country": "United States"
+        },
+        "employmentStatus": "EXECUTIVE",
+        "employerOrBusinessName": "Private Wealth Holding",
+        "sourceOfWealth": "INVESTMENTS",
+        "annualIncomeRange": "$250,000+",
+        "isPep": false,
+        "requestedCurrency": "USD",
+        "requestedAccountType": "CHECKING_PREMIER",
+        "requestedRegion": "US",
+        "initialDepositAmountMinor": 0,
+        "requestDebitCard": true,
+        "username": "amorgan",
+        "passwordHashed": "AtlanticSecure2026!",
+        "loginPin": "1234",
+        "mfaPreference": "AUTHENTICATOR",
+        "status": "APPROVED",
+        "riskScore": 8,
+        "submittedAt": "2026-09-02T09:11:52.054Z",
+        "reviewedAt": "2026-09-02T09:11:52.054Z",
+        "reviewedByAdminId": "adm_master_01",
+        "reviewedByAdminName": "Alexandra Vance",
+        "complianceNotes": "Directly onboarded and provisioned by Administrator Alexandra Vance. Verified KYC and account clearance.",
+        "createdUserId": "usr_morgan_2054",
+        "provisionedRoutingNumber": "021000089",
+        "provisionedAccountNumber": "330162894515"
+      }
+    ],
+    [
+      "app_1788340776059_218",
+      {
+        "id": "app_1788340776059_218",
+        "referenceNumber": "FAB-US-2026-88199",
+        "firstName": "Elena",
+        "lastName": "Rostova",
+        "email": "elena.rostova@premierbank.io",
+        "phone": "+1 (555) 749-2819",
+        "dialCode": "+1",
+        "dateOfBirth": "1991-04-12",
+        "nationality": "United States",
+        "taxIdOrSsn": "987-65-4321",
+        "idDocumentType": "PASSPORT",
+        "idDocumentNumber": "US88291044",
+        "passportPhoto": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500&auto=format&fit=crop&q=80",
+        "address": {
+          "line1": "100 Atlantic Plaza",
+          "line2": "",
+          "city": "Springfield",
+          "stateOrProvince": "NY",
+          "postalCode": "97477",
+          "country": "United States"
+        },
+        "employmentStatus": "EXECUTIVE",
+        "employerOrBusinessName": "Private Wealth Holding",
+        "sourceOfWealth": "INVESTMENTS",
+        "annualIncomeRange": "$250,000+",
+        "isPep": false,
+        "requestedCurrency": "USD",
+        "requestedAccountType": "CHECKING_PREMIER",
+        "requestedRegion": "US",
+        "initialDepositAmountMinor": 0,
+        "requestDebitCard": true,
+        "username": "erostova",
+        "passwordHashed": "AtlanticSecure2026!",
+        "loginPin": "1234",
+        "mfaPreference": "AUTHENTICATOR",
+        "status": "APPROVED",
+        "riskScore": 8,
+        "submittedAt": "2026-09-02T09:19:36.059Z",
+        "reviewedAt": "2026-09-02T09:19:36.059Z",
+        "reviewedByAdminId": "adm_master_01",
+        "reviewedByAdminName": "Alexandra Vance",
+        "complianceNotes": "Directly onboarded and provisioned by Administrator Alexandra Vance. Verified KYC and account clearance.",
+        "createdUserId": "usr_rostova_6059",
+        "provisionedRoutingNumber": "021000089",
+        "provisionedAccountNumber": "590167695052"
+      }
+    ],
+    [
+      "app_1788341329949_919",
+      {
+        "id": "app_1788341329949_919",
+        "referenceNumber": "FAB-US-2026-11554",
+        "firstName": "Marcus",
+        "lastName": "Sterling",
+        "email": "marcus.sterling@firstatlantic.com",
+        "phone": "+15550192830",
+        "dialCode": "+1",
+        "dateOfBirth": "1988-06-15",
+        "nationality": "American",
+        "taxIdOrSsn": "987-65-4321",
+        "idDocumentType": "PASSPORT",
+        "idDocumentNumber": "ID-329948",
+        "passportPhoto": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500&auto=format&fit=crop&q=80",
+        "address": {
+          "line1": "100 Atlantic Plaza",
+          "line2": "",
+          "city": "New York",
+          "stateOrProvince": "NY",
+          "postalCode": "10001",
+          "country": "United States"
+        },
+        "employmentStatus": "EXECUTIVE",
+        "employerOrBusinessName": "Private Wealth Holding",
+        "sourceOfWealth": "INVESTMENTS",
+        "annualIncomeRange": "$250,000+",
+        "isPep": false,
+        "requestedCurrency": "USD",
+        "requestedAccountType": "CHECKING_PREMIER",
+        "requestedRegion": "US",
+        "initialDepositAmountMinor": 500000,
+        "requestDebitCard": true,
+        "username": "msterling",
+        "passwordHashed": "AtlanticSecure2026!",
+        "loginPin": "1234",
+        "mfaPreference": "AUTHENTICATOR",
+        "status": "APPROVED",
+        "riskScore": 8,
+        "submittedAt": "2026-09-02T09:28:49.949Z",
+        "reviewedAt": "2026-09-02T09:28:49.949Z",
+        "reviewedByAdminId": "adm_master_01",
+        "reviewedByAdminName": "Alexandra Vance",
+        "complianceNotes": "Directly onboarded and provisioned by Administrator Alexandra Vance. Verified KYC and account clearance.",
+        "createdUserId": "usr_sterling_9948",
+        "provisionedRoutingNumber": "021000089",
+        "provisionedAccountNumber": "312173973329"
+      }
+    ],
+    [
+      "app_1788341333526_288",
+      {
+        "id": "app_1788341333526_288",
+        "referenceNumber": "FAB-UK-2026-61148",
+        "firstName": "Marcus",
+        "lastName": "Sterling",
+        "email": "marcus.sterling@firstatlantic.com",
+        "phone": "+15550192830",
+        "dialCode": "+1",
+        "dateOfBirth": "1988-06-15",
+        "nationality": "American",
+        "taxIdOrSsn": "GB-123456",
+        "idDocumentType": "PASSPORT",
+        "idDocumentNumber": "ID-329948",
+        "passportPhoto": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500&auto=format&fit=crop&q=80",
+        "address": {
+          "line1": "100 Atlantic Plaza",
+          "line2": "",
+          "city": "London",
+          "stateOrProvince": "Greater London",
+          "postalCode": "W1J 5AS",
+          "country": "United Kingdom"
+        },
+        "employmentStatus": "EXECUTIVE",
+        "employerOrBusinessName": "Private Wealth Holding",
+        "sourceOfWealth": "INVESTMENTS",
+        "annualIncomeRange": "$250,000+",
+        "isPep": false,
+        "requestedCurrency": "GBP",
+        "requestedAccountType": "CHECKING_PREMIER",
+        "requestedRegion": "UK",
+        "initialDepositAmountMinor": 250000,
+        "requestDebitCard": true,
+        "username": "msterling",
+        "passwordHashed": "AtlanticSecure2026!",
+        "loginPin": "1234",
+        "mfaPreference": "AUTHENTICATOR",
+        "status": "APPROVED",
+        "riskScore": 8,
+        "submittedAt": "2026-09-02T09:28:53.526Z",
+        "reviewedAt": "2026-09-02T09:28:53.526Z",
+        "reviewedByAdminId": "adm_master_01",
+        "reviewedByAdminName": "Alexandra Vance",
+        "complianceNotes": "Directly onboarded and provisioned by Administrator Alexandra Vance. Verified KYC and account clearance.",
+        "createdUserId": "usr_sterling_9948",
+        "provisionedIban": "GB29FATL40128892006247",
+        "provisionedSortCode": "40-12-88",
+        "provisionedAccountNumber": "956192006247"
+      }
     ]
   ],
   "receivingAccounts": [
@@ -2846,8 +3595,56 @@
     [
       "mobile.test.8899@gmail.com",
       "AtlanticSecure2026!"
+    ],
+    [
+      "usr_jenkins_6699",
+      "AtlanticSecure2026!"
+    ],
+    [
+      "sjenkinsmob",
+      "AtlanticSecure2026!"
+    ],
+    [
+      "sarah.jenkins.mobile@atlantic-client.com",
+      "AtlanticSecure2026!"
+    ],
+    [
+      "usr_morgan_2054",
+      "AtlanticSecure2026!"
+    ],
+    [
+      "amorgan",
+      "AtlanticSecure2026!"
+    ],
+    [
+      "alex.morgan@techcorp.io",
+      "AtlanticSecure2026!"
+    ],
+    [
+      "usr_rostova_6059",
+      "AtlanticSecure2026!"
+    ],
+    [
+      "erostova",
+      "AtlanticSecure2026!"
+    ],
+    [
+      "elena.rostova@premierbank.io",
+      "AtlanticSecure2026!"
+    ],
+    [
+      "usr_sterling_9948",
+      "AtlanticSecure2026!"
+    ],
+    [
+      "msterling",
+      "AtlanticSecure2026!"
+    ],
+    [
+      "marcus.sterling@firstatlantic.com",
+      "AtlanticSecure2026!"
     ]
   ],
   "activeSessions": [],
-  "savedAt": "2026-09-02T09:00:46.344Z"
+  "savedAt": "2026-09-02T09:28:53.527Z"
 }

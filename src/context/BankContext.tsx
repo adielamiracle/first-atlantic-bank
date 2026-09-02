@@ -455,15 +455,29 @@ export const BankProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const fetchAdminStats = async () => {
     try {
-      const res = await fetch('/api/admin/stats', {
-        headers: { Authorization: `Bearer adm_${adminSessionRole.toLowerCase()}` }
-      });
+      const [res, accRes] = await Promise.all([
+        fetch('/api/admin/stats', {
+          headers: { Authorization: `Bearer adm_${adminSessionRole.toLowerCase()}` }
+        }),
+        fetch('/api/admin/accounts', {
+          headers: { Authorization: `Bearer adm_${adminSessionRole.toLowerCase()}`, 'x-admin-id': 'adm_master_01' }
+        })
+      ]);
       if (res.ok) {
         const data = await res.json();
         setAdminStats(data);
       }
+      if (accRes.ok) {
+        const accData = await accRes.json();
+        if (Array.isArray(accData.accounts) && accData.accounts.length > 0) {
+          setAccounts(accData.accounts);
+          if (accData.totalNetWorthUsdMinor) {
+            setTotalNetWorthUsdMinor(accData.totalNetWorthUsdMinor);
+          }
+        }
+      }
     } catch (e) {
-      console.error('Error fetching admin stats:', e);
+      console.error('Error fetching admin stats & custody accounts:', e);
     }
   };
 
@@ -1381,7 +1395,8 @@ export const BankProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-admin-id': 'adm_master_01'
+          'x-admin-id': 'adm_master_01',
+          'Authorization': `Bearer adm_${adminSessionRole.toLowerCase()}`
         },
         body: JSON.stringify(data)
       });
@@ -1391,11 +1406,11 @@ export const BankProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       }
 
       await Promise.all([
-        refreshData(),
-        fetchApplications(),
         fetchAdminStats(),
+        fetchApplications(),
         fetchAuditLogs(),
-        fetchActivationQueue()
+        fetchActivationQueue(),
+        refreshData()
       ]);
       return {
         success: true,

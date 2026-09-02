@@ -6,7 +6,14 @@ import { db, BILL_PAY_VENDORS, EXCHANGE_RATES } from './src/server/db';
 import { doubleEntryLedger, ledgerRouter } from './src/server/ledger';
 import { adminApprovalRouter } from './src/server/admin/approval';
 import { adminNotificationService } from './src/server/notifications';
-import { isServerSupabaseConfigured, getServerSupabase, syncNewRegistrationToSupabase } from './src/server/supabase';
+import { 
+  isServerSupabaseConfigured, 
+  getServerSupabase, 
+  syncNewRegistrationToSupabase,
+  syncAllDataToSupabase,
+  loadDataFromSupabase,
+  uploadFileToSupabase
+} from './src/server/supabase';
 import { CurrencyCode, BankRegion, SupportCase } from './src/types';
 
 async function startServer() {
@@ -99,8 +106,8 @@ async function startServer() {
     res.json({ rates: EXCHANGE_RATES, timestamp: new Date().toISOString() });
   });
 
-  // --- FILE & PROFILE PICTURE UPLOADS (Persisted to Server Storage) ---
-  app.post('/api/upload/profile-picture', (req, res) => {
+  // --- FILE & PROFILE PICTURE UPLOADS (Persisted to Server Storage & Supabase) ---
+  app.post('/api/upload/profile-picture', async (req, res) => {
     const { imageBase64, photoUrl, userId } = req.body;
     const resolvedUserId = userId || getUserIdFromHeader(req);
     const rawImage = imageBase64 || photoUrl;
@@ -109,7 +116,7 @@ async function startServer() {
       return res.status(400).json({ error: 'No image data payload provided.' });
     }
 
-    const savedUrl = db.saveImageToDisk(rawImage, `profile_${resolvedUserId || 'client'}`);
+    const savedUrl = db.saveImageToDisk(rawImage, `profile_${resolvedUserId || 'client'}`, resolvedUserId);
 
     if (resolvedUserId && db.users.has(resolvedUserId)) {
       const user = db.users.get(resolvedUserId)!;
@@ -120,14 +127,81 @@ async function startServer() {
     res.json({ success: true, url: savedUrl, photoUrl: savedUrl });
   });
 
-  app.post('/api/upload', (req, res) => {
-    const { fileBase64, dataUrl, prefix } = req.body;
+  app.post('/api/upload', async (req, res) => {
+    const { fileBase64, dataUrl, prefix, userId } = req.body;
     const payload = fileBase64 || dataUrl;
     if (!payload) {
       return res.status(400).json({ error: 'No file data provided.' });
     }
-    const savedUrl = db.saveImageToDisk(payload, prefix || 'document');
+    const savedUrl = db.saveImageToDisk(payload, prefix || 'document', userId);
     res.json({ success: true, url: savedUrl });
+  });
+
+  // --- SUPABASE CLOUD MANAGEMENT & SYNC ENDPOINTS ---
+  app.get('/api/admin/supabase/status', async (req, res) => {
+    const sb = getServerSupabase();
+    const url = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL || '';
+    const hasServiceKey = Boolean(process.env.SUPABASE_SERVICE_ROLE_KEY);
+    
+    let dbStatus = 'DISCONNECTED';
+    let counts: Record<string, number> = {};
+
+    if (sb) {
+      try {
+        const { data: users, count: userCount } = await sb.from('users').select('*', { count: 'exact', head: true });
+        const { data: accs, count: accCount } = await sb.from('accounts').select('*', { count: 'exact', head: true });
+        const { data: txns, count: txnCount } = await sb.from('transactions').select('*', { count: 'exact', head: true });
+        const { data: files, count: fileCount } = await sb.from('files').select('*', { count: 'exact', head: true });
+
+        dbStatus = 'CONNECTED_LIVE';
+        counts = {
+          usersInSupabase: userCount || 0,
+          accountsInSupabase: accCount || 0,
+          transactionsInSupabase: txnCount || 0,
+          filesInSupabase: fileCount || 0,
+          localUsers: db.users.size,
+          localAccounts: db.accounts.size,
+          localLedger: db.ledger.length
+        };
+      } catch (e: any) {
+        dbStatus = `ERROR: ${e?.message || 'Failed checking tables'}`;
+      }
+    }
+
+    res.json({
+      configured: isServerSupabaseConfigured,
+      status: dbStatus,
+      url: url ? url.replace(/^(https:\/\/[^.]+).*/, '$1.supabase.co') : 'NOT_CONFIGURED',
+      hasServiceKey,
+      counts
+    });
+  });
+
+  app.post('/api/admin/supabase/sync-all', async (req, res) => {
+    try {
+      const result = await syncAllDataToSupabase(db);
+      res.json({
+        success: result.success,
+        syncedCounts: result.syncedCounts,
+        message: result.success ? 'Successfully backed up all records and data to Supabase Cloud' : 'Supabase credentials not configured'
+      });
+    } catch (e: any) {
+      res.status(500).json({ success: false, error: e?.message || 'Sync failed' });
+    }
+  });
+
+  app.get('/api/admin/supabase/schema', (req, res) => {
+    try {
+      const schemaPath = path.join(process.cwd(), 'supabase_schema.sql');
+      if (fs.existsSync(schemaPath)) {
+        const content = fs.readFileSync(schemaPath, 'utf-8');
+        res.setHeader('Content-Type', 'text/plain');
+        return res.send(content);
+      }
+      res.status(404).send('-- Schema file not found');
+    } catch (e: any) {
+      res.status(500).send(`-- Error: ${e.message}`);
+    }
   });
 
   // --- AUTHENTICATION & APPLICATIONS ---
@@ -817,20 +891,40 @@ async function startServer() {
   });
 
   // --- ACCOUNTS & BALANCES ---
-  app.get('/api/accounts', (req, res) => {
+  app.get(['/api/accounts', '/api/admin/accounts'], (req, res) => {
+    const authHeader = req.headers.authorization || '';
+    const adminId = req.headers['x-admin-id'];
+    const isAdmin = authHeader.includes('adm_') || Boolean(adminId) || req.path.includes('/admin/');
     const userId = getUserIdFromHeader(req);
-    const userAccounts = Array.from(db.accounts.values()).filter(a => a.userId === userId);
+
+    let resultAccounts: any[] = [];
+    if (userId && !isAdmin) {
+      resultAccounts = Array.from(db.accounts.values()).filter(a => a.userId === userId);
+    } else {
+      // Return all institutional custody accounts enriched with customer metadata
+      resultAccounts = Array.from(db.accounts.values()).map(acc => {
+        const u = db.users.get(acc.userId);
+        return {
+          ...acc,
+          customerName: acc.customerName || (u ? `${u.firstName} ${u.lastName}` : 'Private Client'),
+          customerEmail: acc.customerEmail || u?.email,
+          customerPhone: acc.customerPhone || u?.phone
+        };
+      });
+    }
     
     // Calculate total net liquidity converted to primary currency
     let totalUsdMinor = 0;
-    userAccounts.forEach(acc => {
+    resultAccounts.forEach(acc => {
       if (acc.currency === 'USD') totalUsdMinor += acc.balanceMinor;
       else if (acc.currency === 'GBP') totalUsdMinor += Math.round(acc.balanceMinor * EXCHANGE_RATES.GBP.USD);
       else if (acc.currency === 'EUR') totalUsdMinor += Math.round(acc.balanceMinor * EXCHANGE_RATES.EUR.USD);
     });
 
     res.json({
-      accounts: userAccounts,
+      success: true,
+      accounts: resultAccounts,
+      totalAccounts: resultAccounts.length,
       totalNetWorthUsdMinor: totalUsdMinor
     });
   });

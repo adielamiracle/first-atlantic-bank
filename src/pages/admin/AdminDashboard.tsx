@@ -378,7 +378,7 @@ export const AdminDashboard: React.FC = () => {
                 Accounts
               </span>
               <div className="text-sm sm:text-base md:text-lg font-bold font-mono text-slate-900 dark:text-white truncate">
-                {accounts.length} Custody
+                {adminStats?.totalAccounts || accounts.length} Custody
               </div>
               <div className="flex items-center gap-1 text-[10px] text-slate-500 font-mono truncate">
                 <span className="w-1.5 h-1.5 rounded-full bg-[#00A651] shrink-0" />
