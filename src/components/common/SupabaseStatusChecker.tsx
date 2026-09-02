@@ -25,19 +25,31 @@ export const SupabaseStatusChecker: React.FC<{
   compact = false,
   onStatusChange
 }) => {
+  const getEnvUrl = (): string => {
+    return ((typeof process !== 'undefined' && process.env?.NEXT_PUBLIC_SUPABASE_URL) ||
+      (typeof window !== 'undefined' && (window as any).__ENV__?.NEXT_PUBLIC_SUPABASE_URL) ||
+      '').trim();
+  };
+
+  const getEnvKey = (): string => {
+    return ((typeof process !== 'undefined' && process.env?.NEXT_PUBLIC_SUPABASE_ANON_KEY) ||
+      (typeof window !== 'undefined' && (window as any).__ENV__?.NEXT_PUBLIC_SUPABASE_ANON_KEY) ||
+      '').trim();
+  };
+
   const [isPinging, setIsPinging] = useState(false);
   const [result, setResult] = useState<SupabasePingResult>({
     status: 'CHECKING',
     configured: isSupabaseConfigured,
-    urlProvided: Boolean(import.meta.env?.VITE_SUPABASE_URL),
+    urlProvided: Boolean(getEnvUrl()),
     maskedUrl: getMaskedUrl(),
-    keyProvided: Boolean(import.meta.env?.VITE_SUPABASE_ANON_KEY),
+    keyProvided: Boolean(getEnvKey()),
     maskedKey: getMaskedKey(),
     message: 'Initializing Supabase connection telemetry...'
   });
 
   function getMaskedUrl(): string {
-    const url = (import.meta.env?.VITE_SUPABASE_URL || '').trim();
+    const url = getEnvUrl();
     if (!url) return 'Not Set';
     try {
       const parsed = new URL(url);
@@ -48,7 +60,7 @@ export const SupabaseStatusChecker: React.FC<{
   }
 
   function getMaskedKey(): string {
-    const key = (import.meta.env?.VITE_SUPABASE_ANON_KEY || '').trim();
+    const key = getEnvKey();
     if (!key) return 'Not Set';
     if (key.length <= 10) return '••••••••';
     return `${key.substring(0, 6)}••••${key.slice(-4)}`;
@@ -57,8 +69,8 @@ export const SupabaseStatusChecker: React.FC<{
   const pingSupabase = async () => {
     setIsPinging(true);
     const start = performance.now();
-    const rawUrl = (import.meta.env?.VITE_SUPABASE_URL || '').trim();
-    const rawKey = (import.meta.env?.VITE_SUPABASE_ANON_KEY || '').trim();
+    const rawUrl = getEnvUrl();
+    const rawKey = getEnvKey();
 
     const urlProvided = Boolean(rawUrl);
     const keyProvided = Boolean(rawKey);
@@ -223,7 +235,7 @@ export const SupabaseStatusChecker: React.FC<{
             <div className="flex items-center justify-between text-slate-500 font-semibold mb-1">
               <span className="flex items-center gap-1">
                 <Globe className="w-3.5 h-3.5" />
-                <span>VITE_SUPABASE_URL</span>
+                <span>NEXT_PUBLIC_SUPABASE_URL</span>
               </span>
               <span className={result.urlProvided ? 'text-emerald-600 font-bold' : 'text-slate-400'}>
                 {result.urlProvided ? 'Set' : 'Missing'}
@@ -238,7 +250,7 @@ export const SupabaseStatusChecker: React.FC<{
             <div className="flex items-center justify-between text-slate-500 font-semibold mb-1">
               <span className="flex items-center gap-1">
                 <Shield className="w-3.5 h-3.5" />
-                <span>VITE_SUPABASE_ANON_KEY</span>
+                <span>NEXT_PUBLIC_SUPABASE_ANON_KEY</span>
               </span>
               <span className={result.keyProvided ? 'text-emerald-600 font-bold' : 'text-slate-400'}>
                 {result.keyProvided ? 'Set' : 'Missing'}

@@ -190,13 +190,7 @@ async function startServer() {
            u.id.toLowerCase() === cleanInput
     );
 
-    // Fallback convenience for demo accounts if specifically requested
-    if (!user && (cleanInput === 'jsterling' || cleanInput === 'j.sterling@atlantic-client.com')) {
-      user = db.users.get('usr_sterling_01');
-    } else if (!user && (cleanInput === 'emontgomery' || cleanInput === 'e.montgomery@atlantic-wealth.co.uk')) {
-      user = db.users.get('usr_montgomery_02');
-    }
-
+    // Check if user is registered in database or active users
     if (!user) {
       // Check if user has an application in the system - auto-approve and provision immediately
       const appRecord = Array.from(db.applications.values()).find(
@@ -256,8 +250,7 @@ async function startServer() {
 
     if (!user) {
       return res.status(401).json({ 
-        error: 'Invalid username or password. Please verify your credentials or apply for an account.',
-        hint: 'Use your registered username/email and password, or try demo user: jsterling / 1234'
+        error: 'Invalid email/username or password. Please verify your credentials or apply for an account.'
       });
     }
 

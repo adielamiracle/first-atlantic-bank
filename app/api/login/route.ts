@@ -1,9 +1,11 @@
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL || 'https://mock-project.supabase.co';
-const supabaseAnonKey = process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY || 'anon-key-placeholder';
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL || '';
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY || '';
 
-const supabase = createClient(supabaseUrl, supabaseAnonKey);
+const supabase = (supabaseUrl && supabaseAnonKey)
+  ? createClient(supabaseUrl, supabaseAnonKey)
+  : null;
 
 export async function POST(req: Request) {
   try {
@@ -13,6 +15,10 @@ export async function POST(req: Request) {
 
     if (!loginEmail || !password) {
       return Response.json({ error: 'Email and password are required' }, { status: 400 });
+    }
+
+    if (!supabase) {
+      return Response.json({ error: 'Supabase authentication service is not configured' }, { status: 503 });
     }
 
     // 1. Authenticate credentials with Supabase Auth

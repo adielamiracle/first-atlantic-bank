@@ -232,6 +232,86 @@
         },
         "lastLogin": "2026-09-01T21:05:54.532Z"
       }
+    ],
+    [
+      "usr_vance_1810",
+      {
+        "id": "usr_vance_1810",
+        "email": "marcus.vance@atlantic-client.com",
+        "username": "mvance",
+        "firstName": "Marcus",
+        "lastName": "Vance",
+        "phone": "+1 (555) 019-2830",
+        "dialCode": "+1",
+        "dateOfBirth": "1988-06-15",
+        "nationality": "American",
+        "passportNumber": "ID-451810",
+        "passportPhoto": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500&auto=format&fit=crop&q=80",
+        "loginPin": "1234",
+        "ssnMasked": "•••-••-8899",
+        "region": "US",
+        "approval_status": "APPROVED",
+        "address": {
+          "line1": "100 Atlantic Plaza",
+          "line2": "",
+          "city": "New York",
+          "stateOrCounty": "NY",
+          "postalCode": "10001",
+          "country": "United States"
+        },
+        "mfaEnabled": true,
+        "mfaMethod": "AUTHENTICATOR",
+        "biometricsEnabled": true,
+        "kycTier": "TIER_2_VERIFIED_PREMIER",
+        "securityScore": 95,
+        "notifications": {
+          "emailAlerts": true,
+          "smsAlerts": true,
+          "pushAlerts": true,
+          "largeTransactionThresholdMinor": 500000
+        },
+        "lastLogin": "2026-09-02T07:34:11.810Z"
+      }
+    ],
+    [
+      "usr_hayes_7681",
+      {
+        "id": "usr_hayes_7681",
+        "email": "devin.hayes@atlantic-client.com",
+        "username": "dhayes",
+        "firstName": "Devin",
+        "lastName": "Hayes",
+        "phone": "+1 (555) 019-2830",
+        "dialCode": "+1",
+        "dateOfBirth": "1988-06-15",
+        "nationality": "American",
+        "passportNumber": "ID-567681",
+        "passportPhoto": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500&auto=format&fit=crop&q=80",
+        "loginPin": "1234",
+        "ssnMasked": "•••-••-8899",
+        "region": "US",
+        "approval_status": "APPROVED",
+        "address": {
+          "line1": "100 Atlantic Plaza",
+          "line2": "",
+          "city": "New York",
+          "stateOrCounty": "NY",
+          "postalCode": "10001",
+          "country": "United States"
+        },
+        "mfaEnabled": true,
+        "mfaMethod": "AUTHENTICATOR",
+        "biometricsEnabled": true,
+        "kycTier": "TIER_2_VERIFIED_PREMIER",
+        "securityScore": 95,
+        "notifications": {
+          "emailAlerts": true,
+          "smsAlerts": true,
+          "pushAlerts": true,
+          "largeTransactionThresholdMinor": 500000
+        },
+        "lastLogin": "2026-09-02T07:52:47.681Z"
+      }
     ]
   ],
   "accounts": [
@@ -395,6 +475,52 @@
         "dailyTransferLimitMinor": 50000000,
         "statementCycleDay": 28
       }
+    ],
+    [
+      "acc_usr_vance_1810_usd_01",
+      {
+        "id": "acc_usr_vance_1810_usd_01",
+        "userId": "usr_vance_1810",
+        "accountNumber": "•••• 9323",
+        "accountNumberFull": "164876489323",
+        "routingNumber": "021000089",
+        "swiftBic": "FATLUS33NYC",
+        "name": "Premier Private Client Checking",
+        "type": "CHECKING_PREMIER",
+        "currency": "USD",
+        "balanceMinor": 0,
+        "availableBalanceMinor": 0,
+        "pendingHoldMinor": 0,
+        "interestRateAPY": 1.25,
+        "status": "ACTIVE",
+        "region": "US",
+        "openedDate": "2026-09-02",
+        "dailyTransferLimitMinor": 50000000,
+        "statementCycleDay": 28
+      }
+    ],
+    [
+      "acc_usr_hayes_7681_usd_01",
+      {
+        "id": "acc_usr_hayes_7681_usd_01",
+        "userId": "usr_hayes_7681",
+        "accountNumber": "•••• 1004",
+        "accountNumberFull": "853495521004",
+        "routingNumber": "021000089",
+        "swiftBic": "FATLUS33NYC",
+        "name": "Premier Private Client Checking",
+        "type": "CHECKING_PREMIER",
+        "currency": "USD",
+        "balanceMinor": 0,
+        "availableBalanceMinor": 0,
+        "pendingHoldMinor": 0,
+        "interestRateAPY": 1.25,
+        "status": "ACTIVE",
+        "region": "US",
+        "openedDate": "2026-09-02",
+        "dailyTransferLimitMinor": 50000000,
+        "statementCycleDay": 28
+      }
     ]
   ],
   "cards": [
@@ -508,6 +634,52 @@
         "expiryMonth": 12,
         "expiryYear": 2031,
         "cvv": "735",
+        "cardType": "DEBIT_VISA_SIGNATURE",
+        "status": "ACTIVE",
+        "isVirtual": false,
+        "contactlessEnabled": true,
+        "onlineTransactionsEnabled": true,
+        "internationalSpendEnabled": true,
+        "dailyAtmLimitMinor": 500000,
+        "dailySpendLimitMinor": 2500000,
+        "travelNotices": []
+      }
+    ],
+    [
+      "crd_usr_vance_1810_01",
+      {
+        "id": "crd_usr_vance_1810_01",
+        "accountId": "acc_usr_vance_1810_usd_01",
+        "userId": "usr_vance_1810",
+        "cardNumberMasked": "•••• •••• •••• 9323",
+        "cardNumberFull": "4111 2970 4346 9323",
+        "cardHolderName": "MARCUS VANCE",
+        "expiryMonth": 12,
+        "expiryYear": 2031,
+        "cvv": "862",
+        "cardType": "DEBIT_VISA_SIGNATURE",
+        "status": "ACTIVE",
+        "isVirtual": false,
+        "contactlessEnabled": true,
+        "onlineTransactionsEnabled": true,
+        "internationalSpendEnabled": true,
+        "dailyAtmLimitMinor": 500000,
+        "dailySpendLimitMinor": 2500000,
+        "travelNotices": []
+      }
+    ],
+    [
+      "crd_usr_hayes_7681_01",
+      {
+        "id": "crd_usr_hayes_7681_01",
+        "accountId": "acc_usr_hayes_7681_usd_01",
+        "userId": "usr_hayes_7681",
+        "cardNumberMasked": "•••• •••• •••• 1004",
+        "cardNumberFull": "4111 4247 4548 1004",
+        "cardHolderName": "DEVIN HAYES",
+        "expiryMonth": 12,
+        "expiryYear": 2031,
+        "cvv": "187",
         "cardType": "DEBIT_VISA_SIGNATURE",
         "status": "ACTIVE",
         "isVirtual": false,
@@ -648,6 +820,34 @@
     }
   ],
   "auditLogs": [
+    {
+      "actorId": "adm_master_01",
+      "actorEmail": "admin@firstatlanticbank.com",
+      "actorRole": "SUPER_ADMIN",
+      "action": "ADMIN_CUSTOMER_CREATED",
+      "targetType": "USER",
+      "targetId": "usr_hayes_7681",
+      "ipAddress": "199.16.156.12",
+      "userAgent": "First Atlantic Master Admin Suite v4.9",
+      "details": "Administrator Alexandra Vance created new customer account for Devin Hayes (devin.hayes@atlantic-client.com). Provisioned CHECKING_PREMIER (•••• 1004, USD) with initial balance $0.00.",
+      "id": "aud_1788335567682_935",
+      "timestamp": "2026-09-02T07:52:47.682Z",
+      "signatureHash": "00000000000000000000000000000000000000000000000000000000342d0b89"
+    },
+    {
+      "actorId": "adm_master_01",
+      "actorEmail": "admin@firstatlanticbank.com",
+      "actorRole": "SUPER_ADMIN",
+      "action": "ADMIN_CUSTOMER_CREATED",
+      "targetType": "USER",
+      "targetId": "usr_vance_1810",
+      "ipAddress": "199.16.156.12",
+      "userAgent": "First Atlantic Master Admin Suite v4.9",
+      "details": "Administrator Alexandra Vance created new customer account for Marcus Vance (marcus.vance@atlantic-client.com). Provisioned CHECKING_PREMIER (•••• 9323, USD) with initial balance $0.00.",
+      "id": "aud_1788334451811_361",
+      "timestamp": "2026-09-02T07:34:11.811Z",
+      "signatureHash": "000000000000000000000000000000000000000000000000000000006ad8ea7c"
+    },
     {
       "actorId": "adm_master_01",
       "actorEmail": "admin@firstatlanticbank.com",
@@ -2218,6 +2418,106 @@
         "provisionedRoutingNumber": "021000089",
         "provisionedAccountNumber": "125853605109"
       }
+    ],
+    [
+      "app_1788334451810_591",
+      {
+        "id": "app_1788334451810_591",
+        "referenceNumber": "FAB-US-2026-72884",
+        "firstName": "Marcus",
+        "lastName": "Vance",
+        "email": "marcus.vance@atlantic-client.com",
+        "phone": "+1 (555) 019-2830",
+        "dialCode": "+1",
+        "dateOfBirth": "1988-06-15",
+        "nationality": "American",
+        "taxIdOrSsn": "987-65-4321",
+        "idDocumentType": "PASSPORT",
+        "idDocumentNumber": "ID-451810",
+        "passportPhoto": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500&auto=format&fit=crop&q=80",
+        "address": {
+          "line1": "100 Atlantic Plaza",
+          "line2": "",
+          "city": "New York",
+          "stateOrProvince": "NY",
+          "postalCode": "10001",
+          "country": "United States"
+        },
+        "employmentStatus": "EXECUTIVE",
+        "employerOrBusinessName": "Private Wealth Holding",
+        "sourceOfWealth": "INVESTMENTS",
+        "annualIncomeRange": "$250,000+",
+        "isPep": false,
+        "requestedCurrency": "USD",
+        "requestedAccountType": "CHECKING_PREMIER",
+        "requestedRegion": "US",
+        "initialDepositAmountMinor": 0,
+        "requestDebitCard": true,
+        "username": "mvance",
+        "passwordHashed": "AtlanticSecure2026!",
+        "loginPin": "1234",
+        "mfaPreference": "AUTHENTICATOR",
+        "status": "APPROVED",
+        "riskScore": 8,
+        "submittedAt": "2026-09-02T07:34:11.810Z",
+        "reviewedAt": "2026-09-02T07:34:11.810Z",
+        "reviewedByAdminId": "adm_master_01",
+        "reviewedByAdminName": "Alexandra Vance",
+        "complianceNotes": "Directly onboarded and provisioned by Administrator Alexandra Vance. Verified KYC and account clearance.",
+        "createdUserId": "usr_vance_1810",
+        "provisionedRoutingNumber": "021000089",
+        "provisionedAccountNumber": "164876489323"
+      }
+    ],
+    [
+      "app_1788335567681_783",
+      {
+        "id": "app_1788335567681_783",
+        "referenceNumber": "FAB-US-2026-88459",
+        "firstName": "Devin",
+        "lastName": "Hayes",
+        "email": "devin.hayes@atlantic-client.com",
+        "phone": "+1 (555) 019-2830",
+        "dialCode": "+1",
+        "dateOfBirth": "1988-06-15",
+        "nationality": "American",
+        "taxIdOrSsn": "987-65-4321",
+        "idDocumentType": "PASSPORT",
+        "idDocumentNumber": "ID-567681",
+        "passportPhoto": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500&auto=format&fit=crop&q=80",
+        "address": {
+          "line1": "100 Atlantic Plaza",
+          "line2": "",
+          "city": "New York",
+          "stateOrProvince": "NY",
+          "postalCode": "10001",
+          "country": "United States"
+        },
+        "employmentStatus": "EXECUTIVE",
+        "employerOrBusinessName": "Private Wealth Holding",
+        "sourceOfWealth": "INVESTMENTS",
+        "annualIncomeRange": "$250,000+",
+        "isPep": false,
+        "requestedCurrency": "USD",
+        "requestedAccountType": "CHECKING_PREMIER",
+        "requestedRegion": "US",
+        "initialDepositAmountMinor": 0,
+        "requestDebitCard": true,
+        "username": "dhayes",
+        "passwordHashed": "AtlanticSecure2026!",
+        "loginPin": "1234",
+        "mfaPreference": "AUTHENTICATOR",
+        "status": "APPROVED",
+        "riskScore": 8,
+        "submittedAt": "2026-09-02T07:52:47.681Z",
+        "reviewedAt": "2026-09-02T07:52:47.681Z",
+        "reviewedByAdminId": "adm_master_01",
+        "reviewedByAdminName": "Alexandra Vance",
+        "complianceNotes": "Directly onboarded and provisioned by Administrator Alexandra Vance. Verified KYC and account clearance.",
+        "createdUserId": "usr_hayes_7681",
+        "provisionedRoutingNumber": "021000089",
+        "provisionedAccountNumber": "853495521004"
+      }
     ]
   ],
   "receivingAccounts": [
@@ -2342,8 +2642,32 @@
     [
       "zero.bal@atlantic-client.com",
       "AtlanticSecure2026!"
+    ],
+    [
+      "usr_vance_1810",
+      "AtlanticSecure2026!"
+    ],
+    [
+      "mvance",
+      "AtlanticSecure2026!"
+    ],
+    [
+      "marcus.vance@atlantic-client.com",
+      "AtlanticSecure2026!"
+    ],
+    [
+      "usr_hayes_7681",
+      "AtlanticSecure2026!"
+    ],
+    [
+      "dhayes",
+      "AtlanticSecure2026!"
+    ],
+    [
+      "devin.hayes@atlantic-client.com",
+      "AtlanticSecure2026!"
     ]
   ],
   "activeSessions": [],
-  "savedAt": "2026-09-01T21:05:54.633Z"
+  "savedAt": "2026-09-02T07:52:47.682Z"
 }

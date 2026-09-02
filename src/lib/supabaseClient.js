@@ -1,7 +1,9 @@
 import { createClient } from '@supabase/supabase-js';
 
-const rawUrl = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_SUPABASE_URL) ? import.meta.env.VITE_SUPABASE_URL.trim() : '';
-const rawKey = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_SUPABASE_ANON_KEY) ? import.meta.env.VITE_SUPABASE_ANON_KEY.trim() : '';
+const rawUrl = (typeof process !== 'undefined' && process.env?.NEXT_PUBLIC_SUPABASE_URL) ? process.env.NEXT_PUBLIC_SUPABASE_URL.trim() : 
+  (typeof window !== 'undefined' && window.__ENV__?.NEXT_PUBLIC_SUPABASE_URL) ? window.__ENV__.NEXT_PUBLIC_SUPABASE_URL.trim() : '';
+const rawKey = (typeof process !== 'undefined' && process.env?.NEXT_PUBLIC_SUPABASE_ANON_KEY) ? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY.trim() : 
+  (typeof window !== 'undefined' && window.__ENV__?.NEXT_PUBLIC_SUPABASE_ANON_KEY) ? window.__ENV__.NEXT_PUBLIC_SUPABASE_ANON_KEY.trim() : '';
 
 // Detect if real, valid Supabase configuration is provided
 export const isSupabaseConfigured = Boolean(

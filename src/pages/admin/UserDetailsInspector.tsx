@@ -110,11 +110,15 @@ export const UserDetailsInspector: React.FC = () => {
     loadUsersList();
   }, []);
 
-  const filteredUsers = usersList.filter(u =>
-    `${u.first_name} ${u.last_name}`.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    u.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    u.username.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredUsers = usersList.filter(u => {
+    const fn = u.firstName || u.first_name || '';
+    const ln = u.lastName || u.last_name || '';
+    const em = u.email || '';
+    const un = u.username || '';
+    return `${fn} ${ln}`.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      em.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      un.toLowerCase().includes(searchQuery.toLowerCase());
+  });
 
   const openEditProfile = () => {
     if (!userDetails?.user) return;
@@ -258,11 +262,11 @@ export const UserDetailsInspector: React.FC = () => {
                           : 'bg-slate-100 text-[#0a192f]'
                       }`}
                     >
-                      {u.first_name?.charAt(0) || ''}{u.last_name?.charAt(0) || ''}
+                      {(u.firstName || u.first_name)?.charAt(0) || ''}{(u.lastName || u.last_name)?.charAt(0) || ''}
                     </div>
                     <div className="min-w-0">
                       <div className="text-xs font-bold truncate">
-                        {u.first_name} {u.last_name}
+                        {u.firstName || u.first_name} {u.lastName || u.last_name}
                       </div>
                       <div className={`text-[11px] truncate ${isSelected ? 'text-slate-300' : 'text-slate-500'}`}>
                         {u.email}
@@ -272,14 +276,14 @@ export const UserDetailsInspector: React.FC = () => {
 
                   <span
                     className={`text-[10px] font-bold px-2 py-0.5 rounded uppercase font-mono shrink-0 ${
-                      u.approval_status === 'ACTIVATED'
-                        ? 'bg-emerald-500/20 text-emerald-300'
-                        : u.approval_status === 'PENDING'
-                        ? 'bg-amber-500/20 text-amber-300'
-                        : 'bg-rose-500/20 text-rose-300'
+                      (u.approvalStatus || u.approval_status) === 'ACTIVATED' || (u.approvalStatus || u.approval_status) === 'APPROVED'
+                        ? 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-300'
+                        : (u.approvalStatus || u.approval_status) === 'PENDING'
+                        ? 'bg-amber-500/20 text-amber-600 dark:text-amber-300'
+                        : 'bg-slate-500/20 text-slate-600 dark:text-slate-300'
                     }`}
                   >
-                    {u.approval_status}
+                    {u.approvalStatus || u.approval_status || 'ACTIVE'}
                   </span>
                 </div>
               </div>

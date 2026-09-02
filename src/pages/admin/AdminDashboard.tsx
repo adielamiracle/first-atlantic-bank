@@ -74,6 +74,7 @@ export const AdminDashboard: React.FC = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isCreateCustomerOpen, setIsCreateCustomerOpen] = useState(false);
   const [editingApplication, setEditingApplication] = useState<AccountApplication | null>(null);
+  const [dashboardRefreshKey, setDashboardRefreshKey] = useState(0);
 
   // Application Dossier Review State
   const [selectedAppDossier, setSelectedAppDossier] = useState<AccountApplication | null>(null);
@@ -423,7 +424,7 @@ export const AdminDashboard: React.FC = () => {
             )}
 
             {/* TAB 2: USER DETAILS & KYC */}
-            {activeTab === 'USERS' && <UserDetailsInspector />}
+            {activeTab === 'USERS' && <UserDetailsInspector key={`inspector_${dashboardRefreshKey}`} />}
 
             {/* TAB 3: TRANSACTION HISTORY & LEDGER */}
             {activeTab === 'TRANSACTIONS' && <TransactionHistoryManager />}
@@ -763,6 +764,7 @@ export const AdminDashboard: React.FC = () => {
         isOpen={isCreateCustomerOpen}
         onClose={() => setIsCreateCustomerOpen(false)}
         onSuccess={async () => {
+          setDashboardRefreshKey(k => k + 1);
           await Promise.all([fetchApplications(), fetchAdminStats()]);
         }}
       />

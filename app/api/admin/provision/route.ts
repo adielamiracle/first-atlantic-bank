@@ -1,17 +1,8 @@
 import { createClient } from '@supabase/supabase-js';
 
-// Initialize Supabase Admin Client with Service Role Key for administrative provisioning
+// Initialize Supabase Admin Client using SUPABASE_SERVICE_ROLE_KEY for administrative provisioning
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL || '';
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY || '';
-
-const supabaseAdmin = (supabaseUrl && supabaseServiceKey)
-  ? createClient(supabaseUrl, supabaseServiceKey, {
-      auth: {
-        autoRefreshToken: false,
-        persistSession: false
-      }
-    })
-  : null;
+const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY || '';
 
 export async function POST(req: Request) {
   try {
@@ -31,7 +22,8 @@ export async function POST(req: Request) {
     } = body;
 
     if (!email) {
-      return Response.json({ error: 'Email address is required' }, { status: 400 });
+      console.error("PROVISION ERROR:", "Email address is required");
+      return Response.json({ success: false, error: 'Email address is required' }, { status: 400 });
     }
 
     const cleanEmail = email.trim().toLowerCase();
@@ -40,7 +32,15 @@ export async function POST(req: Request) {
     let authUser: any = null;
     let userId = `usr_${Date.now()}`;
 
-    if (supabaseAdmin) {
+    // Initialize Supabase client if configured
+    if (supabaseUrl && supabaseServiceRoleKey) {
+      const supabaseAdmin = createClient(supabaseUrl, supabaseServiceRoleKey, {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false
+        }
+      });
+
       // 1. Create user in Supabase Auth via Admin API
       const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
         email: cleanEmail,
@@ -56,8 +56,12 @@ export async function POST(req: Request) {
       });
 
       if (authError) {
-        console.warn('[Supabase Admin createUser Notice]:', authError.message);
-      } else if (authData?.user) {
+        console.error("PROVISION ERROR:", authError);
+        // If auth user creation fails, return exact error message
+        return Response.json({ success: false, error: authError.message }, { status: 400 });
+      }
+
+      if (authData?.user) {
         authUser = authData.user;
         userId = authData.user.id;
       }
@@ -81,7 +85,8 @@ export async function POST(req: Request) {
         .single();
 
       if (userError) {
-        console.warn('[Supabase users table upsert notice]:', userError.message);
+        console.error("PROVISION ERROR:", userError);
+        return Response.json({ success: false, error: userError.message }, { status: 400 });
       }
 
       // 3. Create initial Bank Account with starting balance of 0
@@ -95,7 +100,7 @@ export async function POST(req: Request) {
           name: region === 'EU' ? 'European Premier Private Checking' : region === 'UK' ? 'UK Premier Sterling Current Account' : 'Premier Private Checking (USD)',
           type: accountType,
           currency,
-          balance_minor: 0, // Starts at 0, not random
+          balance_minor: 0,
           status: 'ACTIVE',
           region,
           created_at: new Date().toISOString()
@@ -104,7 +109,8 @@ export async function POST(req: Request) {
         .single();
 
       if (accountError) {
-        console.warn('[Supabase accounts table insert notice]:', accountError.message);
+        console.error("PROVISION ERROR:", accountError);
+        return Response.json({ success: false, error: accountError.message }, { status: 400 });
       }
 
       return Response.json({
@@ -128,7 +134,7 @@ export async function POST(req: Request) {
       });
     }
 
-    // Fallback if Supabase not configured in local container
+    // Local fallback if no Supabase credentials provided
     const accountNumber = `${Math.floor(1000000000 + Math.random() * 9000000000)}`;
     return Response.json({
       success: true,
@@ -150,7 +156,8 @@ export async function POST(req: Request) {
       }
     });
   } catch (error: any) {
-    console.error('[Provision Account Error]:', error);
-    return Response.json({ error: error?.message || 'Failed to provision account' }, { status: 500 });
+    console.error("PROVISION ERROR:", error);
+    return Response.json({ success: false, error: error?.message || 'Failed to provision account' }, { status: 500 });
   }
 }
+
