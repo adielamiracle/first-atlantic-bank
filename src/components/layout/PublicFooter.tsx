@@ -78,12 +78,23 @@ export const PublicFooter: React.FC = () => {
             <div>
               &copy; {new Date().getFullYear()} First Atlantic Bank &amp; Trust Corporation. All rights reserved. Equal Housing Lender.
             </div>
-            <div className="flex items-center gap-4 text-xs font-medium">
+            <div className="flex flex-wrap items-center gap-3 sm:gap-4 text-xs font-medium">
               <span>Privacy Policy</span>
               <span>•</span>
               <span>Terms of Online Banking</span>
               <span>•</span>
               <span>AML &amp; Patriot Act Disclosure</span>
+              <span>•</span>
+              <button
+                onClick={() => {
+                  window.location.hash = 'admin';
+                  setCurrentView('AUTH_ADMIN_LOGIN');
+                }}
+                className="text-[#d4af37] hover:text-[#f3e5ab] font-bold flex items-center gap-1 cursor-pointer transition-colors underline decoration-[#d4af37]/40"
+              >
+                <Shield className="w-3.5 h-3.5" />
+                <span>Institutional Admin Portal</span>
+              </button>
             </div>
           </div>
         </div>

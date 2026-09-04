@@ -47,35 +47,21 @@ import { GlassmorphicShowcase } from './components/glass/GlassmorphicShowcase';
 const MainAppRouter: React.FC = () => {
   const { currentView, setCurrentView, isAuthenticated, currentRole } = useBank();
 
-  // Handle explicit hash navigation (e.g. #admin-secure-portal or #admin) without trapping users on refresh
+  // Handle explicit hash navigation (e.g. #admin, #/admin, #admin-secure-portal) without getting cleared on reload
   useEffect(() => {
-    // Check if this was a refresh (navigation type reload)
-    const isPageReload = () => {
-      try {
-        const perfEntries = performance.getEntriesByType('navigation');
-        if (perfEntries.length > 0) {
-          const navTiming = perfEntries[0] as PerformanceNavigationTiming;
-          return navTiming.type === 'reload';
-        }
-        return false;
-      } catch {
-        return false;
-      }
-    };
-
-    if (isPageReload()) {
-      // On browser reload/refresh, default to public front page and clear stale admin hash
-      if (window.location.hash.toLowerCase().includes('admin')) {
-        history.replaceState(null, document.title, window.location.pathname + window.location.search);
-      }
-      if (currentRole !== 'ADMIN' && !isAuthenticated) {
-        setCurrentView('PUBLIC_HOME');
-      }
-    }
-
     const handleHashAndPath = () => {
       const hash = window.location.hash.toLowerCase();
-      if (hash === '#admin' || hash === '#/admin' || hash === '#admin-secure-portal' || hash === '#portal-admin') {
+      const pathname = window.location.pathname.toLowerCase();
+      if (
+        hash.includes('admin') ||
+        pathname.includes('admin') ||
+        hash === '#admin' ||
+        hash === '#/admin' ||
+        pathname === '/admin' ||
+        pathname.startsWith('/admin') ||
+        hash === '#admin-secure-portal' ||
+        hash === '#portal-admin'
+      ) {
         if (currentRole === 'ADMIN') {
           setCurrentView('ADMIN_DASHBOARD');
         } else {
@@ -84,10 +70,8 @@ const MainAppRouter: React.FC = () => {
       }
     };
 
-    // Check if entered directly via hash
-    if (!isPageReload() && (window.location.hash.toLowerCase().includes('admin'))) {
-      handleHashAndPath();
-    }
+    // Check on initial load immediately
+    handleHashAndPath();
 
     window.addEventListener('hashchange', handleHashAndPath);
 
@@ -95,7 +79,7 @@ const MainAppRouter: React.FC = () => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === 'A' || e.key === 'a')) {
         e.preventDefault();
-        window.location.hash = 'admin-secure-portal';
+        window.location.hash = 'admin';
         if (currentRole === 'ADMIN') {
           setCurrentView('ADMIN_DASHBOARD');
         } else {
@@ -109,7 +93,7 @@ const MainAppRouter: React.FC = () => {
       window.removeEventListener('hashchange', handleHashAndPath);
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [currentRole, setCurrentView, isAuthenticated]);
+  }, [currentRole, setCurrentView]);
 
   // 1. Dedicated Admin Authentication Route
   if (currentView === 'AUTH_ADMIN_LOGIN') {

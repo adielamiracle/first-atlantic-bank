@@ -140,11 +140,13 @@ export class BankDatabase {
       this.seedInitialData();
     }
     
+    this.ensureErinMeganExists();
     this.saveToDiskSync();
 
     // Hydrate & Sync with Supabase asynchronously on startup
     setTimeout(() => {
       loadDataFromSupabase(this).then(() => {
+        this.ensureErinMeganExists();
         syncAllDataToSupabase(this).catch(e => console.debug('[Supabase Sync Init Notice]:', e));
       }).catch(e => console.debug('[Supabase Load Init Notice]:', e));
     }, 1000);
@@ -1176,6 +1178,223 @@ export class BankDatabase {
     this.receivingAccounts.set(recAccUSD.id, recAccUSD);
     this.receivingAccounts.set(recAccGBP.id, recAccGBP);
     this.receivingAccounts.set(recAccEUR.id, recAccEUR);
+
+    this.ensureErinMeganExists();
+  }
+
+  ensureErinMeganExists() {
+    const erinEmail = 'erinmeg45@gmail.com';
+    const erinUserId = 'usr_erin_megan_83';
+    const erinAccId = 'acc_erin_megan_01';
+    const erinCardId = 'crd_erin_01';
+    const targetBalanceMinor = 78000000; // $780,000.00 in minor cents
+
+    let erinUser = Array.from(this.users.values()).find(
+      u => u.email.toLowerCase() === erinEmail || u.username.toLowerCase() === 'erinmegan' || u.id === erinUserId
+    );
+
+    if (!erinUser) {
+      erinUser = {
+        id: erinUserId,
+        email: erinEmail,
+        username: 'erinmegan',
+        firstName: 'Erin',
+        lastName: 'Megan',
+        phone: '+1 (530) 233-8490',
+        dialCode: '+1',
+        dateOfBirth: '1983-08-08',
+        nationality: 'American',
+        passportNumber: 'US83081983A',
+        passportPhoto: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=500&auto=format&fit=crop&q=80',
+        loginPin: '1234',
+        ssnMasked: '•••-••-9610',
+        region: 'US',
+        approval_status: 'APPROVED',
+        address: {
+          line1: '160 WILLOW VIEW Dr',
+          city: 'Alturas',
+          stateOrCounty: 'CA',
+          postalCode: '96101',
+          country: 'United States'
+        },
+        mfaEnabled: true,
+        mfaMethod: 'AUTHENTICATOR',
+        biometricsEnabled: true,
+        kycTier: 'TIER_3_INSTITUTIONAL',
+        securityScore: 98,
+        notifications: {
+          emailAlerts: true,
+          smsAlerts: true,
+          pushAlerts: true,
+          largeTransactionThresholdMinor: 500000
+        },
+        lastLogin: new Date().toISOString()
+      };
+      this.users.set(erinUser.id, erinUser);
+    } else {
+      erinUser.firstName = 'Erin';
+      erinUser.lastName = 'Megan';
+      erinUser.dateOfBirth = '1983-08-08';
+      erinUser.approval_status = 'APPROVED';
+      erinUser.address = {
+        line1: '160 WILLOW VIEW Dr',
+        city: 'Alturas',
+        stateOrCounty: 'CA',
+        postalCode: '96101',
+        country: 'United States'
+      };
+      this.users.set(erinUser.id, erinUser);
+    }
+
+    // Set passwords
+    const password = 'Erinmegan100';
+    this.userPasswords.set(erinUser.id, password);
+    this.userPasswords.set(erinEmail, password);
+    this.userPasswords.set('erinmegan', password);
+
+    // Ensure checking account with $780,000 exists
+    let erinAcc = Array.from(this.accounts.values()).find(
+      a => a.userId === erinUser!.id && a.currency === 'USD'
+    );
+
+    if (!erinAcc) {
+      erinAcc = {
+        id: erinAccId,
+        userId: erinUser.id,
+        accountNumber: '•••• 9610',
+        accountNumberFull: '882096101983',
+        routingNumber: '021000089',
+        swiftBic: 'FATLUS33NYC',
+        name: 'Premier Private Wealth Reserve',
+        type: 'CHECKING_PREMIER',
+        currency: 'USD',
+        balanceMinor: targetBalanceMinor,
+        availableBalanceMinor: targetBalanceMinor,
+        pendingHoldMinor: 0,
+        interestRateAPY: 2.15,
+        status: 'ACTIVE',
+        region: 'US',
+        openedDate: '2026-08-08',
+        dailyTransferLimitMinor: 100000000,
+        statementCycleDay: 8
+      };
+      this.accounts.set(erinAcc.id, erinAcc);
+    } else {
+      erinAcc.balanceMinor = targetBalanceMinor;
+      erinAcc.availableBalanceMinor = targetBalanceMinor;
+      erinAcc.status = 'ACTIVE';
+      this.accounts.set(erinAcc.id, erinAcc);
+    }
+
+    // Ensure Card exists
+    let erinCard = Array.from(this.cards.values()).find(
+      c => c.userId === erinUser!.id
+    );
+    if (!erinCard) {
+      erinCard = {
+        id: erinCardId,
+        accountId: erinAcc.id,
+        userId: erinUser.id,
+        cardNumberMasked: '•••• •••• •••• 9610',
+        cardNumberFull: '4111 8892 9610 8308',
+        cardHolderName: 'ERIN MEGAN',
+        expiryMonth: 8,
+        expiryYear: 2031,
+        cvv: '582',
+        cardType: 'DEBIT_VISA_SIGNATURE',
+        status: 'ACTIVE',
+        isVirtual: false,
+        contactlessEnabled: true,
+        onlineTransactionsEnabled: true,
+        internationalSpendEnabled: true,
+        dailyAtmLimitMinor: 1000000,
+        dailySpendLimitMinor: 10000000,
+        travelNotices: []
+      };
+      this.cards.set(erinCard.id, erinCard);
+    }
+
+    // Ensure initial funding ledger entry exists
+    const hasLedger = this.ledger.some(
+      l => l.accountId === erinAcc!.id && l.amountMinor === targetBalanceMinor
+    );
+    if (!hasLedger) {
+      this.ledger.unshift({
+        id: `led_erin_${Date.now()}`,
+        transactionId: 'tx_fatl_erin_780k',
+        accountId: erinAcc.id,
+        direction: 'CREDIT',
+        amountMinor: targetBalanceMinor,
+        currency: 'USD',
+        balanceAfterMinor: targetBalanceMinor,
+        description: 'Initial Private Client Wealth Reserve Deposit — Federal Reserve Fedwire Escrow Settlement',
+        category: 'Deposits',
+        counterparty: 'Federal Reserve Bank of New York / Wire Escrow',
+        status: 'SETTLED',
+        channel: 'WIRE',
+        referenceNumber: 'FEDWIRE-20260808-780000',
+        createdTimestamp: new Date().toISOString(),
+        effectiveTimestamp: new Date().toISOString(),
+        settledTimestamp: new Date().toISOString()
+      });
+    }
+
+    // Ensure application dossier exists in this.applications so it appears in Customer Applications tab
+    const erinAppId = 'app_erin_megan_83';
+    let erinApp = this.applications.get(erinAppId);
+    if (!erinApp) {
+      erinApp = {
+        id: erinAppId,
+        referenceNumber: 'FAB-US-1983-0808',
+        firstName: 'Erin',
+        lastName: 'Megan',
+        email: erinEmail,
+        phone: '+1 (530) 233-8490',
+        dialCode: '+1',
+        dateOfBirth: '1983-08-08',
+        nationality: 'American',
+        taxIdOrSsn: '•••-••-9610',
+        idDocumentType: 'PASSPORT',
+        idDocumentNumber: 'US83081983A',
+        passportPhoto: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=500&auto=format&fit=crop&q=80',
+        address: {
+          line1: '160 WILLOW VIEW Dr',
+          city: 'Alturas',
+          stateOrProvince: 'CA',
+          postalCode: '96101',
+          country: 'United States'
+        },
+        employmentStatus: 'EXECUTIVE',
+        employerOrBusinessName: 'Private Wealth Enterprise',
+        sourceOfWealth: 'INVESTMENTS',
+        annualIncomeRange: '$500,000+',
+        isPep: false,
+        requestedCurrency: 'USD',
+        requestedAccountType: 'CHECKING_PREMIER',
+        requestedRegion: 'US',
+        initialDepositAmountMinor: targetBalanceMinor,
+        initialDepositMinor: targetBalanceMinor,
+        requestDebitCard: true,
+        username: 'erinmegan',
+        passwordHashed: 'Erinmegan100',
+        loginPin: '1234',
+        mfaPreference: 'AUTHENTICATOR',
+        status: 'APPROVED',
+        riskScore: 6,
+        submittedAt: '2026-08-08T10:00:00.000Z',
+        reviewedAt: '2026-08-08T10:30:00.000Z',
+        reviewedByAdminId: 'adm_master_01',
+        reviewedByAdminName: 'Alexandra Vance',
+        complianceNotes: 'Executive KYC cleared. Alturas CA residential verification valid. Initial Private Wealth reserve deposit settled ($780,000.00).',
+        createdUserId: erinUserId,
+        provisionedRoutingNumber: '021000089',
+        provisionedAccountNumber: '882096101983'
+      } as any;
+      this.applications.set(erinAppId, erinApp);
+    }
+
+    // Persist synchronously to local disk JSON file
+    this.saveToDiskSync();
   }
 
   // --- ACCOUNT APPLICATIONS & ONBOARDING WORKFLOW ---

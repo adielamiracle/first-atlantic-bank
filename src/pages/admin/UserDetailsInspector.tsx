@@ -37,7 +37,11 @@ import { CreateCustomerModal } from './CreateCustomerModal';
 import { formatAddress, formatDateTime } from '../../types';
 import { safeFetchJson } from '../../lib/apiHelper';
 
-export const UserDetailsInspector: React.FC = () => {
+interface UserDetailsInspectorProps {
+  preselectedUserId?: string;
+}
+
+export const UserDetailsInspector: React.FC<UserDetailsInspectorProps> = ({ preselectedUserId }) => {
   const {
     fetchUserBackendDetails,
     updateUserProfile,
@@ -49,7 +53,7 @@ export const UserDetailsInspector: React.FC = () => {
   const [usersList, setUsersList] = useState<any[]>([]);
   const [isLoadingList, setIsLoadingList] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(preselectedUserId || null);
   const [userDetails, setUserDetails] = useState<any | null>(null);
   const [isLoadingDetails, setIsLoadingDetails] = useState(false);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -82,8 +86,11 @@ export const UserDetailsInspector: React.FC = () => {
       const usersData = result.data?.users || result.data?.customers || [];
       if (usersData) {
         setUsersList(usersData);
-        if (usersData.length > 0 && !selectedUserId) {
-          inspectUser(usersData[0].id);
+        if (usersData.length > 0) {
+          const targetId = preselectedUserId && usersData.some((u: any) => u.id === preselectedUserId)
+            ? preselectedUserId
+            : (selectedUserId || usersData[0].id);
+          inspectUser(targetId);
         }
       }
     } catch (err) {

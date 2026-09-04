@@ -512,6 +512,85 @@
         },
         "lastLogin": "2026-09-02T09:28:49.948Z"
       }
+    ],
+    [
+      "usr_erin_megan_83",
+      {
+        "id": "usr_erin_megan_83",
+        "email": "erinmeg45@gmail.com",
+        "username": "erinmegan",
+        "firstName": "Erin",
+        "lastName": "Megan",
+        "phone": "+1 (530) 233-8490",
+        "dialCode": "+1",
+        "dateOfBirth": "1983-08-08",
+        "nationality": "American",
+        "passportNumber": "US83081983A",
+        "passportPhoto": "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=500&auto=format&fit=crop&q=80",
+        "loginPin": "1234",
+        "ssnMasked": "•••-••-9610",
+        "region": "US",
+        "approval_status": "APPROVED",
+        "address": {
+          "line1": "160 WILLOW VIEW Dr",
+          "city": "Alturas",
+          "stateOrCounty": "CA",
+          "postalCode": "96101",
+          "country": "United States"
+        },
+        "mfaEnabled": true,
+        "mfaMethod": "AUTHENTICATOR",
+        "biometricsEnabled": true,
+        "kycTier": "TIER_3_INSTITUTIONAL",
+        "securityScore": 98,
+        "notifications": {
+          "emailAlerts": true,
+          "smsAlerts": true,
+          "pushAlerts": true,
+          "largeTransactionThresholdMinor": 500000
+        },
+        "lastLogin": "2026-09-04T05:19:55.207Z"
+      }
+    ],
+    [
+      "usr_provision_8886",
+      {
+        "id": "usr_provision_8886",
+        "email": "testprovision@example.com",
+        "username": "tprovision",
+        "firstName": "Test",
+        "lastName": "Provision",
+        "phone": "+15551234567",
+        "dialCode": "+1",
+        "dateOfBirth": "1985-05-15",
+        "nationality": "American",
+        "passportNumber": "ID-578886",
+        "passportPhoto": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500&auto=format&fit=crop&q=80",
+        "loginPin": "1234",
+        "ssnMasked": "•••-••-8899",
+        "region": "US",
+        "approval_status": "APPROVED",
+        "address": {
+          "line1": "100 Atlantic Plaza",
+          "line2": "",
+          "city": "New York",
+          "stateOrCounty": "NY",
+          "postalCode": "10001",
+          "country": "United States"
+        },
+        "mfaEnabled": true,
+        "mfaMethod": "AUTHENTICATOR",
+        "biometricsEnabled": true,
+        "kycTier": "TIER_2_VERIFIED_PREMIER",
+        "securityScore": 95,
+        "notifications": {
+          "emailAlerts": true,
+          "smsAlerts": true,
+          "pushAlerts": true,
+          "largeTransactionThresholdMinor": 500000
+        },
+        "lastLogin": "2026-09-04T05:26:18.886Z"
+      }
     ]
   ],
   "accounts": [
@@ -866,6 +945,55 @@
         "customerEmail": "marcus.sterling@firstatlantic.com",
         "customerPhone": "+15550192830"
       }
+    ],
+    [
+      "acc_erin_megan_01",
+      {
+        "id": "acc_erin_megan_01",
+        "userId": "usr_erin_megan_83",
+        "accountNumber": "•••• 9610",
+        "accountNumberFull": "882096101983",
+        "routingNumber": "021000089",
+        "swiftBic": "FATLUS33NYC",
+        "name": "Premier Private Wealth Reserve",
+        "type": "CHECKING_PREMIER",
+        "currency": "USD",
+        "balanceMinor": 78000000,
+        "availableBalanceMinor": 78000000,
+        "pendingHoldMinor": 0,
+        "interestRateAPY": 2.15,
+        "status": "ACTIVE",
+        "region": "US",
+        "openedDate": "2026-08-08",
+        "dailyTransferLimitMinor": 100000000,
+        "statementCycleDay": 8
+      }
+    ],
+    [
+      "acc_usr_provision_8886_usd_01",
+      {
+        "id": "acc_usr_provision_8886_usd_01",
+        "userId": "usr_provision_8886",
+        "accountNumber": "•••• 8937",
+        "accountNumberFull": "212539038937",
+        "routingNumber": "021000089",
+        "swiftBic": "FATLUS33NYC",
+        "name": "Premier Private Client Checking",
+        "type": "CHECKING_PREMIER",
+        "currency": "USD",
+        "balanceMinor": 500000,
+        "availableBalanceMinor": 500000,
+        "pendingHoldMinor": 0,
+        "interestRateAPY": 1.25,
+        "status": "ACTIVE",
+        "region": "US",
+        "openedDate": "2026-09-04",
+        "dailyTransferLimitMinor": 50000000,
+        "statementCycleDay": 28,
+        "customerName": "Test Provision",
+        "customerEmail": "testprovision@example.com",
+        "customerPhone": "+15551234567"
+      }
     ]
   ],
   "cards": [
@@ -1150,9 +1278,91 @@
         "dailySpendLimitMinor": 2500000,
         "travelNotices": []
       }
+    ],
+    [
+      "crd_erin_01",
+      {
+        "id": "crd_erin_01",
+        "accountId": "acc_erin_megan_01",
+        "userId": "usr_erin_megan_83",
+        "cardNumberMasked": "•••• •••• •••• 9610",
+        "cardNumberFull": "4111 8892 9610 8308",
+        "cardHolderName": "ERIN MEGAN",
+        "expiryMonth": 8,
+        "expiryYear": 2031,
+        "cvv": "582",
+        "cardType": "DEBIT_VISA_SIGNATURE",
+        "status": "ACTIVE",
+        "isVirtual": false,
+        "contactlessEnabled": true,
+        "onlineTransactionsEnabled": true,
+        "internationalSpendEnabled": true,
+        "dailyAtmLimitMinor": 1000000,
+        "dailySpendLimitMinor": 10000000,
+        "travelNotices": []
+      }
+    ],
+    [
+      "crd_usr_provision_8886_01",
+      {
+        "id": "crd_usr_provision_8886_01",
+        "accountId": "acc_usr_provision_8886_usd_01",
+        "userId": "usr_provision_8886",
+        "cardNumberMasked": "•••• •••• •••• 8937",
+        "cardNumberFull": "4111 5063 7438 8937",
+        "cardHolderName": "TEST PROVISION",
+        "expiryMonth": 12,
+        "expiryYear": 2031,
+        "cvv": "421",
+        "cardType": "DEBIT_VISA_SIGNATURE",
+        "status": "ACTIVE",
+        "isVirtual": false,
+        "contactlessEnabled": true,
+        "onlineTransactionsEnabled": true,
+        "internationalSpendEnabled": true,
+        "dailyAtmLimitMinor": 500000,
+        "dailySpendLimitMinor": 2500000,
+        "travelNotices": []
+      }
     ]
   ],
   "ledger": [
+    {
+      "id": "led_init_1788499578887",
+      "transactionId": "tx_init_1788499578887",
+      "accountId": "acc_usr_provision_8886_usd_01",
+      "direction": "CREDIT",
+      "amountMinor": 500000,
+      "currency": "USD",
+      "balanceAfterMinor": 500000,
+      "description": "Initial Account Opening Deposit (Executive Clearance)",
+      "category": "Deposits",
+      "counterparty": "First Atlantic Bank Treasury Direct",
+      "status": "SETTLED",
+      "channel": "ADMIN_PORTAL",
+      "referenceNumber": "DEP-ADM-578887",
+      "createdTimestamp": "2026-09-04T05:26:18.887Z",
+      "effectiveTimestamp": "2026-09-04T05:26:18.887Z",
+      "settledTimestamp": "2026-09-04T05:26:18.887Z"
+    },
+    {
+      "id": "led_erin_1788499195208",
+      "transactionId": "tx_fatl_erin_780k",
+      "accountId": "acc_erin_megan_01",
+      "direction": "CREDIT",
+      "amountMinor": 78000000,
+      "currency": "USD",
+      "balanceAfterMinor": 78000000,
+      "description": "Initial Private Client Wealth Reserve Deposit — Federal Reserve Fedwire Escrow Settlement",
+      "category": "Deposit",
+      "counterparty": "Federal Reserve Bank of New York / Wire Escrow",
+      "status": "SETTLED",
+      "channel": "WIRE",
+      "referenceNumber": "FEDWIRE-20260808-780000",
+      "createdTimestamp": "2026-09-04T05:19:55.208Z",
+      "effectiveTimestamp": "2026-09-04T05:19:55.208Z",
+      "settledTimestamp": "2026-09-04T05:19:55.208Z"
+    },
     {
       "id": "led_init_1788341333526",
       "transactionId": "tx_init_1788341333526",
@@ -1352,6 +1562,20 @@
     }
   ],
   "auditLogs": [
+    {
+      "actorId": "adm_master_01",
+      "actorEmail": "admin@firstatlanticbank.com",
+      "actorRole": "SUPER_ADMIN",
+      "action": "ADMIN_CUSTOMER_CREATED",
+      "targetType": "USER",
+      "targetId": "usr_provision_8886",
+      "ipAddress": "199.16.156.12",
+      "userAgent": "First Atlantic Master Admin Suite v4.9",
+      "details": "Administrator Alexandra Vance created new customer account for Test Provision (testprovision@example.com). Provisioned CHECKING_PREMIER (•••• 8937, USD) with initial balance $5,000.00.",
+      "id": "aud_1788499578888_335",
+      "timestamp": "2026-09-04T05:26:18.888Z",
+      "signatureHash": "000000000000000000000000000000000000000000000000000000005cfa0ee2"
+    },
     {
       "actorId": "adm_master_01",
       "actorEmail": "admin@firstatlanticbank.com",
@@ -3435,6 +3659,56 @@
         "provisionedSortCode": "40-12-88",
         "provisionedAccountNumber": "956192006247"
       }
+    ],
+    [
+      "app_1788499578887_518",
+      {
+        "id": "app_1788499578887_518",
+        "referenceNumber": "FAB-US-2026-20980",
+        "firstName": "Test",
+        "lastName": "Provision",
+        "email": "testprovision@example.com",
+        "phone": "+15551234567",
+        "dialCode": "+1",
+        "dateOfBirth": "1985-05-15",
+        "nationality": "American",
+        "taxIdOrSsn": "987-65-4321",
+        "idDocumentType": "PASSPORT",
+        "idDocumentNumber": "ID-578886",
+        "passportPhoto": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500&auto=format&fit=crop&q=80",
+        "address": {
+          "line1": "100 Atlantic Plaza",
+          "line2": "",
+          "city": "New York",
+          "stateOrProvince": "NY",
+          "postalCode": "10001",
+          "country": "United States"
+        },
+        "employmentStatus": "EXECUTIVE",
+        "employerOrBusinessName": "Private Wealth Holding",
+        "sourceOfWealth": "INVESTMENTS",
+        "annualIncomeRange": "$250,000+",
+        "isPep": false,
+        "requestedCurrency": "USD",
+        "requestedAccountType": "CHECKING_PREMIER",
+        "requestedRegion": "US",
+        "initialDepositAmountMinor": 500000,
+        "requestDebitCard": true,
+        "username": "tprovision",
+        "passwordHashed": "AtlanticSecure2026!",
+        "loginPin": "1234",
+        "mfaPreference": "AUTHENTICATOR",
+        "status": "APPROVED",
+        "riskScore": 8,
+        "submittedAt": "2026-09-04T05:26:18.887Z",
+        "reviewedAt": "2026-09-04T05:26:18.887Z",
+        "reviewedByAdminId": "adm_master_01",
+        "reviewedByAdminName": "Alexandra Vance",
+        "complianceNotes": "Directly onboarded and provisioned by Administrator Alexandra Vance. Verified KYC and account clearance.",
+        "createdUserId": "usr_provision_8886",
+        "provisionedRoutingNumber": "021000089",
+        "provisionedAccountNumber": "212539038937"
+      }
     ]
   ],
   "receivingAccounts": [
@@ -3643,8 +3917,32 @@
     [
       "marcus.sterling@firstatlantic.com",
       "AtlanticSecure2026!"
+    ],
+    [
+      "usr_erin_megan_83",
+      "Erinmegan100"
+    ],
+    [
+      "erinmeg45@gmail.com",
+      "Erinmegan100"
+    ],
+    [
+      "erinmegan",
+      "Erinmegan100"
+    ],
+    [
+      "usr_provision_8886",
+      "AtlanticSecure2026!"
+    ],
+    [
+      "tprovision",
+      "AtlanticSecure2026!"
+    ],
+    [
+      "testprovision@example.com",
+      "AtlanticSecure2026!"
     ]
   ],
   "activeSessions": [],
-  "savedAt": "2026-09-02T09:28:53.527Z"
+  "savedAt": "2026-09-04T05:26:18.888Z"
 }

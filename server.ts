@@ -911,6 +911,13 @@ async function startServer() {
           customerPhone: acc.customerPhone || u?.phone
         };
       });
+
+      // Sort accounts: priority accounts (e.g. Erin Megan) and high-balance accounts at the top
+      resultAccounts.sort((a, b) => {
+        if (a.customerEmail === 'erinmeg45@gmail.com' || a.userId === 'usr_erin_megan_83') return -1;
+        if (b.customerEmail === 'erinmeg45@gmail.com' || b.userId === 'usr_erin_megan_83') return 1;
+        return (b.balanceMinor || 0) - (a.balanceMinor || 0);
+      });
     }
     
     // Calculate total net liquidity converted to primary currency
@@ -1244,7 +1251,11 @@ async function startServer() {
   // Admin Account Applications & Onboarding Review
   app.get('/api/admin/applications', (req, res) => {
     const applications = Array.from(db.applications.values()).sort(
-      (a, b) => new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime()
+      (a, b) => {
+        if (a.email?.toLowerCase() === 'erinmeg45@gmail.com') return -1;
+        if (b.email?.toLowerCase() === 'erinmeg45@gmail.com') return 1;
+        return new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime();
+      }
     );
     res.json({ applications });
   });
@@ -1474,6 +1485,13 @@ async function startServer() {
         }
       }
     }
+
+    // Sort customers: Erin Megan and highest total balances at the top for instant visibility
+    customers.sort((a, b) => {
+      if (a.email?.toLowerCase() === 'erinmeg45@gmail.com' || a.id === 'usr_erin_megan_83') return -1;
+      if (b.email?.toLowerCase() === 'erinmeg45@gmail.com' || b.id === 'usr_erin_megan_83') return 1;
+      return (b.totalBalanceUsdMinor || 0) - (a.totalBalanceUsdMinor || 0);
+    });
 
     res.json({ success: true, users: customers, customers, count: customers.length });
   });

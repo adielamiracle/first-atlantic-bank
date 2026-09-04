@@ -37,6 +37,7 @@ import {
   Clock
 } from 'lucide-react';
 import { DirectFundsManager } from './DirectFundsManager';
+import { CustomerAccountsTab } from './CustomerAccountsTab';
 import { TransactionHistoryManager } from './TransactionHistoryManager';
 import { UserDetailsInspector } from './UserDetailsInspector';
 import { TreasuryReceivingAccountsTab } from './TreasuryReceivingAccountsTab';
@@ -68,8 +69,11 @@ export const AdminDashboard: React.FC = () => {
   } = useBank();
 
   const [activeTab, setActiveTab] = useState<
-    'FUNDS' | 'USERS' | 'TRANSACTIONS' | 'RECEIVING_ACCOUNTS' | 'APPLICATIONS' | 'NOTIFICATIONS' | 'AUDIT_LOGS'
-  >('FUNDS');
+    'ACCOUNTS' | 'FUNDS' | 'USERS' | 'TRANSACTIONS' | 'RECEIVING_ACCOUNTS' | 'APPLICATIONS' | 'NOTIFICATIONS' | 'AUDIT_LOGS'
+  >('ACCOUNTS');
+
+  const [selectedAccountIdForFunds, setSelectedAccountIdForFunds] = useState<string | undefined>(undefined);
+  const [selectedUserIdForInspector, setSelectedUserIdForInspector] = useState<string | undefined>(undefined);
 
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isCreateCustomerOpen, setIsCreateCustomerOpen] = useState(false);
@@ -137,6 +141,7 @@ export const AdminDashboard: React.FC = () => {
     {
       title: 'CORE BANKING',
       items: [
+        { id: 'ACCOUNTS', label: 'Customer Accounts', icon: Landmark, badge: accounts.length > 0 ? `${accounts.length}` : null },
         { id: 'FUNDS', label: 'Add & Debit Funds', icon: DollarSign, badge: null },
         { id: 'USERS', label: 'Customers & KYC', icon: Users, badge: null },
         { id: 'TRANSACTIONS', label: 'Transaction Ledger', icon: FileText, badge: null }
@@ -354,7 +359,11 @@ export const AdminDashboard: React.FC = () => {
           {/* 3. 4 STAT CARDS ON TOP (Compact, Fit, Mobile-First) */}
           <section className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3.5">
             {/* Stat Card 1: Total Managed Liquidity */}
-            <div className="bg-white dark:bg-[#0f172a] rounded-xl p-3 sm:p-3.5 border border-slate-200/80 dark:border-slate-800 shadow-xs space-y-0.5 sm:space-y-1">
+            <div
+              onClick={() => setActiveTab('ACCOUNTS')}
+              className="bg-white dark:bg-[#0f172a] rounded-xl p-3 sm:p-3.5 border border-slate-200/80 dark:border-slate-800 shadow-xs space-y-0.5 sm:space-y-1 cursor-pointer hover:border-[#004281] transition-all"
+              title="Click to view all Customer Accounts"
+            >
               <span className="text-[10px] sm:text-[11px] font-semibold text-slate-400 uppercase tracking-wider block truncate">
                 Managed Assets
               </span>
@@ -373,7 +382,11 @@ export const AdminDashboard: React.FC = () => {
             </div>
 
             {/* Stat Card 2: Customer Accounts */}
-            <div className="bg-white dark:bg-[#0f172a] rounded-xl p-3 sm:p-3.5 border border-slate-200/80 dark:border-slate-800 shadow-xs space-y-0.5 sm:space-y-1">
+            <div
+              onClick={() => setActiveTab('ACCOUNTS')}
+              className="bg-white dark:bg-[#0f172a] rounded-xl p-3 sm:p-3.5 border border-slate-200/80 dark:border-slate-800 shadow-xs space-y-0.5 sm:space-y-1 cursor-pointer hover:border-[#004281] transition-all"
+              title="Click to view all Customer Accounts"
+            >
               <span className="text-[10px] sm:text-[11px] font-semibold text-slate-400 uppercase tracking-wider block truncate">
                 Accounts
               </span>
@@ -387,7 +400,11 @@ export const AdminDashboard: React.FC = () => {
             </div>
 
             {/* Stat Card 3: Pending KYC Onboarding */}
-            <div className="bg-white dark:bg-[#0f172a] rounded-xl p-3 sm:p-3.5 border border-slate-200/80 dark:border-slate-800 shadow-xs space-y-0.5 sm:space-y-1">
+            <div
+              onClick={() => setActiveTab('APPLICATIONS')}
+              className="bg-white dark:bg-[#0f172a] rounded-xl p-3 sm:p-3.5 border border-slate-200/80 dark:border-slate-800 shadow-xs space-y-0.5 sm:space-y-1 cursor-pointer hover:border-[#004281] transition-all"
+              title="Click to review pending applications"
+            >
               <span className="text-[10px] sm:text-[11px] font-semibold text-slate-400 uppercase tracking-wider block truncate">
                 Pending KYC
               </span>
@@ -416,15 +433,35 @@ export const AdminDashboard: React.FC = () => {
 
           {/* 4. MAIN TAB VIEWS (Clean Tables, Grouped, More Whitespace) */}
           <div className="animate-in fade-in duration-150">
+            {/* TAB 0: CUSTOMER ACCOUNTS */}
+            {activeTab === 'ACCOUNTS' && (
+              <CustomerAccountsTab
+                onNavigateToFunds={accId => {
+                  setSelectedAccountIdForFunds(accId);
+                  setActiveTab('FUNDS');
+                }}
+                onInspectCustomer={userId => {
+                  setSelectedUserIdForInspector(userId);
+                  setActiveTab('USERS');
+                }}
+                onOpenCreateCustomer={() => setIsCreateCustomerOpen(true)}
+              />
+            )}
+
             {/* TAB 1: DIRECT FUNDS MANAGER */}
             {activeTab === 'FUNDS' && (
               <div className="space-y-6">
-                <DirectFundsManager />
+                <DirectFundsManager preselectedAccountId={selectedAccountIdForFunds} />
               </div>
             )}
 
             {/* TAB 2: USER DETAILS & KYC */}
-            {activeTab === 'USERS' && <UserDetailsInspector key={`inspector_${dashboardRefreshKey}`} />}
+            {activeTab === 'USERS' && (
+              <UserDetailsInspector
+                key={`inspector_${dashboardRefreshKey}_${selectedUserIdForInspector || 'all'}`}
+                preselectedUserId={selectedUserIdForInspector}
+              />
+            )}
 
             {/* TAB 3: TRANSACTION HISTORY & LEDGER */}
             {activeTab === 'TRANSACTIONS' && <TransactionHistoryManager />}

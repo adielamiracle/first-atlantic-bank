@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { InstitutionalCrest } from '../common/InstitutionalCrest';
 import { useBank, AppView } from '../../context/BankContext';
-import { Lock, Menu, X, Globe, Building2, Sun, Moon, Search } from 'lucide-react';
+import { Lock, Menu, X, Globe, Building2, Sun, Moon, Search, ShieldCheck } from 'lucide-react';
 import { GlobalSearchModal } from '../common/GlobalSearchModal';
 
 export const PublicNavbar: React.FC = () => {
@@ -113,6 +113,17 @@ export const PublicNavbar: React.FC = () => {
               <Lock className="w-3.5 h-3.5" />
               <span>Sign In</span>
             </button>
+            <button
+              onClick={() => {
+                window.location.hash = 'admin';
+                setCurrentView('AUTH_ADMIN_LOGIN');
+              }}
+              title="First Atlantic Institutional Admin Portal"
+              className="px-3 py-1.5 text-xs font-bold uppercase tracking-wider text-[#d4af37] hover:text-white bg-[#004281]/50 hover:bg-[#004281]/90 border border-[#d4af37]/40 hover:border-[#d4af37] rounded-full backdrop-blur-md transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap"
+            >
+              <ShieldCheck className="w-3.5 h-3.5 text-[#d4af37]" />
+              <span>Admin Portal</span>
+            </button>
           </div>
 
           {/* Mobile Actions & Menu Toggle */}
@@ -209,6 +220,17 @@ export const PublicNavbar: React.FC = () => {
                 className="w-full py-2.5 text-center text-sm font-semibold bg-white/5 hover:bg-white/10 border border-white/15 text-slate-200 rounded-xl cursor-pointer active:scale-98 backdrop-blur-md"
               >
                 Open an Account
+              </button>
+              <button
+                onClick={() => {
+                  window.location.hash = 'admin';
+                  setCurrentView('AUTH_ADMIN_LOGIN');
+                  setMobileMenuOpen(false);
+                }}
+                className="w-full py-2.5 text-center text-xs font-bold bg-[#004281]/50 hover:bg-[#004281] border border-[#d4af37]/60 text-[#d4af37] hover:text-white rounded-xl flex items-center justify-center gap-2 cursor-pointer active:scale-98 transition-all"
+              >
+                <ShieldCheck className="w-4 h-4 text-[#d4af37]" />
+                <span>Institutional Admin Portal &amp; Provisioning</span>
               </button>
             </div>
           </div>

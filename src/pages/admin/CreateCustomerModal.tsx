@@ -62,6 +62,36 @@ const PASSPORT_PRESETS = [
   }
 ];
 
+export function normalizeDateInput(raw: string): string {
+  if (!raw || !raw.trim()) return '1988-06-15';
+  const clean = raw.trim();
+  if (/^\d{4}-\d{2}-\d{2}$/.test(clean)) return clean;
+  const months: Record<string, string> = {
+    jan: '01', feb: '02', mar: '03', apr: '04', may: '05', jun: '06',
+    jul: '07', aug: '08', sep: '09', oct: '10', nov: '11', dec: '12'
+  };
+  const textMatch = clean.match(/([a-zA-Z]+)[/\s,]+(\d{1,2})[/\s,]+(\d{4})/);
+  if (textMatch) {
+    const monthKey = textMatch[1].slice(0, 3).toLowerCase();
+    const month = months[monthKey] || '01';
+    const day = textMatch[2].padStart(2, '0');
+    const year = textMatch[3];
+    return `${year}-${month}-${day}`;
+  }
+  const slashMatch = clean.match(/^(\d{1,2})[/-](\d{1,2})[/-](\d{4})$/);
+  if (slashMatch) {
+    const p1 = slashMatch[1].padStart(2, '0');
+    const p2 = slashMatch[2].padStart(2, '0');
+    const year = slashMatch[3];
+    return `${year}-${p1}-${p2}`;
+  }
+  const parsed = new Date(clean);
+  if (!isNaN(parsed.getTime())) {
+    return parsed.toISOString().slice(0, 10);
+  }
+  return clean;
+}
+
 export const CreateCustomerModal: React.FC<CreateCustomerModalProps> = ({
   isOpen,
   onClose,
@@ -117,7 +147,7 @@ export const CreateCustomerModal: React.FC<CreateCustomerModalProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [highlightedField, setHighlightedField] = useState<string | null>(null);
 
-  // Success Modal State & 3s Redirect Timer
+  // Success Modal State & Redirect Timer
   const [createdSuccessData, setCreatedSuccessData] = useState<{
     user: any;
     account: any;
@@ -125,7 +155,7 @@ export const CreateCustomerModal: React.FC<CreateCustomerModalProps> = ({
     application: any;
     payload: any;
   } | null>(null);
-  const [redirectCountdown, setRedirectCountdown] = useState(3);
+  const [redirectCountdown, setRedirectCountdown] = useState<number | null>(null);
 
   // Auto-fill username when typing names
   const handleFirstNameChange = (val: string) => {
@@ -368,7 +398,7 @@ export const CreateCustomerModal: React.FC<CreateCustomerModalProps> = ({
       loginPin: loginPin.trim() || '1234',
       phone: phone.trim() || `${dialCode} 555-0199`,
       dialCode,
-      dateOfBirth: dateOfBirth || '1988-06-15',
+      dateOfBirth: normalizeDateInput(dateOfBirth),
       nationality: nationality || (region === 'UK' ? 'British' : region === 'EU' ? 'German' : 'American'),
       passportNumber: passportNumber.trim() || `PASSPORT-${Date.now().toString().slice(-6)}`,
       passportPhoto: passportPhoto || PASSPORT_PRESETS[0].url,
@@ -419,7 +449,7 @@ export const CreateCustomerModal: React.FC<CreateCustomerModalProps> = ({
         application: res.application,
         payload
       });
-      setRedirectCountdown(3);
+      setRedirectCountdown(null);
 
       showToast('SUCCESS', 'Account Created Successfully!', `Account Number: ${res.account?.accountNumber || 'Provisioned'}`);
       if (onSuccess) onSuccess();
@@ -432,9 +462,9 @@ export const CreateCustomerModal: React.FC<CreateCustomerModalProps> = ({
     }
   };
 
-  // Requirement 5: Auto-redirect countdown (3 seconds)
+  // Optional auto-redirect countdown
   useEffect(() => {
-    if (!createdSuccessData) return;
+    if (!createdSuccessData || redirectCountdown === null) return;
 
     if (redirectCountdown <= 0) {
       handleGoToDashboard();
@@ -442,7 +472,7 @@ export const CreateCustomerModal: React.FC<CreateCustomerModalProps> = ({
     }
 
     const timer = setTimeout(() => {
-      setRedirectCountdown(prev => prev - 1);
+      setRedirectCountdown(prev => (prev !== null && prev > 0 ? prev - 1 : null));
     }, 1000);
 
     return () => clearTimeout(timer);
@@ -622,22 +652,48 @@ export const CreateCustomerModal: React.FC<CreateCustomerModalProps> = ({
               </div>
             </div>
 
-            {/* Countdown notice */}
-            <div className="flex items-center justify-center gap-2 text-xs text-slate-400">
-              <RefreshCw className="w-3.5 h-3.5 animate-spin text-emerald-400" />
-              <span>
-                Redirecting to <strong className="text-slate-200 font-mono">/dashboard/customer/{createdSuccessData.user?.id}</strong> in <strong className="text-[#00A651] font-mono">{redirectCountdown}s</strong>...
-              </span>
-            </div>
+            {/* Status notice */}
+            {redirectCountdown !== null ? (
+              <div className="flex items-center justify-center gap-2 text-xs text-slate-400">
+                <RefreshCw className="w-3.5 h-3.5 animate-spin text-emerald-400" />
+                <span>
+                  Switching to customer dashboard in <strong className="text-[#00A651] font-mono">{redirectCountdown}s</strong>...
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setRedirectCountdown(null)}
+                  className="ml-1 text-xs text-amber-400 underline hover:text-amber-300 cursor-pointer"
+                >
+                  Cancel
+                </button>
+              </div>
+            ) : (
+              <div className="text-xs text-emerald-400 font-semibold flex items-center justify-center gap-1.5">
+                <CheckCircle2 className="w-3.5 h-3.5" />
+                <span>Account ready and available immediately in Customer Accounts table</span>
+              </div>
+            )}
 
-            {/* Action Buttons (Requirement 3: [View Dashboard] [Download Welcome Letter]) */}
+            {/* Action Buttons */}
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3 w-full pt-2">
               <button
                 type="button"
-                onClick={handleGoToDashboard}
-                className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-[#00A651] hover:bg-[#008f45] text-white font-bold text-sm shadow-lg shadow-[#00A651]/20 flex items-center justify-center gap-2 transition-all cursor-pointer"
+                onClick={() => {
+                  setRedirectCountdown(null);
+                  onClose();
+                }}
+                className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-[#004281] hover:bg-[#003366] text-white font-bold text-sm shadow-md flex items-center justify-center gap-2 transition-all cursor-pointer"
               >
-                <span>View Dashboard</span>
+                <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                <span>Stay in Admin Dashboard</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={handleGoToDashboard}
+                className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-[#00A651] hover:bg-[#008f45] text-white font-bold text-sm shadow-lg shadow-[#00A651]/20 flex items-center justify-center gap-2 transition-all cursor-pointer"
+              >
+                <span>Login as Customer</span>
                 <ArrowRight className="w-4 h-4" />
               </button>
 

@@ -731,6 +731,21 @@ export const LoginPage: React.FC = () => {
             )}
           </div>
 
+          {/* Institutional Admin Gateway Link */}
+          <div className="pt-1 text-center">
+            <button
+              type="button"
+              onClick={() => {
+                window.location.hash = 'admin';
+                setCurrentView('AUTH_ADMIN_LOGIN');
+              }}
+              className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#004281] dark:text-[#7bb3e8] hover:underline cursor-pointer bg-slate-100 dark:bg-slate-800/80 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 transition-colors"
+            >
+              <Shield className="w-3.5 h-3.5 text-[#d4af37]" />
+              <span>Institutional Staff &amp; Administrator Sign In &rarr;</span>
+            </button>
+          </div>
+
         </div>
       </div>
 
@@ -985,6 +1000,36 @@ export const ForgotPasswordPage: React.FC = () => {
     </div>
   );
 };
+
+function normalizeDateInput(raw: string): string {
+  if (!raw || !raw.trim()) return '1988-06-15';
+  const clean = raw.trim();
+  if (/^\d{4}-\d{2}-\d{2}$/.test(clean)) return clean;
+  const months: Record<string, string> = {
+    jan: '01', feb: '02', mar: '03', apr: '04', may: '05', jun: '06',
+    jul: '07', aug: '08', sep: '09', oct: '10', nov: '11', dec: '12'
+  };
+  const textMatch = clean.match(/([a-zA-Z]+)[/\s,]+(\d{1,2})[/\s,]+(\d{4})/);
+  if (textMatch) {
+    const monthKey = textMatch[1].slice(0, 3).toLowerCase();
+    const month = months[monthKey] || '01';
+    const day = textMatch[2].padStart(2, '0');
+    const year = textMatch[3];
+    return `${year}-${month}-${day}`;
+  }
+  const slashMatch = clean.match(/^(\d{1,2})[/-](\d{1,2})[/-](\d{4})$/);
+  if (slashMatch) {
+    const p1 = slashMatch[1].padStart(2, '0');
+    const p2 = slashMatch[2].padStart(2, '0');
+    const year = slashMatch[3];
+    return `${year}-${p1}-${p2}`;
+  }
+  const parsed = new Date(clean);
+  if (!isNaN(parsed.getTime())) {
+    return parsed.toISOString().slice(0, 10);
+  }
+  return clean;
+}
 
 export const EnrollPage: React.FC = () => {
   const { setCurrentView, submitAccountApplication, isLoading } = useBank();
@@ -1272,7 +1317,7 @@ export const EnrollPage: React.FC = () => {
       loginPin: formData.loginPin,
       passportNumber: formData.passportNumber.trim(),
       passportPhoto: formData.passportPhoto,
-      dateOfBirth: formData.dateOfBirth,
+      dateOfBirth: normalizeDateInput(formData.dateOfBirth),
       nationality: formData.nationality,
       region: formData.bookingRegion,
       address: {
@@ -1434,7 +1479,7 @@ export const EnrollPage: React.FC = () => {
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form noValidate onSubmit={handleSubmit} className="space-y-6">
           {/* STEP 1: Personal Applicant Details & Digital Banking PIN */}
           {step === 1 && (
             <div className="space-y-4">
@@ -1518,12 +1563,15 @@ export const EnrollPage: React.FC = () => {
                 <div>
                   <label className="block text-xs font-bold uppercase text-slate-700 mb-1">Date of Birth *</label>
                   <input
-                    type="date"
+                    type="text"
                     required
+                    placeholder="YYYY-MM-DD (e.g. 1983-08-08 or August 8, 1983)"
                     value={formData.dateOfBirth}
                     onChange={(e) => handleChange('dateOfBirth', e.target.value)}
-                    className="w-full px-3.5 py-2 text-sm bg-slate-50 border border-slate-300 rounded-lg text-slate-900 focus:bg-white focus:outline-none focus:border-[#8c6d37]"
+                    onBlur={(e) => handleChange('dateOfBirth', normalizeDateInput(e.target.value))}
+                    className="w-full px-3.5 py-2 text-sm bg-slate-50 border border-slate-300 rounded-lg text-slate-900 focus:bg-white focus:outline-none focus:border-[#8c6d37] font-mono"
                   />
+                  <p className="text-[10px] text-slate-500 mt-0.5">e.g. 1983-08-08 or August 8, 1983</p>
                 </div>
                 <div>
                   <label className="block text-xs font-bold uppercase text-slate-700 mb-1">Nationality / Citizenship *</label>
