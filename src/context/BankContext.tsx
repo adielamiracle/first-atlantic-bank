@@ -1590,7 +1590,7 @@ export const BankProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         travelNotices: []
       };
 
-      const localApp: AccountApplication = {
+      const localApp: any = {
         id: `app_${Date.now().toString(36)}`,
         referenceNumber: `APP-FAB-${Date.now().toString().slice(-6)}`,
         firstName: cleanFirstName,
