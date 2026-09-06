@@ -15,16 +15,46 @@ export async function safeFetchJson<T = any>(
   try {
     const res = await fetch(input, init);
     const contentType = res.headers.get('content-type') || '';
-    const text = await res.text();
+    const rawText = await res.text();
+    const text = (rawText || '').trim();
 
-    // Check if the response is actually HTML (e.g. 404/200 SPA fallback page on Vercel)
-    if (text.trim().startsWith('<') || contentType.includes('text/html')) {
+    // Check if the response is empty
+    if (!text) {
+      if (res.ok) {
+        return {
+          ok: true,
+          status: res.status,
+          data: {} as T,
+          isHtml: false
+        };
+      }
+      return {
+        ok: false,
+        status: res.status,
+        data: null,
+        isHtml: false,
+        errorMessage: res.status === 401 
+          ? 'Invalid credentials. Please verify your username/email and password.' 
+          : res.status === 403 
+          ? 'Access restricted. Please contact Private Client Concierge.'
+          : 'Service temporarily unavailable.'
+      };
+    }
+
+    // Check if the response is HTML (e.g. 404/200 SPA fallback page on Vercel or proxy error)
+    if (
+      text.startsWith('<') || 
+      contentType.includes('text/html') || 
+      text.includes('<!DOCTYPE') || 
+      text.includes('<html') || 
+      text.includes('<head')
+    ) {
       return {
         ok: false,
         status: res.status,
         data: null,
         isHtml: true,
-        errorMessage: 'Backend API returned HTML instead of JSON. Switching to local offline mode.'
+        errorMessage: 'Core banking service currently running in client vault mode.'
       };
     }
 
@@ -38,12 +68,31 @@ export async function safeFetchJson<T = any>(
         errorMessage: !res.ok ? (data?.message || data?.error || `Request failed with status ${res.status}`) : undefined
       };
     } catch {
+      // Fallback if response text is not valid JSON
+      let fallbackMsg = 'Authentication service temporarily unavailable.';
+      if (res.status === 401) {
+        fallbackMsg = 'Invalid credentials. Please check your username/email and password.';
+      } else if (res.status === 403) {
+        fallbackMsg = 'Account access restricted. Please contact Private Client Concierge.';
+      } else if (res.status >= 500) {
+        fallbackMsg = 'Banking server is momentarily unreachable. Switching to offline vault.';
+      } else {
+        const cleanMsg = text.replace(/<[^>]*>?/gm, '').trim();
+        if (cleanMsg.length > 0 && cleanMsg.length < 120 && !cleanMsg.includes('\n')) {
+          if (cleanMsg.includes('Cannot POST') || cleanMsg.includes('Cannot GET')) {
+            fallbackMsg = 'Service endpoint unavailable. Switching to offline vault.';
+          } else {
+            fallbackMsg = cleanMsg;
+          }
+        }
+      }
+
       return {
         ok: false,
         status: res.status,
         data: null,
         isHtml: false,
-        errorMessage: 'Unable to parse API response as JSON'
+        errorMessage: fallbackMsg
       };
     }
   } catch (err: any) {
@@ -52,7 +101,7 @@ export async function safeFetchJson<T = any>(
       status: 0,
       data: null,
       isHtml: false,
-      errorMessage: err?.message || 'Network request failed'
+      errorMessage: err?.message || 'Network request interrupted. Switching to local offline vault.'
     };
   }
 }

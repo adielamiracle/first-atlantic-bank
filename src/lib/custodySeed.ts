@@ -77,6 +77,47 @@ export function saveStoredInstitutionalUsers(users: any[]) {
 }
 
 /**
+ * Save user password and PIN for seamless authentication
+ */
+const LOCAL_STORAGE_CREDS_KEY = 'fab_user_credentials_vault_v2';
+
+export function saveStoredUserCredentials(
+  userId: string,
+  username: string,
+  email: string,
+  password?: string,
+  loginPin?: string
+) {
+  try {
+    const raw = localStorage.getItem(LOCAL_STORAGE_CREDS_KEY);
+    const map: Record<string, { password?: string; loginPin?: string; userId?: string }> = raw ? JSON.parse(raw) : {};
+    const cred = { 
+      password: password || 'AtlanticSecure2026!', 
+      loginPin: loginPin || '1234',
+      userId 
+    };
+    if (userId) map[userId.toLowerCase().trim()] = cred;
+    if (username) map[username.toLowerCase().trim()] = cred;
+    if (email) map[email.toLowerCase().trim()] = cred;
+    localStorage.setItem(LOCAL_STORAGE_CREDS_KEY, JSON.stringify(map));
+  } catch (e) {
+    console.debug('Error saving local user credentials:', e);
+  }
+}
+
+export function getStoredUserCredentials(identifier: string): { password?: string; loginPin?: string; userId?: string } | null {
+  try {
+    const raw = localStorage.getItem(LOCAL_STORAGE_CREDS_KEY);
+    if (!raw) return null;
+    const map = JSON.parse(raw);
+    const key = (identifier || '').toLowerCase().trim();
+    return map[key] || null;
+  } catch (e) {
+    return null;
+  }
+}
+
+/**
  * Clear all cache storages and local cache for instant UI refresh
  */
 export async function purgeAllAppCaches(): Promise<void> {

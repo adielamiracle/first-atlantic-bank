@@ -450,6 +450,11 @@ export const CreateCustomerModal: React.FC<CreateCustomerModalProps> = ({
         payload
       });
       setRedirectCountdown(null);
+      try {
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('last_registered_username', payload.username || payload.email);
+        }
+      } catch (e) {}
 
       showToast('SUCCESS', 'Account Created Successfully!', `Account Number: ${res.account?.accountNumber || 'Provisioned'}`);
       if (onSuccess) onSuccess();

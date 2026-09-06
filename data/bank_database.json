@@ -549,7 +549,7 @@
           "pushAlerts": true,
           "largeTransactionThresholdMinor": 500000
         },
-        "lastLogin": "2026-09-05T23:50:57.228Z"
+        "lastLogin": "2026-09-06T13:45:08.203Z"
       }
     ],
     [
@@ -670,6 +670,46 @@
           "largeTransactionThresholdMinor": 500000
         },
         "lastLogin": "2026-09-06T00:56:39.099Z"
+      }
+    ],
+    [
+      "usr_vance_1709",
+      {
+        "id": "usr_vance_1709",
+        "email": "marcus.vance@example.com",
+        "username": "marcusvance",
+        "firstName": "Marcus",
+        "lastName": "Vance",
+        "phone": "+1 555-0144",
+        "dialCode": "+1",
+        "dateOfBirth": "1988-06-15",
+        "nationality": "American",
+        "passportNumber": "ID-311709",
+        "passportPhoto": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500&auto=format&fit=crop&q=80",
+        "loginPin": "4321",
+        "ssnMasked": "•••-••-8899",
+        "region": "US",
+        "approval_status": "APPROVED",
+        "address": {
+          "line1": "100 Atlantic Plaza",
+          "line2": "",
+          "city": "New York",
+          "stateOrCounty": "NY",
+          "postalCode": "10001",
+          "country": "United States"
+        },
+        "mfaEnabled": true,
+        "mfaMethod": "AUTHENTICATOR",
+        "biometricsEnabled": true,
+        "kycTier": "TIER_2_VERIFIED_PREMIER",
+        "securityScore": 95,
+        "notifications": {
+          "emailAlerts": true,
+          "smsAlerts": true,
+          "pushAlerts": true,
+          "largeTransactionThresholdMinor": 500000
+        },
+        "lastLogin": "2026-09-06T13:45:11.709Z"
       }
     ]
   ],
@@ -1126,6 +1166,32 @@
         "customerEmail": "jane.doe.1788656199079@example.com",
         "customerPhone": "+1 555-0199"
       }
+    ],
+    [
+      "acc_usr_vance_1709_usd_01",
+      {
+        "id": "acc_usr_vance_1709_usd_01",
+        "userId": "usr_vance_1709",
+        "accountNumber": "•••• 9051",
+        "accountNumberFull": "384884459051",
+        "routingNumber": "021000089",
+        "swiftBic": "FATLUS33NYC",
+        "name": "Premier Private Client Checking",
+        "type": "CHECKING_PREMIER",
+        "currency": "USD",
+        "balanceMinor": 500000,
+        "availableBalanceMinor": 500000,
+        "pendingHoldMinor": 0,
+        "interestRateAPY": 1.25,
+        "status": "ACTIVE",
+        "region": "US",
+        "openedDate": "2026-09-06",
+        "dailyTransferLimitMinor": 50000000,
+        "statementCycleDay": 28,
+        "customerName": "Marcus Vance",
+        "customerEmail": "marcus.vance@example.com",
+        "customerPhone": "+1 555-0144"
+      }
     ]
   ],
   "cards": [
@@ -1502,9 +1568,50 @@
         "dailySpendLimitMinor": 2500000,
         "travelNotices": []
       }
+    ],
+    [
+      "crd_usr_vance_1709_01",
+      {
+        "id": "crd_usr_vance_1709_01",
+        "accountId": "acc_usr_vance_1709_usd_01",
+        "userId": "usr_vance_1709",
+        "cardNumberMasked": "•••• •••• •••• 9051",
+        "cardNumberFull": "4111 1037 1477 9051",
+        "cardHolderName": "MARCUS VANCE",
+        "expiryMonth": 12,
+        "expiryYear": 2031,
+        "cvv": "645",
+        "cardType": "DEBIT_VISA_SIGNATURE",
+        "status": "ACTIVE",
+        "isVirtual": false,
+        "contactlessEnabled": true,
+        "onlineTransactionsEnabled": true,
+        "internationalSpendEnabled": true,
+        "dailyAtmLimitMinor": 500000,
+        "dailySpendLimitMinor": 2500000,
+        "travelNotices": []
+      }
     ]
   ],
   "ledger": [
+    {
+      "id": "led_init_1788702311710",
+      "transactionId": "tx_init_1788702311710",
+      "accountId": "acc_usr_vance_1709_usd_01",
+      "direction": "CREDIT",
+      "amountMinor": 500000,
+      "currency": "USD",
+      "balanceAfterMinor": 500000,
+      "description": "Initial Account Opening Deposit (Executive Clearance)",
+      "category": "Deposits",
+      "counterparty": "First Atlantic Bank Treasury Direct",
+      "status": "SETTLED",
+      "channel": "ADMIN_PORTAL",
+      "referenceNumber": "DEP-ADM-311710",
+      "createdTimestamp": "2026-09-06T13:45:11.710Z",
+      "effectiveTimestamp": "2026-09-06T13:45:11.710Z",
+      "settledTimestamp": "2026-09-06T13:45:11.710Z"
+    },
     {
       "id": "led_init_1788656199100",
       "transactionId": "tx_init_1788656199100",
@@ -1776,6 +1883,51 @@
     }
   ],
   "auditLogs": [
+    {
+      "actorId": "adm_master_01",
+      "actorEmail": "admin@firstatlanticbank.com",
+      "actorRole": "SUPER_ADMIN",
+      "action": "ADMIN_CUSTOMER_CREATED",
+      "targetType": "USER",
+      "targetId": "usr_vance_1709",
+      "ipAddress": "199.16.156.12",
+      "userAgent": "First Atlantic Master Admin Suite v4.9",
+      "details": "Administrator Alexandra Vance created new customer account for Marcus Vance (marcus.vance@example.com). Provisioned CHECKING_PREMIER (•••• 9051, USD) with initial balance $5,000.00.",
+      "id": "aud_1788702311710_629",
+      "timestamp": "2026-09-06T13:45:11.710Z",
+      "signatureHash": "0000000000000000000000000000000000000000000000000000000042db9a04"
+    },
+    {
+      "actorId": "usr_erin_megan_83",
+      "actorEmail": "erinmeg45@gmail.com",
+      "actorRole": "CUSTOMER",
+      "action": "CUSTOMER_SESSION_AUTHORIZED",
+      "targetType": "USER",
+      "targetId": "usr_erin_megan_83",
+      "ipAddress": "108.45.192.8",
+      "userAgent": "curl/7.88.1",
+      "details": "Successful Sovereign Identity & 4-Digit Security PIN validation.",
+      "id": "aud_1788702308203_791",
+      "timestamp": "2026-09-06T13:45:08.203Z",
+      "signatureHash": "000000000000000000000000000000000000000000000000000000007be74774"
+    },
+    {
+      "id": "aud_adm_login_1788702302690",
+      "actorId": "adm_master_01",
+      "actorEmail": "admin@firstatlanticbank.com",
+      "actorRole": "SUPER_ADMIN",
+      "actorUsername": "alexandra.vance",
+      "category": "AUTHENTICATION",
+      "severity": "INFO",
+      "action": "ADMIN_AUTHENTICATED_LOGIN",
+      "targetType": "SECURITY",
+      "targetId": "adm_master_01",
+      "ipAddress": "199.16.156.12",
+      "userAgent": "First Atlantic Master Admin Suite v4.9 / MacOS",
+      "timestamp": "2026-09-06T13:45:02.690Z",
+      "details": "Master Administrator Alexandra Vance successfully authenticated via Executive Risk & Governance gateway.",
+      "signatureHash": "sig_admin_sec_1788702302690"
+    },
     {
       "actorId": "adm_master_01",
       "actorEmail": "admin@firstatlanticbank.com",
@@ -2182,7 +2334,7 @@
         "name": "Alexandra Vance",
         "role": "SUPER_ADMIN",
         "department": "Executive Risk, Governance & Master Administration",
-        "lastLogin": "2026-09-05T23:51:01.272Z",
+        "lastLogin": "2026-09-06T13:45:02.690Z",
         "status": "ACTIVE"
       }
     ]
@@ -4132,6 +4284,56 @@
         "provisionedRoutingNumber": "021000089",
         "provisionedAccountNumber": "854904076756"
       }
+    ],
+    [
+      "app_1788702311710_674",
+      {
+        "id": "app_1788702311710_674",
+        "referenceNumber": "FAB-US-2026-95501",
+        "firstName": "Marcus",
+        "lastName": "Vance",
+        "email": "marcus.vance@example.com",
+        "phone": "+1 555-0144",
+        "dialCode": "+1",
+        "dateOfBirth": "1988-06-15",
+        "nationality": "American",
+        "taxIdOrSsn": "987-65-4321",
+        "idDocumentType": "PASSPORT",
+        "idDocumentNumber": "ID-311709",
+        "passportPhoto": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500&auto=format&fit=crop&q=80",
+        "address": {
+          "line1": "100 Atlantic Plaza",
+          "line2": "",
+          "city": "New York",
+          "stateOrProvince": "NY",
+          "postalCode": "10001",
+          "country": "United States"
+        },
+        "employmentStatus": "EXECUTIVE",
+        "employerOrBusinessName": "Private Wealth Holding",
+        "sourceOfWealth": "INVESTMENTS",
+        "annualIncomeRange": "$250,000+",
+        "isPep": false,
+        "requestedCurrency": "USD",
+        "requestedAccountType": "CHECKING_PREMIER",
+        "requestedRegion": "US",
+        "initialDepositAmountMinor": 500000,
+        "requestDebitCard": true,
+        "username": "marcusvance",
+        "passwordHashed": "SecurePassword2026!",
+        "loginPin": "4321",
+        "mfaPreference": "AUTHENTICATOR",
+        "status": "APPROVED",
+        "riskScore": 8,
+        "submittedAt": "2026-09-06T13:45:11.710Z",
+        "reviewedAt": "2026-09-06T13:45:11.710Z",
+        "reviewedByAdminId": "adm_master_01",
+        "reviewedByAdminName": "Alexandra Vance",
+        "complianceNotes": "Directly onboarded and provisioned by Administrator Alexandra Vance. Verified KYC and account clearance.",
+        "createdUserId": "usr_vance_1709",
+        "provisionedRoutingNumber": "021000089",
+        "provisionedAccountNumber": "384884459051"
+      }
     ]
   ],
   "receivingAccounts": [
@@ -4388,8 +4590,20 @@
     [
       "jane.doe.1788656199079@example.com",
       "AtlanticSecure2026!"
+    ],
+    [
+      "usr_vance_1709",
+      "SecurePassword2026!"
+    ],
+    [
+      "marcusvance",
+      "SecurePassword2026!"
+    ],
+    [
+      "marcus.vance@example.com",
+      "SecurePassword2026!"
     ]
   ],
   "activeSessions": [],
-  "savedAt": "2026-09-06T00:56:39.202Z"
+  "savedAt": "2026-09-06T13:45:11.711Z"
 }

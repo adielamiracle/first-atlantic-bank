@@ -10,6 +10,10 @@
       "destination": "/api/login.ts"
     },
     {
+      "source": "/api/auth/verify-pin",
+      "destination": "/api/auth/verify-pin.ts"
+    },
+    {
       "source": "/api/admin/provision",
       "destination": "/api/admin/provision.ts"
     },

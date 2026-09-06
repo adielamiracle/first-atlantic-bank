@@ -32,6 +32,7 @@ import {
   saveStoredInstitutionalAccounts,
   getStoredInstitutionalUsers,
   saveStoredInstitutionalUsers,
+  saveStoredUserCredentials,
   purgeAllAppCaches
 } from '../lib/custodySeed';
 
@@ -1473,6 +1474,7 @@ export const BankProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         setAccounts(prev => [responseAccount, ...prev.filter(a => a.id !== responseAccount.id)]);
         saveStoredInstitutionalAccounts([responseAccount, ...getStoredInstitutionalAccounts().filter(a => a.id !== responseAccount.id)]);
         saveStoredInstitutionalUsers([responseUser, ...getStoredInstitutionalUsers().filter(u => u.id !== responseUser.id)]);
+        saveStoredUserCredentials(responseUser.id, responseUser.username || data.username, responseUser.email || data.email, data.password, data.loginPin);
         await Promise.all([
           fetchAdminStats(),
           fetchApplications(),
@@ -1609,6 +1611,7 @@ export const BankProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
       const updatedUsers = [localUser, ...getStoredInstitutionalUsers().filter(u => u.id !== localUser.id)];
       saveStoredInstitutionalUsers(updatedUsers);
+      saveStoredUserCredentials(userId, cleanUsername, cleanEmail, data.password, data.loginPin);
 
       // Async background Supabase sync if client is configured
       try {
