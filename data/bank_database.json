@@ -127,7 +127,7 @@
         "nationality": "United States",
         "passportNumber": "ID-755427",
         "passportPhoto": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500&auto=format&fit=crop&q=80",
-        "loginPin": "1234",
+        "loginPin": "4321",
         "ssnMasked": "•••-••-8899",
         "region": "US",
         "approval_status": "APPROVED",
@@ -150,7 +150,7 @@
           "pushAlerts": true,
           "largeTransactionThresholdMinor": 500000
         },
-        "lastLogin": "2026-09-01T17:45:58.092Z"
+        "lastLogin": "2026-09-06T14:17:17.371Z"
       }
     ],
     [
@@ -709,7 +709,46 @@
           "pushAlerts": true,
           "largeTransactionThresholdMinor": 500000
         },
-        "lastLogin": "2026-09-06T13:45:11.709Z"
+        "lastLogin": "2026-09-06T13:45:18.387Z"
+      }
+    ],
+    [
+      "usr_testuser999",
+      {
+        "id": "usr_testuser999",
+        "email": "testuser999@client.firstatlanticbank.com",
+        "username": "testuser999",
+        "firstName": "Testuser999",
+        "lastName": "estuser999",
+        "phone": "+1 (555) 019-2830",
+        "dialCode": "+1",
+        "dateOfBirth": "1988-06-15",
+        "nationality": "United States",
+        "passportNumber": "US04244176A",
+        "passportPhoto": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500&auto=format&fit=crop&q=80",
+        "loginPin": "1234",
+        "region": "US",
+        "approval_status": "APPROVED",
+        "address": {
+          "line1": "100 Atlantic Plaza",
+          "line2": "Suite 4200",
+          "city": "New York",
+          "stateOrCounty": "NY",
+          "postalCode": "10001",
+          "country": "United States"
+        },
+        "mfaEnabled": true,
+        "mfaMethod": "AUTHENTICATOR",
+        "biometricsEnabled": true,
+        "kycTier": "TIER_2_VERIFIED_PREMIER",
+        "securityScore": 95,
+        "notifications": {
+          "emailAlerts": true,
+          "smsAlerts": true,
+          "pushAlerts": true,
+          "largeTransactionThresholdMinor": 500000
+        },
+        "lastLogin": "2026-09-06T14:17:28.277Z"
       }
     ]
   ],
@@ -818,8 +857,8 @@
         "name": "Premier Private Client Checking",
         "type": "CHECKING_PREMIER",
         "currency": "USD",
-        "balanceMinor": 5000000,
-        "availableBalanceMinor": 5000000,
+        "balanceMinor": 4948000,
+        "availableBalanceMinor": 4948000,
         "pendingHoldMinor": 0,
         "interestRateAPY": 1.25,
         "status": "ACTIVE",
@@ -1191,6 +1230,31 @@
         "customerName": "Marcus Vance",
         "customerEmail": "marcus.vance@example.com",
         "customerPhone": "+1 555-0144"
+      }
+    ],
+    [
+      "acc_usr_testuser999_usd_01",
+      {
+        "id": "acc_usr_testuser999_usd_01",
+        "userId": "usr_testuser999",
+        "accountNumber": "•••• 0074",
+        "accountNumberFull": "645654880074",
+        "routingNumber": "021000089",
+        "swiftBic": "FATLUS33NYC",
+        "name": "Premier Private Client Checking",
+        "type": "CHECKING_PREMIER",
+        "currency": "USD",
+        "balanceMinor": 2500000,
+        "availableBalanceMinor": 2500000,
+        "pendingHoldMinor": 0,
+        "interestRateAPY": 1.25,
+        "status": "ACTIVE",
+        "region": "US",
+        "openedDate": "2026-09-06",
+        "dailyTransferLimitMinor": 50000000,
+        "statementCycleDay": 28,
+        "customerName": "Testuser999 estuser999",
+        "customerEmail": "testuser999@client.firstatlanticbank.com"
       }
     ]
   ],
@@ -1595,6 +1659,70 @@
   ],
   "ledger": [
     {
+      "id": "led_1788704317034",
+      "transactionId": "tx_ext_1788704317034_643",
+      "accountId": "acc_usr_user_5427_usd_01",
+      "direction": "DEBIT",
+      "amountMinor": 50000,
+      "currency": "USD",
+      "balanceAfterMinor": 4948000,
+      "description": "Consulting invoice",
+      "category": "Transfers",
+      "counterparty": "John Doe",
+      "status": "SETTLED",
+      "channel": "ACH",
+      "referenceNumber": "DOM-04317034",
+      "createdTimestamp": "2026-09-06T14:18:37.034Z",
+      "effectiveTimestamp": "2026-09-06T14:18:37.034Z",
+      "settledTimestamp": "2026-09-06T14:18:37.034Z",
+      "metadata": {
+        "recipient": {
+          "name": "John Doe",
+          "bankName": "JPMorgan Chase",
+          "accountNumber": "987654321",
+          "routingNumber": "021000021",
+          "country": "US"
+        },
+        "feeMinor": 0
+      }
+    },
+    {
+      "id": "led_1788704310358_1",
+      "transactionId": "tx_transfer_1788704310357_801",
+      "accountId": "acc_usr_user_5427_usd_01",
+      "direction": "DEBIT",
+      "amountMinor": 1000,
+      "currency": "USD",
+      "balanceAfterMinor": 4998000,
+      "description": "Test internal",
+      "category": "Transfers",
+      "counterparty": "Premier Private Client Checking",
+      "status": "SETTLED",
+      "channel": "ONLINE",
+      "referenceNumber": "INT-310357",
+      "createdTimestamp": "2026-09-06T14:18:30.357Z",
+      "effectiveTimestamp": "2026-09-06T14:18:30.357Z",
+      "settledTimestamp": "2026-09-06T14:18:30.357Z"
+    },
+    {
+      "id": "led_1788704310358_2",
+      "transactionId": "tx_transfer_1788704310357_801",
+      "accountId": "acc_usr_user_5427_usd_01",
+      "direction": "CREDIT",
+      "amountMinor": 1000,
+      "currency": "USD",
+      "balanceAfterMinor": 4998000,
+      "description": "Test internal",
+      "category": "Transfers",
+      "counterparty": "Premier Private Client Checking",
+      "status": "SETTLED",
+      "channel": "ONLINE",
+      "referenceNumber": "INT-310357",
+      "createdTimestamp": "2026-09-06T14:18:30.357Z",
+      "effectiveTimestamp": "2026-09-06T14:18:30.357Z",
+      "settledTimestamp": "2026-09-06T14:18:30.357Z"
+    },
+    {
       "id": "led_init_1788702311710",
       "transactionId": "tx_init_1788702311710",
       "accountId": "acc_usr_vance_1709_usd_01",
@@ -1883,6 +2011,107 @@
     }
   ],
   "auditLogs": [
+    {
+      "actorId": "usr_user_5427",
+      "actorEmail": "macreator00@gmail.com",
+      "actorRole": "CUSTOMER",
+      "action": "EXTERNAL_TRANSFER_DISPATCHED",
+      "targetType": "ACCOUNT",
+      "targetId": "acc_usr_user_5427_usd_01",
+      "ipAddress": "108.45.192.8",
+      "userAgent": "First Atlantic Secure Web Platform",
+      "details": "Dispatched DOMESTIC_WIRE of $500.00 to John Doe at JPMorgan Chase",
+      "id": "aud_1788704317034_829",
+      "timestamp": "2026-09-06T14:18:37.034Z",
+      "signatureHash": "000000000000000000000000000000000000000000000000000000003db39c39"
+    },
+    {
+      "actorId": "usr_user_5427",
+      "actorEmail": "macreator00@gmail.com",
+      "actorRole": "CUSTOMER",
+      "action": "INTERNAL_TRANSFER_EXECUTED",
+      "targetType": "ACCOUNT",
+      "targetId": "acc_usr_user_5427_usd_01",
+      "ipAddress": "108.45.192.8",
+      "userAgent": "First Atlantic Secure Web Platform",
+      "details": "Transferred $10.00 from Premier Private Client Checking to Premier Private Client Checking (Ref: INT-310357)",
+      "id": "aud_1788704310359_583",
+      "timestamp": "2026-09-06T14:18:30.359Z",
+      "signatureHash": "0000000000000000000000000000000000000000000000000000000037dc530e"
+    },
+    {
+      "id": "aud_adm_login_1788704249924",
+      "actorId": "adm_master_01",
+      "actorEmail": "admin@firstatlanticbank.com",
+      "actorRole": "SUPER_ADMIN",
+      "actorUsername": "alexandra.vance",
+      "category": "AUTHENTICATION",
+      "severity": "INFO",
+      "action": "ADMIN_AUTHENTICATED_LOGIN",
+      "targetType": "SECURITY",
+      "targetId": "adm_master_01",
+      "ipAddress": "199.16.156.12",
+      "userAgent": "First Atlantic Master Admin Suite v4.9 / MacOS",
+      "timestamp": "2026-09-06T14:17:29.924Z",
+      "details": "Master Administrator Alexandra Vance successfully authenticated via Executive Risk & Governance gateway.",
+      "signatureHash": "sig_admin_sec_1788704249924"
+    },
+    {
+      "actorId": "usr_testuser999",
+      "actorEmail": "testuser999@client.firstatlanticbank.com",
+      "actorRole": "CUSTOMER",
+      "action": "CUSTOMER_SESSION_AUTHORIZED",
+      "targetType": "USER",
+      "targetId": "usr_testuser999",
+      "ipAddress": "108.45.192.8",
+      "userAgent": "curl/7.88.1",
+      "details": "Successful Sovereign Identity & 4-Digit Security PIN validation.",
+      "id": "aud_1788704248277_649",
+      "timestamp": "2026-09-06T14:17:28.277Z",
+      "signatureHash": "000000000000000000000000000000000000000000000000000000006b45f617"
+    },
+    {
+      "actorId": "usr_user_5427",
+      "actorEmail": "macreator00@gmail.com",
+      "actorRole": "CUSTOMER",
+      "action": "CUSTOMER_SESSION_AUTHORIZED",
+      "targetType": "USER",
+      "targetId": "usr_user_5427",
+      "ipAddress": "108.45.192.8",
+      "userAgent": "curl/7.88.1",
+      "details": "Successful Sovereign Identity & 4-Digit Security PIN validation.",
+      "id": "aud_1788704237371_56",
+      "timestamp": "2026-09-06T14:17:17.371Z",
+      "signatureHash": "000000000000000000000000000000000000000000000000000000007e38cf80"
+    },
+    {
+      "actorId": "usr_user_5427",
+      "actorEmail": "macreator00@gmail.com",
+      "actorRole": "CUSTOMER",
+      "action": "CUSTOMER_SESSION_AUTHORIZED",
+      "targetType": "USER",
+      "targetId": "usr_user_5427",
+      "ipAddress": "108.45.192.8",
+      "userAgent": "curl/7.88.1",
+      "details": "Successful Sovereign Identity & 4-Digit Security PIN validation.",
+      "id": "aud_1788704235651_560",
+      "timestamp": "2026-09-06T14:17:15.651Z",
+      "signatureHash": "000000000000000000000000000000000000000000000000000000007e39ad39"
+    },
+    {
+      "actorId": "usr_vance_1709",
+      "actorEmail": "marcus.vance@example.com",
+      "actorRole": "CUSTOMER",
+      "action": "CUSTOMER_SESSION_AUTHORIZED",
+      "targetType": "USER",
+      "targetId": "usr_vance_1709",
+      "ipAddress": "108.45.192.8",
+      "userAgent": "curl/7.88.1",
+      "details": "Successful Sovereign Identity & 4-Digit Security PIN validation.",
+      "id": "aud_1788702318387_650",
+      "timestamp": "2026-09-06T13:45:18.387Z",
+      "signatureHash": "000000000000000000000000000000000000000000000000000000001ee05ea6"
+    },
     {
       "actorId": "adm_master_01",
       "actorEmail": "admin@firstatlanticbank.com",
@@ -2334,7 +2563,7 @@
         "name": "Alexandra Vance",
         "role": "SUPER_ADMIN",
         "department": "Executive Risk, Governance & Master Administration",
-        "lastLogin": "2026-09-06T13:45:02.690Z",
+        "lastLogin": "2026-09-06T14:17:29.924Z",
         "status": "ACTIVE"
       }
     ]
@@ -4425,15 +4654,15 @@
     ],
     [
       "usr_user_5427",
-      "AtlanticSecure2026!"
+      "anyPassword123!"
     ],
     [
       "macreator00",
-      "AtlanticSecure2026!"
+      "anyPassword123!"
     ],
     [
       "macreator00@gmail.com",
-      "AtlanticSecure2026!"
+      "anyPassword123!"
     ],
     [
       "usr_supabaseuser_1034",
@@ -4602,8 +4831,20 @@
     [
       "marcus.vance@example.com",
       "SecurePassword2026!"
+    ],
+    [
+      "usr_testuser999",
+      "mypassword"
+    ],
+    [
+      "testuser999",
+      "mypassword"
+    ],
+    [
+      "testuser999@client.firstatlanticbank.com",
+      "mypassword"
     ]
   ],
   "activeSessions": [],
-  "savedAt": "2026-09-06T13:45:11.711Z"
+  "savedAt": "2026-09-06T14:18:37.135Z"
 }

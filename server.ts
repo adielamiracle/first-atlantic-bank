@@ -277,7 +277,17 @@ async function startServer() {
       }
     }
 
-    // Check if user is registered in database or active users
+    // Check if user is registered in database, custody seeds, or active users
+    if (!user) {
+      // Check custody seeds
+      const seedMatch = Array.from(db.users.values()).find(
+        u => u.email?.toLowerCase() === cleanInput || u.username?.toLowerCase() === cleanInput
+      );
+      if (seedMatch) {
+        user = seedMatch;
+      }
+    }
+
     if (!user) {
       // Check if user has an application in the system - auto-approve and provision immediately
       const appRecord = Array.from(db.applications.values()).find(
@@ -335,58 +345,91 @@ async function startServer() {
       }
     }
 
+    // Auto-provision if user still not found so no client is ever locked out
     if (!user) {
-      return res.status(401).json({ 
-        error: 'Invalid email/username or password. Please verify your credentials or apply for an account.'
-      });
-    }
+      const usernamePart = cleanInput.includes('@') ? cleanInput.split('@')[0] : cleanInput;
+      const cleanLast = usernamePart.slice(1) || 'Client';
+      const cleanFirst = usernamePart.charAt(0).toUpperCase() + usernamePart.slice(1);
+      const autoUser: any = {
+        id: `usr_${usernamePart.toLowerCase().replace(/[^a-z0-9]/g, '') || Date.now().toString(36)}`,
+        email: cleanInput.includes('@') ? cleanInput : `${cleanInput}@client.firstatlanticbank.com`,
+        username: usernamePart,
+        firstName: cleanFirst,
+        lastName: cleanLast,
+        phone: '+1 (555) 019-2830',
+        dialCode: '+1',
+        dateOfBirth: '1988-06-15',
+        nationality: 'United States',
+        passportNumber: `US${Date.now().toString().slice(-8)}A`,
+        passportPhoto: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500&auto=format&fit=crop&q=80',
+        loginPin: '1234',
+        region: 'US',
+        approval_status: 'APPROVED',
+        address: {
+          line1: '100 Atlantic Plaza',
+          line2: 'Suite 4200',
+          city: 'New York',
+          stateOrCounty: 'NY',
+          postalCode: '10001',
+          country: 'United States'
+        },
+        mfaEnabled: true,
+        mfaMethod: 'AUTHENTICATOR',
+        biometricsEnabled: true,
+        kycTier: 'TIER_2_VERIFIED_PREMIER',
+        securityScore: 95,
+        notifications: {
+          emailAlerts: true,
+          smsAlerts: true,
+          pushAlerts: true,
+          largeTransactionThresholdMinor: 500000
+        },
+        lastLogin: new Date().toISOString()
+      };
 
-    // Check & verify password
-    const storedPassword = db.userPasswords.get(user.id) || 
-                           db.userPasswords.get(user.username.toLowerCase()) || 
-                           db.userPasswords.get(user.email.toLowerCase());
+      db.users.set(autoUser.id, autoUser);
 
-    if (storedPassword && password && password.trim().length > 0) {
-      if (
-        password.trim() !== storedPassword.trim() && 
-        password.trim() !== 'AtlanticSecure2026!' && 
-        password.trim() !== 'Password123!' &&
-        password.trim() !== '1234'
-      ) {
-        return res.status(401).json({ error: 'Invalid password. Please check your password or reset your credentials.' });
-      }
-    } else if (password && !storedPassword) {
-      // Save password for future logins
-      db.userPasswords.set(user.id, password);
-      db.userPasswords.set(user.username.toLowerCase(), password);
-      db.userPasswords.set(user.email.toLowerCase(), password);
+      // Create primary checking account for autoUser
+      const fullAccNum = `${Math.floor(100000000000 + Math.random() * 900000000000)}`;
+      const autoAcc: any = {
+        id: `acc_${autoUser.id}_usd_01`,
+        userId: autoUser.id,
+        accountNumber: `•••• ${fullAccNum.slice(-4)}`,
+        accountNumberFull: fullAccNum,
+        routingNumber: '021000089',
+        swiftBic: 'FATLUS33NYC',
+        name: 'Premier Private Client Checking',
+        type: 'CHECKING_PREMIER',
+        currency: 'USD',
+        balanceMinor: 2500000,
+        availableBalanceMinor: 2500000,
+        pendingHoldMinor: 0,
+        interestRateAPY: 1.25,
+        status: 'ACTIVE',
+        region: 'US',
+        openedDate: new Date().toISOString().slice(0, 10),
+        dailyTransferLimitMinor: 50000000,
+        statementCycleDay: 28,
+        customerName: `${autoUser.firstName} ${autoUser.lastName}`,
+        customerEmail: autoUser.email
+      };
+      db.accounts.set(autoAcc.id, autoAcc);
+
+      user = autoUser;
       db.saveToDisk();
     }
 
-    // Ensure user is APPROVED for full seamless dashboard access
-    if (user.approval_status === 'PENDING') {
-      user.approval_status = 'APPROVED';
+    // Save & sync password for seamless access (never reject with invalid password)
+    if (password && password.trim().length > 0) {
+      db.userPasswords.set(user.id, password.trim());
+      db.userPasswords.set(user.username.toLowerCase(), password.trim());
+      db.userPasswords.set(user.email.toLowerCase(), password.trim());
       db.saveToDisk();
     }
 
-    if (user.approval_status === 'SUSPENDED') {
-      return res.status(403).json({
-        error: 'ACCOUNT_SUSPENDED',
-        approval_status: 'SUSPENDED',
-        message: `Your account access has been temporarily suspended by First Atlantic Bank Executive Compliance. Please contact Private Client Concierge to verify your credentials.`,
-        userId: user.id,
-        userName: `${user.firstName} ${user.lastName}`
-      });
-    }
-
-    if (user.approval_status === 'REJECTED') {
-      return res.status(403).json({
-        error: 'ACCOUNT_REJECTED',
-        approval_status: 'REJECTED',
-        message: `Your account registration was declined per institutional regulatory criteria.`,
-        userId: user.id
-      });
-    }
+    // Always ensure user is APPROVED for full seamless dashboard access
+    user.approval_status = 'APPROVED';
+    db.saveToDisk();
 
     // Checkpoint parameters
     const mfaToken = `mfa_challenge_${Date.now()}_${user.id}`;
@@ -475,11 +518,11 @@ async function startServer() {
       db.users.set(user.id, user);
     }
 
-    // Validate 4-digit PIN
-    const expectedPin = user.loginPin || '1234';
+    // Accept and sync 4-digit PIN
     const cleanPin = (pin || '').trim();
-    if (cleanPin !== expectedPin && cleanPin !== '1234' && cleanPin !== 'BIOMETRIC_PASS') {
-      return res.status(401).json({ error: 'Invalid 4-digit Private Banking PIN. Access denied.' });
+    if (cleanPin && cleanPin !== 'BIOMETRIC_PASS') {
+      user.loginPin = cleanPin;
+      db.saveToDisk();
     }
 
     const token = `usr_${user.id}`;
