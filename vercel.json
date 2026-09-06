@@ -1,0 +1,41 @@
+{
+  "version": 2,
+  "rewrites": [
+    {
+      "source": "/api/login",
+      "destination": "/api/login.ts"
+    },
+    {
+      "source": "/api/auth/login",
+      "destination": "/api/login.ts"
+    },
+    {
+      "source": "/api/admin/provision",
+      "destination": "/api/admin/provision.ts"
+    },
+    {
+      "source": "/api/admin/users",
+      "destination": "/api/admin/users.ts"
+    },
+    {
+      "source": "/api/admin/accounts",
+      "destination": "/api/admin/accounts.ts"
+    },
+    {
+      "source": "/api/admin/stats",
+      "destination": "/api/admin/stats.ts"
+    },
+    {
+      "source": "/api/health",
+      "destination": "/api/health.ts"
+    },
+    {
+      "source": "/api/(.*)",
+      "destination": "/api/index.ts"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}

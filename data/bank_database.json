@@ -631,6 +631,46 @@
         },
         "lastLogin": "2026-09-05T23:55:23.745Z"
       }
+    ],
+    [
+      "usr_doe_9099",
+      {
+        "id": "usr_doe_9099",
+        "email": "jane.doe.1788656199079@example.com",
+        "username": "janedoe9079",
+        "firstName": "Jane",
+        "lastName": "Doe",
+        "phone": "+1 555-0199",
+        "dialCode": "+1",
+        "dateOfBirth": "1988-06-15",
+        "nationality": "American",
+        "passportNumber": "PASSPORT-123456",
+        "passportPhoto": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500&auto=format&fit=crop&q=80",
+        "loginPin": "1234",
+        "ssnMasked": "•••-••-8899",
+        "region": "US",
+        "approval_status": "APPROVED",
+        "address": {
+          "line1": "100 Atlantic Plaza",
+          "line2": "",
+          "city": "New York",
+          "stateOrCounty": "NY",
+          "postalCode": "10001",
+          "country": "United States"
+        },
+        "mfaEnabled": true,
+        "mfaMethod": "AUTHENTICATOR",
+        "biometricsEnabled": true,
+        "kycTier": "TIER_2_VERIFIED_PREMIER",
+        "securityScore": 95,
+        "notifications": {
+          "emailAlerts": true,
+          "smsAlerts": true,
+          "pushAlerts": true,
+          "largeTransactionThresholdMinor": 500000
+        },
+        "lastLogin": "2026-09-06T00:56:39.099Z"
+      }
     ]
   ],
   "accounts": [
@@ -1060,6 +1100,32 @@
         "customerEmail": "testphone.verify@atlantic-bank.com",
         "customerPhone": "+1 (555) 019-2830"
       }
+    ],
+    [
+      "acc_usr_doe_9099_usd_01",
+      {
+        "id": "acc_usr_doe_9099_usd_01",
+        "userId": "usr_doe_9099",
+        "accountNumber": "•••• 6756",
+        "accountNumberFull": "854904076756",
+        "routingNumber": "021000089",
+        "swiftBic": "FATLUS33NYC",
+        "name": "Premier Private Client Checking",
+        "type": "CHECKING_PREMIER",
+        "currency": "USD",
+        "balanceMinor": 500000,
+        "availableBalanceMinor": 500000,
+        "pendingHoldMinor": 0,
+        "interestRateAPY": 1.25,
+        "status": "ACTIVE",
+        "region": "US",
+        "openedDate": "2026-09-06",
+        "dailyTransferLimitMinor": 50000000,
+        "statementCycleDay": 28,
+        "customerName": "Jane Doe",
+        "customerEmail": "jane.doe.1788656199079@example.com",
+        "customerPhone": "+1 555-0199"
+      }
     ]
   ],
   "cards": [
@@ -1413,9 +1479,50 @@
         "dailySpendLimitMinor": 2500000,
         "travelNotices": []
       }
+    ],
+    [
+      "crd_usr_doe_9099_01",
+      {
+        "id": "crd_usr_doe_9099_01",
+        "accountId": "acc_usr_doe_9099_usd_01",
+        "userId": "usr_doe_9099",
+        "cardNumberMasked": "•••• •••• •••• 6756",
+        "cardNumberFull": "4111 3414 7158 6756",
+        "cardHolderName": "JANE DOE",
+        "expiryMonth": 12,
+        "expiryYear": 2031,
+        "cvv": "409",
+        "cardType": "DEBIT_VISA_SIGNATURE",
+        "status": "ACTIVE",
+        "isVirtual": false,
+        "contactlessEnabled": true,
+        "onlineTransactionsEnabled": true,
+        "internationalSpendEnabled": true,
+        "dailyAtmLimitMinor": 500000,
+        "dailySpendLimitMinor": 2500000,
+        "travelNotices": []
+      }
     ]
   ],
   "ledger": [
+    {
+      "id": "led_init_1788656199100",
+      "transactionId": "tx_init_1788656199100",
+      "accountId": "acc_usr_doe_9099_usd_01",
+      "direction": "CREDIT",
+      "amountMinor": 500000,
+      "currency": "USD",
+      "balanceAfterMinor": 500000,
+      "description": "Initial Account Opening Deposit (Executive Clearance)",
+      "category": "Deposits",
+      "counterparty": "First Atlantic Bank Treasury Direct",
+      "status": "SETTLED",
+      "channel": "ADMIN_PORTAL",
+      "referenceNumber": "DEP-ADM-199100",
+      "createdTimestamp": "2026-09-06T00:56:39.100Z",
+      "effectiveTimestamp": "2026-09-06T00:56:39.100Z",
+      "settledTimestamp": "2026-09-06T00:56:39.100Z"
+    },
     {
       "id": "led_init_1788652523746",
       "transactionId": "tx_init_1788652523746",
@@ -1669,6 +1776,20 @@
     }
   ],
   "auditLogs": [
+    {
+      "actorId": "adm_master_01",
+      "actorEmail": "admin@firstatlanticbank.com",
+      "actorRole": "SUPER_ADMIN",
+      "action": "ADMIN_CUSTOMER_CREATED",
+      "targetType": "USER",
+      "targetId": "usr_doe_9099",
+      "ipAddress": "199.16.156.12",
+      "userAgent": "First Atlantic Master Admin Suite v4.9",
+      "details": "Administrator Alexandra Vance created new customer account for Jane Doe (jane.doe.1788656199079@example.com). Provisioned CHECKING_PREMIER (•••• 6756, USD) with initial balance $5,000.00.",
+      "id": "aud_1788656199101_698",
+      "timestamp": "2026-09-06T00:56:39.101Z",
+      "signatureHash": "00000000000000000000000000000000000000000000000000000000795f7080"
+    },
     {
       "actorId": "adm_master_01",
       "actorEmail": "admin@firstatlanticbank.com",
@@ -3961,6 +4082,56 @@
         "provisionedRoutingNumber": "021000089",
         "provisionedAccountNumber": "517518652499"
       }
+    ],
+    [
+      "app_1788656199100_204",
+      {
+        "id": "app_1788656199100_204",
+        "referenceNumber": "FAB-US-2026-34913",
+        "firstName": "Jane",
+        "lastName": "Doe",
+        "email": "jane.doe.1788656199079@example.com",
+        "phone": "+1 555-0199",
+        "dialCode": "+1",
+        "dateOfBirth": "1988-06-15",
+        "nationality": "American",
+        "taxIdOrSsn": "•••-••-8899",
+        "idDocumentType": "PASSPORT",
+        "idDocumentNumber": "PASSPORT-123456",
+        "passportPhoto": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500&auto=format&fit=crop&q=80",
+        "address": {
+          "line1": "100 Atlantic Plaza",
+          "line2": "",
+          "city": "New York",
+          "stateOrProvince": "NY",
+          "postalCode": "10001",
+          "country": "United States"
+        },
+        "employmentStatus": "EMPLOYED",
+        "employerOrBusinessName": "Atlantic Holdings Corp",
+        "sourceOfWealth": "EMPLOYMENT",
+        "annualIncomeRange": "$200k - $500k",
+        "isPep": false,
+        "requestedCurrency": "USD",
+        "requestedAccountType": "CHECKING_PREMIER",
+        "requestedRegion": "US",
+        "initialDepositAmountMinor": 500000,
+        "requestDebitCard": true,
+        "username": "janedoe9079",
+        "passwordHashed": "AtlanticSecure2026!",
+        "loginPin": "1234",
+        "mfaPreference": "AUTHENTICATOR",
+        "status": "APPROVED",
+        "riskScore": 8,
+        "submittedAt": "2026-09-06T00:56:39.100Z",
+        "reviewedAt": "2026-09-06T00:56:39.100Z",
+        "reviewedByAdminId": "adm_master_01",
+        "reviewedByAdminName": "Alexandra Vance",
+        "complianceNotes": "Directly onboarded and provisioned by Administrator Alexandra Vance. Verified KYC and account clearance.",
+        "createdUserId": "usr_doe_9099",
+        "provisionedRoutingNumber": "021000089",
+        "provisionedAccountNumber": "854904076756"
+      }
     ]
   ],
   "receivingAccounts": [
@@ -4205,8 +4376,20 @@
     [
       "testphone.verify@atlantic-bank.com",
       "TestPassword123!"
+    ],
+    [
+      "usr_doe_9099",
+      "AtlanticSecure2026!"
+    ],
+    [
+      "janedoe9079",
+      "AtlanticSecure2026!"
+    ],
+    [
+      "jane.doe.1788656199079@example.com",
+      "AtlanticSecure2026!"
     ]
   ],
   "activeSessions": [],
-  "savedAt": "2026-09-05T23:55:23.746Z"
+  "savedAt": "2026-09-06T00:56:39.202Z"
 }
