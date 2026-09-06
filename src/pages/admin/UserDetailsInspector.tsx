@@ -28,6 +28,7 @@ import {
   Layers,
   ArrowUpRight,
   ArrowDownLeft,
+  ArrowLeft,
   X
 } from 'lucide-react';
 import { CurrencyDisplay } from '../../components/common/CurrencyDisplay';
@@ -76,6 +77,7 @@ export const UserDetailsInspector: React.FC<UserDetailsInspectorProps> = ({ pres
 
   // Direct Fund Action for this user
   const [activeFundActionAccountId, setActiveFundActionAccountId] = useState<string | null>(null);
+  const [mobileView, setMobileView] = useState<'LIST' | 'DETAILS'>('LIST');
 
   const loadUsersList = async () => {
     setIsLoadingList(true);
@@ -91,6 +93,9 @@ export const UserDetailsInspector: React.FC<UserDetailsInspectorProps> = ({ pres
             ? preselectedUserId
             : (selectedUserId || usersData[0].id);
           inspectUser(targetId);
+          if (preselectedUserId) {
+            setMobileView('DETAILS');
+          }
         }
       }
     } catch (err) {
@@ -102,12 +107,13 @@ export const UserDetailsInspector: React.FC<UserDetailsInspectorProps> = ({ pres
 
   const inspectUser = async (userId: string) => {
     setSelectedUserId(userId);
+    setMobileView('DETAILS');
     setIsLoadingDetails(true);
     try {
       const data = await fetchUserBackendDetails(userId);
       setUserDetails(data);
     } catch (err) {
-      console.error(err);
+      console.warn('Notice inspecting user details:', err);
     } finally {
       setIsLoadingDetails(false);
     }
@@ -242,7 +248,7 @@ export const UserDetailsInspector: React.FC<UserDetailsInspectorProps> = ({ pres
       {/* Main Grid: User Selection & Detailed Inspector */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
         {/* User List Selector (Column) */}
-        <div className="lg:col-span-4 space-y-2 max-h-[700px] overflow-y-auto pr-1">
+        <div className={`lg:col-span-4 space-y-2 max-h-[700px] overflow-y-auto pr-1 ${mobileView === 'DETAILS' ? 'hidden lg:block' : 'block'}`}>
           {isLoadingList ? (
             <div className="p-8 text-center text-slate-400 text-xs flex flex-col items-center gap-2 bg-white rounded-2xl border border-slate-200">
               <RefreshCw className="w-5 h-5 animate-spin text-[#c5a880]" />
@@ -299,7 +305,17 @@ export const UserDetailsInspector: React.FC<UserDetailsInspectorProps> = ({ pres
         </div>
 
         {/* User Full Backend Details Inspector (Column) */}
-        <div className="lg:col-span-8">
+        <div className={`lg:col-span-8 ${mobileView === 'LIST' ? 'hidden lg:block' : 'block'}`}>
+          {/* Mobile Back Button */}
+          <div className="lg:hidden mb-3">
+            <button
+              onClick={() => setMobileView('LIST')}
+              className="px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-700 dark:text-slate-200 font-bold text-xs flex items-center gap-1.5 cursor-pointer"
+            >
+              <ArrowLeft className="w-3.5 h-3.5" />
+              <span>← Back to Customer Directory</span>
+            </button>
+          </div>
           {isLoadingDetails ? (
             <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center text-slate-400 text-xs flex flex-col items-center gap-2 shadow-sm">
               <RefreshCw className="w-6 h-6 animate-spin text-[#c5a880]" />

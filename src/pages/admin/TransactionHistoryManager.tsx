@@ -71,7 +71,7 @@ export const TransactionHistoryManager: React.FC = () => {
       setTransactions(data.transactions || []);
       setTotalCount(data.total || 0);
     } catch (err) {
-      console.error(err);
+      console.warn('Notice loading transaction history:', err);
     } finally {
       setIsLoading(false);
     }

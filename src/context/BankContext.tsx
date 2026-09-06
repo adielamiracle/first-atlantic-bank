@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef, ReactNode } from 'react';
 import {
   UserProfile,
   BankAccount,
@@ -404,6 +404,24 @@ export const BankProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   useEffect(() => {
     const initSession = async () => {
       try {
+        const hash = (window.location.hash || '').toLowerCase();
+        const isAdminSaved = localStorage.getItem('fab_admin_active') === 'true';
+
+        // If accessed directly with #admin or user had an active admin session
+        if (hash === '#admin' || hash === '#/admin' || (isAdminSaved && !hash.includes('login') && !hash.includes('enroll'))) {
+          setCurrentRole('ADMIN');
+          setCurrentView('ADMIN_DASHBOARD');
+          await Promise.all([
+            fetchAdminStats(),
+            fetchPendingMakerCheckers(),
+            fetchActivationQueue(),
+            fetchApplications(),
+            fetchAuditLogs(),
+            fetchAdminNotifications()
+          ]);
+          return;
+        }
+
         const savedToken = localStorage.getItem('fab_session_token');
         const savedUserStr = localStorage.getItem('fab_current_user');
         
@@ -441,54 +459,70 @@ export const BankProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const fetchApplications = async () => {
     try {
-      const res = await fetch('/api/admin/applications', {
+      const res = await safeFetchJson<any>('/api/admin/applications', {
         headers: { Authorization: `Bearer adm_${adminSessionRole.toLowerCase()}` }
       });
-      if (res.ok) {
-        const data = await res.json();
-        setApplications(data.applications || []);
+      if (res.ok && res.data) {
+        setApplications(res.data.applications || []);
       }
     } catch (e) {
-      console.error('Error fetching account applications:', e);
+      console.warn('Notice fetching account applications:', e);
     }
   };
 
-  const fetchAdminStats = async () => {
-    try {
-      const [res, accRes] = await Promise.all([
-        fetch('/api/admin/stats', {
-          headers: { Authorization: `Bearer adm_${adminSessionRole.toLowerCase()}` }
-        }),
-        fetch('/api/admin/accounts', {
-          headers: { Authorization: `Bearer adm_${adminSessionRole.toLowerCase()}`, 'x-admin-id': 'adm_master_01' }
-        })
-      ]);
-      if (res.ok) {
-        const data = await res.json();
-        setAdminStats(data);
-      }
-      if (accRes.ok) {
-        const accData = await accRes.json();
-        if (Array.isArray(accData.accounts) && accData.accounts.length > 0) {
-          setAccounts(accData.accounts);
-          if (accData.totalNetWorthUsdMinor) {
-            setTotalNetWorthUsdMinor(accData.totalNetWorthUsdMinor);
+  const adminStatsInFlightRef = useRef<Promise<void> | null>(null);
+
+  const fetchAdminStats = async (isRetry = false): Promise<void> => {
+    if (adminStatsInFlightRef.current && !isRetry) {
+      return adminStatsInFlightRef.current;
+    }
+
+    const task = (async () => {
+      try {
+        const [res, accRes] = await Promise.all([
+          safeFetchJson<any>('/api/admin/stats', {
+            headers: { Authorization: `Bearer adm_${adminSessionRole.toLowerCase()}` }
+          }),
+          safeFetchJson<any>('/api/admin/accounts', {
+            headers: { Authorization: `Bearer adm_${adminSessionRole.toLowerCase()}`, 'x-admin-id': 'adm_master_01' }
+          })
+        ]);
+        if (res.ok && res.data) {
+          setAdminStats(res.data);
+        }
+        if (accRes.ok && accRes.data) {
+          const accData = accRes.data;
+          if (Array.isArray(accData.accounts)) {
+            setAccounts(accData.accounts);
+            if (accData.totalNetWorthUsdMinor) {
+              setTotalNetWorthUsdMinor(accData.totalNetWorthUsdMinor);
+            }
           }
         }
+        // If both failed (e.g. server was restarting during startup), retry once quietly after 1.5s
+        if (!res.ok && !accRes.ok && !isRetry) {
+          setTimeout(() => {
+            fetchAdminStats(true);
+          }, 1500);
+        }
+      } catch (e) {
+        console.warn('Notice syncing admin stats & custody accounts:', e);
+      } finally {
+        adminStatsInFlightRef.current = null;
       }
-    } catch (e) {
-      console.error('Error fetching admin stats & custody accounts:', e);
-    }
+    })();
+
+    adminStatsInFlightRef.current = task;
+    return task;
   };
 
   const fetchPendingMakerCheckers = async () => {
     try {
-      const res = await fetch('/api/admin/adjustments', {
+      const res = await safeFetchJson<any>('/api/admin/adjustments', {
         headers: { Authorization: `Bearer adm_${adminSessionRole.toLowerCase()}` }
       });
-      if (res.ok) {
-        const data = await res.json();
-        const pending = (data.adjustments || []).map((adj: any) => ({
+      if (res.ok && res.data) {
+        const pending = (res.data.adjustments || []).map((adj: any) => ({
           id: adj.id,
           actionType: adj.adjustmentType,
           targetAccountId: adj.accountId,
@@ -504,21 +538,20 @@ export const BankProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         setPendingMakerCheckers(pending);
       }
     } catch (e) {
-      console.error('Error fetching adjustments for maker-checker:', e);
+      console.warn('Notice fetching adjustments for maker-checker:', e);
     }
   };
 
   const fetchAuditLogs = async () => {
     try {
-      const res = await fetch('/api/admin/audit-logs', {
+      const res = await safeFetchJson<any>('/api/admin/audit-logs', {
         headers: { Authorization: `Bearer adm_${adminSessionRole.toLowerCase()}` }
       });
-      if (res.ok) {
-        const data = await res.json();
-        setAuditLogs(data.logs || []);
+      if (res.ok && res.data) {
+        setAuditLogs(res.data.logs || []);
       }
     } catch (e) {
-      console.error('Error fetching audit logs:', e);
+      console.warn('Notice fetching audit logs:', e);
     }
   };
 
@@ -954,8 +987,10 @@ export const BankProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       ]);
 
       if (accResult.data?.accounts && Array.isArray(accResult.data.accounts)) {
-        setAccounts(accResult.data.accounts);
-        setTotalNetWorthUsdMinor(accResult.data.totalNetWorthUsdMinor || 0);
+        if (currentRole !== 'ADMIN') {
+          setAccounts(accResult.data.accounts);
+          setTotalNetWorthUsdMinor(accResult.data.totalNetWorthUsdMinor || 0);
+        }
 
         if (accResult.data.accounts.length > 0) {
           const firstAccId = selectedAccountId || accResult.data.accounts[0]?.id;
@@ -985,7 +1020,11 @@ export const BankProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   const refreshData = async () => {
-    if (!currentUser && currentRole !== 'ADMIN') return;
+    if (currentRole === 'ADMIN') {
+      await fetchAdminStats();
+      return;
+    }
+    if (!currentUser) return;
     await fetchUserData(token, currentUser?.id);
   };
 
@@ -1015,7 +1054,11 @@ export const BankProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     try {
       localStorage.removeItem('fab_session_token');
       localStorage.removeItem('fab_current_user');
+      localStorage.removeItem('fab_admin_active');
     } catch {}
+    if (window.location.hash.includes('admin')) {
+      window.location.hash = '';
+    }
     showToast('INFO', 'Session Terminated', 'You have been safely signed out.');
   };
 
@@ -1080,6 +1123,9 @@ export const BankProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   const switchToAdmin = () => {
+    try {
+      localStorage.setItem('fab_admin_active', 'true');
+    } catch (e) {}
     setCurrentRole('ADMIN');
     setCurrentView('ADMIN_DASHBOARD');
     fetchAdminStats();
@@ -1288,15 +1334,15 @@ export const BankProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       if (params?.status && params.status !== 'ALL') q.set('status', params.status);
       if (params?.limit) q.set('limit', String(params.limit));
 
-      const res = await fetch(`/api/admin/transactions?${q.toString()}`, {
+      const res = await safeFetchJson<any>(`/api/admin/transactions?${q.toString()}`, {
         headers: { 'x-admin-id': 'adm_master_01' }
       });
-      if (res.ok) {
-        return await res.json();
+      if (res.ok && res.data) {
+        return res.data;
       }
       return { total: 0, transactions: [] };
     } catch (err) {
-      console.error('Error fetching admin transactions:', err);
+      console.warn('Notice fetching admin transactions:', err);
       return { total: 0, transactions: [] };
     }
   };
@@ -1350,15 +1396,15 @@ export const BankProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   // --- ADMIN BACKEND USER DETAILS INSPECTOR & EDIT ---
   const fetchUserBackendDetails = async (userId: string) => {
     try {
-      const res = await fetch(`/api/admin/users/${userId}/backend-details`, {
+      const res = await safeFetchJson<any>(`/api/admin/users/${userId}/backend-details`, {
         headers: { 'x-admin-id': 'adm_master_01' }
       });
-      if (res.ok) {
-        return await res.json();
+      if (res.ok && res.data) {
+        return res.data;
       }
       return null;
     } catch (err) {
-      console.error('Error fetching backend user details:', err);
+      console.warn('Notice fetching backend user details:', err);
       return null;
     }
   };
@@ -1409,8 +1455,7 @@ export const BankProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         fetchAdminStats(),
         fetchApplications(),
         fetchAuditLogs(),
-        fetchActivationQueue(),
-        refreshData()
+        fetchActivationQueue()
       ]);
       return {
         success: true,
@@ -1457,15 +1502,14 @@ export const BankProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   // --- BANK RECEIVING ACCOUNTS (TREASURY WIRE ROUTING) ---
   const fetchBankReceivingAccounts = async () => {
     try {
-      const res = await fetch('/api/admin/bank-receiving-accounts', {
+      const res = await safeFetchJson<any>('/api/admin/bank-receiving-accounts', {
         headers: { 'x-admin-id': 'adm_master_01' }
       });
-      if (res.ok) {
-        const data = await res.json();
-        setBankReceivingAccounts(data.receivingAccounts || []);
+      if (res.ok && res.data) {
+        setBankReceivingAccounts(res.data.receivingAccounts || []);
       }
     } catch (err) {
-      console.error('Error fetching bank receiving accounts:', err);
+      console.warn('Notice fetching bank receiving accounts:', err);
     }
   };
 

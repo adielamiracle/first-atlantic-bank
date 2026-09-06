@@ -95,7 +95,7 @@ export const AdminUserDetailsTab: React.FC = () => {
         setEditStatus(data.user.approval_status || 'APPROVED');
       }
     } catch (err) {
-      console.error(err);
+      console.warn('Notice loading user details:', err);
     } finally {
       setIsLoadingDetails(false);
     }

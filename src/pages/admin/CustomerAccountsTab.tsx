@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useBank } from '../../context/BankContext';
 import {
   Landmark,
@@ -40,6 +40,17 @@ export const CustomerAccountsTab: React.FC<CustomerAccountsTabProps> = ({
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [revealedAccIds, setRevealedAccIds] = useState<Record<string, boolean>>({});
   const [isRefreshing, setIsRefreshing] = useState(false);
+
+  // Auto-fetch accounts on mount and periodic synchronization
+  useEffect(() => {
+    fetchAdminStats();
+    const interval = setInterval(() => {
+      if (!document.hidden) {
+        fetchAdminStats();
+      }
+    }, 12000);
+    return () => clearInterval(interval);
+  }, []);
 
   const handleCopy = (text: string, id: string, label: string) => {
     navigator.clipboard.writeText(text);
@@ -158,8 +169,8 @@ export const CustomerAccountsTab: React.FC<CustomerAccountsTabProps> = ({
         <div className="bg-gradient-to-r from-[#004281] via-[#0b3866] to-[#0a2342] text-white rounded-2xl p-4 sm:p-5 shadow-sm border border-blue-900/40 relative overflow-hidden">
           <div className="absolute right-0 top-0 translate-x-12 -translate-y-6 w-56 h-56 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 relative z-10">
-            <div className="space-y-1">
-              <div className="flex items-center gap-2">
+            <div className="space-y-1.5 min-w-0">
+              <div className="flex items-center gap-2 flex-wrap">
                 <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-[10px] font-bold uppercase tracking-wider border border-emerald-500/30 flex items-center gap-1">
                   <Sparkles className="w-3 h-3 text-emerald-300" />
                   Verified Active Custody Account
@@ -168,11 +179,11 @@ export const CustomerAccountsTab: React.FC<CustomerAccountsTabProps> = ({
                   {erinAccount.region} Jurisdiction
                 </span>
               </div>
-              <h3 className="text-lg font-bold tracking-tight text-white flex items-center gap-2">
+              <h3 className="text-base sm:text-lg font-bold tracking-tight text-white flex items-center gap-2 flex-wrap">
                 <span>{erinAccount.customerName || 'Erin Megan'}</span>
                 <span className="text-xs text-slate-300 font-normal">({erinAccount.customerEmail})</span>
               </h3>
-              <div className="flex items-center gap-3 text-xs text-blue-100/80 font-mono flex-wrap">
+              <div className="flex items-center gap-2 sm:gap-3 text-xs text-blue-100/80 font-mono flex-wrap">
                 <span>Acc: <strong className="text-white">{erinAccount.accountNumberFull || erinAccount.accountNumber}</strong></span>
                 <span>•</span>
                 <span>Routing: <strong className="text-white">{erinAccount.routingNumber || '021000089'}</strong></span>
@@ -181,8 +192,8 @@ export const CustomerAccountsTab: React.FC<CustomerAccountsTabProps> = ({
               </div>
             </div>
 
-            <div className="flex items-center gap-3 self-start md:self-auto">
-              <div className="text-right">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-3 pt-2 md:pt-0 border-t md:border-t-0 border-white/10">
+              <div className="text-left sm:text-right">
                 <span className="text-[10px] font-semibold text-blue-200 uppercase tracking-wider block">
                   Current Liquidity
                 </span>
@@ -196,7 +207,7 @@ export const CustomerAccountsTab: React.FC<CustomerAccountsTabProps> = ({
                 </div>
               </div>
 
-              <div className="flex flex-col sm:flex-row gap-2">
+              <div className="flex items-center gap-2">
                 {onNavigateToFunds && (
                   <button
                     onClick={() => onNavigateToFunds(erinAccount.id)}
@@ -234,7 +245,7 @@ export const CustomerAccountsTab: React.FC<CustomerAccountsTabProps> = ({
           />
         </div>
 
-        <div className="flex items-center gap-1.5 self-start sm:self-auto bg-slate-100 dark:bg-slate-800/80 p-1 rounded-xl">
+        <div className="flex items-center gap-1.5 self-start sm:self-auto bg-slate-100 dark:bg-slate-800/80 p-1 rounded-xl flex-wrap">
           {(['ALL', 'USD', 'EUR', 'GBP'] as const).map(curr => (
             <button
               key={curr}
@@ -251,9 +262,133 @@ export const CustomerAccountsTab: React.FC<CustomerAccountsTabProps> = ({
         </div>
       </div>
 
-      {/* 4. Accounts List Table */}
+      {/* 4. Accounts Container: Mobile Cards View + Desktop Data Table */}
       <div className="bg-white dark:bg-[#0f172a] rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-xs overflow-hidden">
-        <div className="overflow-x-auto">
+        
+        {/* MOBILE VIEW (block md:hidden): Responsive Cards Optimized for Phones */}
+        <div className="block md:hidden divide-y divide-slate-100 dark:divide-slate-800">
+          {filteredAccounts.length === 0 ? (
+            <div className="p-8 text-center text-slate-400 text-xs">
+              No bank accounts found matching &quot;{searchQuery}&quot;.
+            </div>
+          ) : (
+            filteredAccounts.map(acc => {
+              const isRevealed = Boolean(revealedAccIds[acc.id]);
+              const displayAccNum = isRevealed ? (acc.accountNumberFull || acc.accountNumber) : acc.accountNumber;
+              const isPriority = acc.customerEmail?.toLowerCase() === 'erinmeg45@gmail.com' || acc.userId === 'usr_erin_megan_83';
+
+              return (
+                <div
+                  key={`mobile-${acc.id}`}
+                  className={`p-4 space-y-3 transition-colors ${
+                    isPriority ? 'bg-blue-50/40 dark:bg-blue-950/20 border-l-4 border-l-[#004281]' : ''
+                  }`}
+                >
+                  {/* Top row: Name, priority badge, and status */}
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="space-y-0.5 min-w-0">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span className="font-bold text-slate-900 dark:text-white text-sm">
+                          {acc.name}
+                        </span>
+                        {isPriority && (
+                          <span className="text-[9px] px-1.5 py-0.5 rounded bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 font-mono font-bold">
+                            High Net Worth
+                          </span>
+                        )}
+                      </div>
+                      <div className="text-xs font-semibold text-slate-800 dark:text-slate-200">
+                        {acc.customerName || 'Private Client'}
+                        {acc.customerEmail && (
+                          <span className="text-slate-500 dark:text-slate-400 text-[11px] font-normal font-mono block">
+                            {acc.customerEmail}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    <StatusBadge status={acc.status} size="xs" />
+                  </div>
+
+                  {/* Account details box */}
+                  <div className="bg-slate-50 dark:bg-slate-850 p-2.5 rounded-xl border border-slate-200/60 dark:border-slate-800/80 space-y-1.5 text-xs font-mono">
+                    <div className="flex items-center justify-between">
+                      <span className="text-slate-400 text-[11px]">Account #:</span>
+                      <div className="flex items-center gap-2 font-bold text-slate-800 dark:text-slate-200">
+                        <span>{displayAccNum}</span>
+                        <button
+                          onClick={() => toggleRevealAccount(acc.id)}
+                          className="text-slate-400 hover:text-slate-600 p-0.5 cursor-pointer"
+                        >
+                          {isRevealed ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5 text-[#004281]" />}
+                        </button>
+                        <button
+                          onClick={() => handleCopy(acc.accountNumberFull || acc.accountNumber, acc.id, 'Account Number')}
+                          className="text-slate-400 hover:text-slate-600 p-0.5 cursor-pointer"
+                        >
+                          {copiedId === acc.id ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
+                        </button>
+                      </div>
+                    </div>
+
+                    {(acc.routingNumber || acc.iban) && (
+                      <div className="flex items-center justify-between pt-1 border-t border-slate-200/60 dark:border-slate-800 text-[11px]">
+                        <span className="text-slate-400">{acc.routingNumber ? 'Routing:' : 'IBAN:'}</span>
+                        <span className="text-slate-700 dark:text-slate-300 font-semibold">{acc.routingNumber || acc.iban}</span>
+                      </div>
+                    )}
+                    {acc.swiftBic && (
+                      <div className="flex items-center justify-between text-[11px]">
+                        <span className="text-slate-400">SWIFT/BIC:</span>
+                        <span className="text-slate-700 dark:text-slate-300 font-semibold">{acc.swiftBic}</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Balance & Action Buttons */}
+                  <div className="flex items-center justify-between pt-1">
+                    <div>
+                      <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider block">
+                        Available Balance
+                      </span>
+                      <div className="font-mono font-bold text-base text-emerald-600 dark:text-emerald-400">
+                        <CurrencyDisplay
+                          amountMinor={acc.balanceMinor}
+                          currency={acc.currency}
+                          size="md"
+                          className="font-bold font-mono"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-1.5">
+                      {onNavigateToFunds && (
+                        <button
+                          onClick={() => onNavigateToFunds(acc.id)}
+                          className="px-2.5 py-1.5 rounded-lg bg-[#004281] hover:bg-[#003366] text-white font-bold text-xs flex items-center gap-1 shadow-xs cursor-pointer"
+                        >
+                          <DollarSign className="w-3.5 h-3.5" />
+                          <span>Funds</span>
+                        </button>
+                      )}
+                      {onInspectCustomer && acc.userId && (
+                        <button
+                          onClick={() => onInspectCustomer(acc.userId)}
+                          className="px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-semibold text-xs flex items-center gap-1 cursor-pointer"
+                        >
+                          <Users className="w-3.5 h-3.5" />
+                          <span>KYC</span>
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </div>
+
+        {/* DESKTOP VIEW (hidden md:block): Institutional Wide Table */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-slate-50/80 dark:bg-slate-900/60 border-b border-slate-200/80 dark:border-slate-800 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
@@ -276,7 +411,7 @@ export const CustomerAccountsTab: React.FC<CustomerAccountsTabProps> = ({
                 filteredAccounts.map(acc => {
                   const isRevealed = Boolean(revealedAccIds[acc.id]);
                   const displayAccNum = isRevealed ? (acc.accountNumberFull || acc.accountNumber) : acc.accountNumber;
-                  const isPriority = acc.customerEmail?.toLowerCase() === 'erinmeg45@gmail.com';
+                  const isPriority = acc.customerEmail?.toLowerCase() === 'erinmeg45@gmail.com' || acc.userId === 'usr_erin_megan_83';
 
                   return (
                     <tr

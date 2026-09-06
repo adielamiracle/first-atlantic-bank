@@ -549,7 +549,7 @@
           "pushAlerts": true,
           "largeTransactionThresholdMinor": 500000
         },
-        "lastLogin": "2026-09-04T05:19:55.207Z"
+        "lastLogin": "2026-09-05T23:50:57.228Z"
       }
     ],
     [
@@ -590,6 +590,46 @@
           "largeTransactionThresholdMinor": 500000
         },
         "lastLogin": "2026-09-04T05:26:18.886Z"
+      }
+    ],
+    [
+      "usr_verification_3745",
+      {
+        "id": "usr_verification_3745",
+        "email": "testphone.verify@atlantic-bank.com",
+        "username": "testphoneverify",
+        "firstName": "TestPhone",
+        "lastName": "Verification",
+        "phone": "+1 (555) 019-2830",
+        "dialCode": "+1",
+        "dateOfBirth": "1988-06-15",
+        "nationality": "American",
+        "passportNumber": "ID-523745",
+        "passportPhoto": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500&auto=format&fit=crop&q=80",
+        "loginPin": "1234",
+        "ssnMasked": "•••-••-8899",
+        "region": "US",
+        "approval_status": "APPROVED",
+        "address": {
+          "line1": "100 Atlantic Plaza",
+          "line2": "",
+          "city": "New York",
+          "stateOrCounty": "NY",
+          "postalCode": "10001",
+          "country": "United States"
+        },
+        "mfaEnabled": true,
+        "mfaMethod": "AUTHENTICATOR",
+        "biometricsEnabled": true,
+        "kycTier": "TIER_2_VERIFIED_PREMIER",
+        "securityScore": 95,
+        "notifications": {
+          "emailAlerts": true,
+          "smsAlerts": true,
+          "pushAlerts": true,
+          "largeTransactionThresholdMinor": 500000
+        },
+        "lastLogin": "2026-09-05T23:55:23.745Z"
       }
     ]
   ],
@@ -994,6 +1034,32 @@
         "customerEmail": "testprovision@example.com",
         "customerPhone": "+15551234567"
       }
+    ],
+    [
+      "acc_usr_verification_3745_usd_01",
+      {
+        "id": "acc_usr_verification_3745_usd_01",
+        "userId": "usr_verification_3745",
+        "accountNumber": "•••• 2499",
+        "accountNumberFull": "517518652499",
+        "routingNumber": "021000089",
+        "swiftBic": "FATLUS33NYC",
+        "name": "Corporate Treasury Operating Account",
+        "type": "CHECKING",
+        "currency": "USD",
+        "balanceMinor": 500000,
+        "availableBalanceMinor": 500000,
+        "pendingHoldMinor": 0,
+        "interestRateAPY": 1.25,
+        "status": "ACTIVE",
+        "region": "US",
+        "openedDate": "2026-09-05",
+        "dailyTransferLimitMinor": 50000000,
+        "statementCycleDay": 28,
+        "customerName": "TestPhone Verification",
+        "customerEmail": "testphone.verify@atlantic-bank.com",
+        "customerPhone": "+1 (555) 019-2830"
+      }
     ]
   ],
   "cards": [
@@ -1324,9 +1390,50 @@
         "dailySpendLimitMinor": 2500000,
         "travelNotices": []
       }
+    ],
+    [
+      "crd_usr_verification_3745_01",
+      {
+        "id": "crd_usr_verification_3745_01",
+        "accountId": "acc_usr_verification_3745_usd_01",
+        "userId": "usr_verification_3745",
+        "cardNumberMasked": "•••• •••• •••• 2499",
+        "cardNumberFull": "4111 4497 4407 2499",
+        "cardHolderName": "TESTPHONE VERIFICATION",
+        "expiryMonth": 12,
+        "expiryYear": 2031,
+        "cvv": "233",
+        "cardType": "DEBIT_VISA_SIGNATURE",
+        "status": "ACTIVE",
+        "isVirtual": false,
+        "contactlessEnabled": true,
+        "onlineTransactionsEnabled": true,
+        "internationalSpendEnabled": true,
+        "dailyAtmLimitMinor": 500000,
+        "dailySpendLimitMinor": 2500000,
+        "travelNotices": []
+      }
     ]
   ],
   "ledger": [
+    {
+      "id": "led_init_1788652523746",
+      "transactionId": "tx_init_1788652523746",
+      "accountId": "acc_usr_verification_3745_usd_01",
+      "direction": "CREDIT",
+      "amountMinor": 500000,
+      "currency": "USD",
+      "balanceAfterMinor": 500000,
+      "description": "Initial Account Opening Deposit (Executive Clearance)",
+      "category": "Deposits",
+      "counterparty": "First Atlantic Bank Treasury Direct",
+      "status": "SETTLED",
+      "channel": "ADMIN_PORTAL",
+      "referenceNumber": "DEP-ADM-523746",
+      "createdTimestamp": "2026-09-05T23:55:23.746Z",
+      "effectiveTimestamp": "2026-09-05T23:55:23.746Z",
+      "settledTimestamp": "2026-09-05T23:55:23.746Z"
+    },
     {
       "id": "led_init_1788499578887",
       "transactionId": "tx_init_1788499578887",
@@ -1562,6 +1669,51 @@
     }
   ],
   "auditLogs": [
+    {
+      "actorId": "adm_master_01",
+      "actorEmail": "admin@firstatlanticbank.com",
+      "actorRole": "SUPER_ADMIN",
+      "action": "ADMIN_CUSTOMER_CREATED",
+      "targetType": "USER",
+      "targetId": "usr_verification_3745",
+      "ipAddress": "199.16.156.12",
+      "userAgent": "First Atlantic Master Admin Suite v4.9",
+      "details": "Administrator Alexandra Vance created new customer account for TestPhone Verification (testphone.verify@atlantic-bank.com). Provisioned CHECKING (•••• 2499, USD) with initial balance $5,000.00.",
+      "id": "aud_1788652523746_493",
+      "timestamp": "2026-09-05T23:55:23.746Z",
+      "signatureHash": "00000000000000000000000000000000000000000000000000000000468a42c2"
+    },
+    {
+      "id": "aud_adm_direct_1788652261272",
+      "actorId": "adm_master_01",
+      "actorEmail": "admin@firstatlanticbank.com",
+      "actorRole": "SUPER_ADMIN",
+      "actorUsername": "alexandra.vance",
+      "category": "AUTHENTICATION",
+      "severity": "INFO",
+      "action": "ADMIN_AUTHENTICATED_LOGIN",
+      "targetType": "SECURITY",
+      "targetId": "adm_master_01",
+      "ipAddress": "199.16.156.12",
+      "userAgent": "First Atlantic Master Admin Suite v4.9 / MacOS",
+      "timestamp": "2026-09-05T23:51:01.272Z",
+      "details": "Master Administrator Alexandra Vance established direct executive session.",
+      "signatureHash": "sig_admin_sec_1788652261272"
+    },
+    {
+      "actorId": "usr_erin_megan_83",
+      "actorEmail": "erinmeg45@gmail.com",
+      "actorRole": "CUSTOMER",
+      "action": "CUSTOMER_SESSION_AUTHORIZED",
+      "targetType": "USER",
+      "targetId": "usr_erin_megan_83",
+      "ipAddress": "108.45.192.8",
+      "userAgent": "node",
+      "details": "Successful Sovereign Identity & 4-Digit Security PIN validation.",
+      "id": "aud_1788652257228_406",
+      "timestamp": "2026-09-05T23:50:57.228Z",
+      "signatureHash": "0000000000000000000000000000000000000000000000000000000012661e68"
+    },
     {
       "actorId": "adm_master_01",
       "actorEmail": "admin@firstatlanticbank.com",
@@ -1909,7 +2061,7 @@
         "name": "Alexandra Vance",
         "role": "SUPER_ADMIN",
         "department": "Executive Risk, Governance & Master Administration",
-        "lastLogin": "2026-09-01T14:38:50.334Z",
+        "lastLogin": "2026-09-05T23:51:01.272Z",
         "status": "ACTIVE"
       }
     ]
@@ -3709,6 +3861,106 @@
         "provisionedRoutingNumber": "021000089",
         "provisionedAccountNumber": "212539038937"
       }
+    ],
+    [
+      "app_erin_megan_83",
+      {
+        "id": "app_erin_megan_83",
+        "referenceNumber": "FAB-US-1983-0808",
+        "firstName": "Erin",
+        "lastName": "Megan",
+        "email": "erinmeg45@gmail.com",
+        "phone": "+1 (530) 233-8490",
+        "dialCode": "+1",
+        "dateOfBirth": "1983-08-08",
+        "nationality": "American",
+        "taxIdOrSsn": "•••-••-9610",
+        "idDocumentType": "PASSPORT",
+        "idDocumentNumber": "US83081983A",
+        "passportPhoto": "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=500&auto=format&fit=crop&q=80",
+        "address": {
+          "line1": "160 WILLOW VIEW Dr",
+          "city": "Alturas",
+          "stateOrProvince": "CA",
+          "postalCode": "96101",
+          "country": "United States"
+        },
+        "employmentStatus": "EXECUTIVE",
+        "employerOrBusinessName": "Private Wealth Enterprise",
+        "sourceOfWealth": "INVESTMENTS",
+        "annualIncomeRange": "$500,000+",
+        "isPep": false,
+        "requestedCurrency": "USD",
+        "requestedAccountType": "CHECKING_PREMIER",
+        "requestedRegion": "US",
+        "initialDepositAmountMinor": 78000000,
+        "initialDepositMinor": 78000000,
+        "requestDebitCard": true,
+        "username": "erinmegan",
+        "passwordHashed": "Erinmegan100",
+        "loginPin": "1234",
+        "mfaPreference": "AUTHENTICATOR",
+        "status": "APPROVED",
+        "riskScore": 6,
+        "submittedAt": "2026-08-08T10:00:00.000Z",
+        "reviewedAt": "2026-08-08T10:30:00.000Z",
+        "reviewedByAdminId": "adm_master_01",
+        "reviewedByAdminName": "Alexandra Vance",
+        "complianceNotes": "Executive KYC cleared. Alturas CA residential verification valid. Initial Private Wealth reserve deposit settled ($780,000.00).",
+        "createdUserId": "usr_erin_megan_83",
+        "provisionedRoutingNumber": "021000089",
+        "provisionedAccountNumber": "882096101983"
+      }
+    ],
+    [
+      "app_1788652523746_694",
+      {
+        "id": "app_1788652523746_694",
+        "referenceNumber": "FAB-US-2026-39485",
+        "firstName": "TestPhone",
+        "lastName": "Verification",
+        "email": "testphone.verify@atlantic-bank.com",
+        "phone": "+1 (555) 019-2830",
+        "dialCode": "+1",
+        "dateOfBirth": "1988-06-15",
+        "nationality": "American",
+        "taxIdOrSsn": "987-65-4321",
+        "idDocumentType": "PASSPORT",
+        "idDocumentNumber": "ID-523745",
+        "passportPhoto": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500&auto=format&fit=crop&q=80",
+        "address": {
+          "line1": "100 Atlantic Plaza",
+          "line2": "",
+          "city": "New York",
+          "stateOrProvince": "NY",
+          "postalCode": "10001",
+          "country": "United States"
+        },
+        "employmentStatus": "EXECUTIVE",
+        "employerOrBusinessName": "Private Wealth Holding",
+        "sourceOfWealth": "INVESTMENTS",
+        "annualIncomeRange": "$250,000+",
+        "isPep": false,
+        "requestedCurrency": "USD",
+        "requestedAccountType": "CHECKING",
+        "requestedRegion": "US",
+        "initialDepositAmountMinor": 500000,
+        "requestDebitCard": true,
+        "username": "testphoneverify",
+        "passwordHashed": "TestPassword123!",
+        "loginPin": "1234",
+        "mfaPreference": "AUTHENTICATOR",
+        "status": "APPROVED",
+        "riskScore": 8,
+        "submittedAt": "2026-09-05T23:55:23.746Z",
+        "reviewedAt": "2026-09-05T23:55:23.746Z",
+        "reviewedByAdminId": "adm_master_01",
+        "reviewedByAdminName": "Alexandra Vance",
+        "complianceNotes": "Directly onboarded and provisioned by Administrator Alexandra Vance. Verified KYC and account clearance.",
+        "createdUserId": "usr_verification_3745",
+        "provisionedRoutingNumber": "021000089",
+        "provisionedAccountNumber": "517518652499"
+      }
     ]
   ],
   "receivingAccounts": [
@@ -3941,8 +4193,20 @@
     [
       "testprovision@example.com",
       "AtlanticSecure2026!"
+    ],
+    [
+      "usr_verification_3745",
+      "TestPassword123!"
+    ],
+    [
+      "testphoneverify",
+      "TestPassword123!"
+    ],
+    [
+      "testphone.verify@atlantic-bank.com",
+      "TestPassword123!"
     ]
   ],
   "activeSessions": [],
-  "savedAt": "2026-09-04T05:26:18.888Z"
+  "savedAt": "2026-09-05T23:55:23.746Z"
 }

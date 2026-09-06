@@ -65,7 +65,7 @@ export const AdminTransactionManagerTab: React.FC = () => {
       setTransactions(data.transactions || []);
       setTotalCount(data.total || 0);
     } catch (err) {
-      console.error(err);
+      console.warn('Notice loading transactions:', err);
     } finally {
       setIsLoading(false);
     }
