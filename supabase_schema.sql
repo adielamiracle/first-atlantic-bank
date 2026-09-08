@@ -78,12 +78,20 @@ CREATE TABLE IF NOT EXISTS public.cards (
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- 4. TRANSACTIONS & DOUBLE-ENTRY LEDGER TABLE
+-- 4. TRANSACTIONS & TRANSFERS TABLE (RLS Protected)
 CREATE TABLE IF NOT EXISTS public.transactions (
-  id TEXT PRIMARY KEY,
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID,
+  from_account TEXT,
+  to_bank TEXT,
+  beneficiary_name TEXT,
+  amount NUMERIC,
+  fee NUMERIC,
+  status TEXT DEFAULT 'pending',
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  -- Additional fields for institutional double-entry ledger compatibility
   transaction_id TEXT,
   account_id TEXT,
-  user_id TEXT,
   direction TEXT,
   amount_minor BIGINT,
   currency TEXT DEFAULT 'USD',
@@ -91,14 +99,25 @@ CREATE TABLE IF NOT EXISTS public.transactions (
   description TEXT,
   category TEXT,
   counterparty TEXT,
-  status TEXT DEFAULT 'SETTLED',
   channel TEXT DEFAULT 'ONLINE',
   reference_number TEXT,
-  created_timestamp TIMESTAMPTZ DEFAULT NOW(),
-  effective_timestamp TIMESTAMPTZ DEFAULT NOW(),
-  settled_timestamp TIMESTAMPTZ,
   metadata JSONB DEFAULT '{}'::jsonb
 );
+
+-- Row Level Security (RLS) for Transactions: Users can only see & insert their own transactions
+ALTER TABLE public.transactions ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can only view their own transactions"
+ON public.transactions FOR SELECT
+USING (auth.uid() = user_id OR auth.uid()::text = user_id::text);
+
+CREATE POLICY "Users can insert their own transactions"
+ON public.transactions FOR INSERT
+WITH CHECK (auth.uid() = user_id OR auth.uid()::text = user_id::text);
+
+CREATE POLICY "Users can update their own transactions"
+ON public.transactions FOR UPDATE
+USING (auth.uid() = user_id OR auth.uid()::text = user_id::text);
 
 -- 5. ACCOUNT ONBOARDING APPLICATIONS TABLE
 CREATE TABLE IF NOT EXISTS public.applications (
@@ -187,7 +206,7 @@ CREATE TABLE IF NOT EXISTS public.activation_requests (
 ALTER TABLE public.users DISABLE ROW LEVEL SECURITY;
 ALTER TABLE public.accounts DISABLE ROW LEVEL SECURITY;
 ALTER TABLE public.cards DISABLE ROW LEVEL SECURITY;
-ALTER TABLE public.transactions DISABLE ROW LEVEL SECURITY;
+-- Note: public.transactions has Row Level Security (RLS) ENABLED above to isolate user transactions
 ALTER TABLE public.applications DISABLE ROW LEVEL SECURITY;
 ALTER TABLE public.files DISABLE ROW LEVEL SECURITY;
 ALTER TABLE public.audit_logs DISABLE ROW LEVEL SECURITY;

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useBank } from '../../context/BankContext';
 import { CurrencyDisplay } from '../../components/common/CurrencyDisplay';
 import { StatusBadge } from '../../components/common/StatusBadge';
@@ -9,6 +9,7 @@ import { GlassToggle } from '../../components/glass/GlassToggle';
 import { GlassSlider } from '../../components/glass/GlassSlider';
 import { GlassSearchBar } from '../../components/glass/GlassSearchBar';
 import { GlassTabs } from '../../components/glass/GlassTabs';
+import { supabase } from '../../lib/supabaseClient';
 import {
   Camera,
   CheckCircle2,
@@ -43,6 +44,9 @@ import {
   Globe,
   Building,
   FileCheck,
+  Loader2,
+  ArrowUpRight,
+  ArrowDownLeft,
   Cpu,
   Layers,
   Zap,
@@ -273,7 +277,36 @@ export const DepositCheckPage: React.FC = () => {
 
 export const StatementsPage: React.FC = () => {
   const { accounts, recentTransactions, currentUser, showToast } = useBank();
+  const primaryAccount = accounts[0];
   const [selectedStatement, setSelectedStatement] = useState<any>(null);
+  const [activeTab, setActiveTab] = useState<'TRANSACTIONS' | 'STATEMENTS'>('TRANSACTIONS');
+  const [filterStatus, setFilterStatus] = useState<'ALL' | 'PENDING' | 'SETTLED'>('ALL');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [supabaseTxs, setSupabaseTxs] = useState<any[]>([]);
+  const [isLoadingTxs, setIsLoadingTxs] = useState(false);
+
+  // Fetch transactions from Supabase 'transactions' table
+  const fetchSupabaseTransactions = async () => {
+    setIsLoadingTxs(true);
+    try {
+      let query = supabase.from('transactions').select('*');
+      if (currentUser?.id) {
+        query = query.eq('user_id', currentUser.id);
+      }
+      const { data, error } = await query.order('created_at', { ascending: false });
+      if (!error && Array.isArray(data)) {
+        setSupabaseTxs(data);
+      }
+    } catch (err) {
+      console.warn('Unable to query Supabase transactions table:', err);
+    } finally {
+      setIsLoadingTxs(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchSupabaseTransactions();
+  }, [currentUser?.id]);
 
   const statements = [
     { period: 'August 2026', date: 'Aug 31, 2026', size: '245 KB', startBal: 12500000, endBal: 14892050 },
@@ -292,71 +325,310 @@ export const StatementsPage: React.FC = () => {
     );
   };
 
-  const primaryAccount = accounts[0];
+  // Combine Supabase transactions and recent ledger transactions
+  const combinedTransactions = [
+    ...supabaseTxs.map((sTx: any) => ({
+      id: sTx.id || `sb-${Math.random()}`,
+      createdTimestamp: sTx.created_at || new Date().toISOString(),
+      description: sTx.beneficiary_name ? `Transfer to ${sTx.beneficiary_name} (${sTx.to_bank || 'Wire'})` : 'Institutional Wire Out',
+      channel: sTx.to_bank ? `Wire (${sTx.to_bank})` : 'Wire Transfer',
+      direction: 'DEBIT',
+      amountMinor: Math.round((Number(sTx.amount) || 0) * 100),
+      feeMinor: Math.round((Number(sTx.fee) || 0) * 100),
+      status: (sTx.status || 'pending').toLowerCase(),
+      fromAccount: sTx.from_account,
+      beneficiaryName: sTx.beneficiary_name,
+      toBank: sTx.to_bank,
+      isSupabase: true
+    })),
+    ...recentTransactions.map((tx: any) => ({
+      id: tx.id,
+      createdTimestamp: tx.createdTimestamp,
+      description: tx.description,
+      channel: tx.channel || 'Ledger',
+      direction: tx.direction,
+      amountMinor: tx.amountMinor,
+      feeMinor: 0,
+      status: (tx.status || 'settled').toLowerCase(),
+      fromAccount: tx.sourceAccountId,
+      beneficiaryName: tx.description,
+      toBank: 'First Atlantic Internal',
+      isSupabase: false
+    }))
+  ].sort((a, b) => new Date(b.createdTimestamp).getTime() - new Date(a.createdTimestamp).getTime());
+
+  // Filter transactions
+  const filteredTxs = combinedTransactions.filter((tx) => {
+    if (filterStatus === 'PENDING' && tx.status !== 'pending') return false;
+    if (filterStatus === 'SETTLED' && tx.status !== 'settled' && tx.status !== 'completed') return false;
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      const matchDesc = tx.description?.toLowerCase().includes(q);
+      const matchBen = tx.beneficiaryName?.toLowerCase().includes(q);
+      const matchBank = tx.toBank?.toLowerCase().includes(q);
+      return matchDesc || matchBen || matchBank;
+    }
+    return true;
+  });
+
+  const pendingCount = combinedTransactions.filter(t => t.status === 'pending').length;
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
+      {/* Top Header Card */}
       <GlassPanel variant="standard" className="p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-xl font-bold font-serif text-slate-900 dark:text-white">
-            Electronic Statements &amp; Tax Documents
+          <h1 className="text-xl sm:text-2xl font-bold font-serif text-slate-900 dark:text-white">
+            Activity &amp; Authoritative Records
           </h1>
-          <p className="text-xs text-slate-500 dark:text-slate-400">
-            Official monthly account transcripts, 1099-INT dividend summaries, and audit confirmations.
+          <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
+            Real-time wire executions, ledger settlement badges, and cryptographic audit statements.
           </p>
         </div>
 
-        <GlassButton
-          variant="glass-default"
-          size="sm"
-          onClick={() => window.print()}
-          iconLeft={<Printer className="w-3.5 h-3.5" />}
-        >
-          Print Page
-        </GlassButton>
+        {/* Tab switcher */}
+        <div className="flex bg-slate-100 dark:bg-white/10 p-1 rounded-xl shrink-0 self-start sm:self-auto border border-black/5 dark:border-white/10">
+          <button
+            onClick={() => setActiveTab('TRANSACTIONS')}
+            className={`px-4 py-2 text-xs sm:text-sm font-semibold rounded-lg transition-all cursor-pointer min-h-[40px] flex items-center gap-1.5 ${
+              activeTab === 'TRANSACTIONS'
+                ? 'bg-[#FFC300] text-black shadow-sm'
+                : 'text-slate-600 dark:text-slate-300 hover:text-black dark:hover:text-white'
+            }`}
+          >
+            <span>Transactions</span>
+            {pendingCount > 0 && (
+              <span className="px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-900 text-amber-100">
+                {pendingCount}
+              </span>
+            )}
+          </button>
+          <button
+            onClick={() => setActiveTab('STATEMENTS')}
+            className={`px-4 py-2 text-xs sm:text-sm font-semibold rounded-lg transition-all cursor-pointer min-h-[40px] ${
+              activeTab === 'STATEMENTS'
+                ? 'bg-[#FFC300] text-black shadow-sm'
+                : 'text-slate-600 dark:text-slate-300 hover:text-black dark:hover:text-white'
+            }`}
+          >
+            Statements
+          </button>
+        </div>
       </GlassPanel>
 
-      <GlassPanel variant="standard" className="divide-y divide-white/20 dark:divide-white/5 overflow-hidden">
-        {statements.map((stmt) => (
-          <div key={stmt.period} className="p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-white/40 dark:hover:bg-white/[0.04] transition-colors">
-            <div className="flex items-center gap-3.5">
-              <div className="w-11 h-11 rounded-xl bg-white/70 dark:bg-white/10 text-[#8c6d37] dark:text-[#f8c22d] flex items-center justify-center shrink-0 border border-white/60 dark:border-white/10 shadow-sm backdrop-blur-md">
-                <FileText className="w-5 h-5" />
-              </div>
-              <div>
-                <h3 className="text-sm font-bold text-slate-900 dark:text-white">{stmt.period} Monthly Statement</h3>
-                <p className="text-xs text-slate-500 dark:text-slate-400 font-mono">Issued: {stmt.date} • {stmt.size} • Cryptographically Signed</p>
-              </div>
+      {/* TAB 1: TRANSACTIONS ACTIVITY */}
+      {activeTab === 'TRANSACTIONS' && (
+        <div className="space-y-4">
+          {/* Controls Bar */}
+          <GlassPanel variant="subtle" className="p-4 flex flex-col sm:flex-row items-center justify-between gap-3">
+            {/* Status Filters */}
+            <div className="flex items-center gap-2 w-full sm:w-auto overflow-x-auto pb-1 sm:pb-0">
+              <button
+                onClick={() => setFilterStatus('ALL')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold cursor-pointer min-h-[36px] transition-colors ${
+                  filterStatus === 'ALL'
+                    ? 'bg-black text-white dark:bg-white dark:text-black'
+                    : 'bg-white/60 dark:bg-white/10 text-slate-600 dark:text-slate-300 hover:bg-white/90'
+                }`}
+              >
+                All ({combinedTransactions.length})
+              </button>
+              <button
+                onClick={() => setFilterStatus('PENDING')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold cursor-pointer min-h-[36px] flex items-center gap-1.5 transition-colors ${
+                  filterStatus === 'PENDING'
+                    ? 'bg-amber-500 text-black font-bold'
+                    : 'bg-white/60 dark:bg-white/10 text-slate-600 dark:text-slate-300 hover:bg-white/90'
+                }`}
+              >
+                <Clock className="w-3.5 h-3.5" />
+                <span>Pending ({pendingCount})</span>
+              </button>
+              <button
+                onClick={() => setFilterStatus('SETTLED')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold cursor-pointer min-h-[36px] flex items-center gap-1.5 transition-colors ${
+                  filterStatus === 'SETTLED'
+                    ? 'bg-emerald-600 text-white font-bold'
+                    : 'bg-white/60 dark:bg-white/10 text-slate-600 dark:text-slate-300 hover:bg-white/90'
+                }`}
+              >
+                <CheckCircle2 className="w-3.5 h-3.5" />
+                <span>Settled</span>
+              </button>
             </div>
 
-            <div className="flex items-center gap-2">
-              <GlassButton
-                variant="glass-frosted"
-                size="sm"
-                onClick={() => setSelectedStatement(stmt)}
-                iconLeft={<Eye className="w-3.5 h-3.5" />}
+            {/* Refresh and search */}
+            <div className="flex items-center gap-2 w-full sm:w-auto">
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search recipient or bank..."
+                className="glass-input w-full sm:w-64 px-3 py-2 text-xs rounded-xl text-slate-900 dark:text-slate-100 min-h-[38px]"
+              />
+              <button
+                onClick={fetchSupabaseTransactions}
+                title="Refresh from Supabase"
+                className="p-2 rounded-xl bg-white/70 dark:bg-white/10 hover:bg-white/90 text-slate-700 dark:text-slate-200 border border-black/5 dark:border-white/10 min-h-[38px] min-w-[38px] flex items-center justify-center cursor-pointer active:scale-95"
               >
-                View
-              </GlassButton>
-              <GlassButton
-                variant="primary-gold"
-                size="sm"
-                onClick={() => handleDownload(stmt.period, 'PDF')}
-                iconLeft={<Download className="w-3.5 h-3.5" />}
-              >
-                PDF
-              </GlassButton>
-              <GlassButton
-                variant="glass-ghost"
-                size="sm"
-                onClick={() => handleDownload(stmt.period, 'CSV')}
-              >
-                CSV
-              </GlassButton>
+                <RefreshCw className={`w-4 h-4 ${isLoadingTxs ? 'animate-spin text-amber-500' : ''}`} />
+              </button>
             </div>
-          </div>
-        ))}
-      </GlassPanel>
+          </GlassPanel>
+
+          {/* Transaction List */}
+          <GlassPanel variant="standard" className="overflow-hidden divide-y divide-white/20 dark:divide-white/5">
+            {isLoadingTxs ? (
+              <div className="p-12 flex flex-col items-center justify-center gap-3 text-slate-500 dark:text-slate-400">
+                <Loader2 className="w-8 h-8 animate-spin text-[#d4af37]" />
+                <p className="text-sm font-medium">Syncing transactions from Supabase...</p>
+              </div>
+            ) : filteredTxs.length === 0 ? (
+              <div className="p-12 text-center space-y-2">
+                <FileText className="w-8 h-8 mx-auto text-slate-400" />
+                <p className="text-sm font-bold text-slate-700 dark:text-slate-300">No transactions found</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400">
+                  {searchQuery ? 'Try adjusting your search criteria.' : 'Outbound transfers and ledger entries will appear here.'}
+                </p>
+              </div>
+            ) : (
+              filteredTxs.map((tx) => {
+                const isPending = tx.status === 'pending';
+                const isFailed = tx.status === 'failed' || tx.status === 'declined';
+                const isSettled = !isPending && !isFailed;
+                const isCredit = tx.direction === 'CREDIT';
+
+                return (
+                  <div
+                    key={tx.id}
+                    className="p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-white/40 dark:hover:bg-white/[0.04] transition-colors"
+                  >
+                    {/* Left: Icon & Description */}
+                    <div className="flex items-start sm:items-center gap-3.5">
+                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 shadow-xs ${
+                        isCredit
+                          ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20'
+                          : 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20'
+                      }`}>
+                        {isCredit ? (
+                          <ArrowDownLeft className="w-5 h-5 stroke-[2.5]" />
+                        ) : (
+                          <ArrowUpRight className="w-5 h-5 stroke-[2.5]" />
+                        )}
+                      </div>
+
+                      <div className="space-y-0.5">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <h4 className="text-sm font-bold text-slate-900 dark:text-white">
+                            {tx.description}
+                          </h4>
+                        </div>
+                        <div className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-2 flex-wrap">
+                          <span>{new Date(tx.createdTimestamp).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
+                          <span>•</span>
+                          <span className="font-mono text-[11px]">{tx.channel}</span>
+                          {tx.fromAccount && (
+                            <>
+                              <span>•</span>
+                              <span className="font-mono text-[11px]">From: ••••{String(tx.fromAccount).slice(-4)}</span>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Right: Amount & Status Badge */}
+                    <div className="flex items-center justify-between sm:justify-end gap-3 pl-13 sm:pl-0">
+                      {/* Status Badge */}
+                      <div>
+                        {isPending && (
+                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold font-mono bg-amber-100 dark:bg-amber-950/70 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-700 shadow-xs">
+                            <Clock className="w-3 h-3 animate-pulse text-amber-600 dark:text-amber-400" />
+                            <span>Pending</span>
+                          </span>
+                        )}
+                        {isSettled && (
+                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold font-mono bg-emerald-100 dark:bg-emerald-950/70 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700 shadow-xs">
+                            <CheckCircle2 className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
+                            <span>Settled</span>
+                          </span>
+                        )}
+                        {isFailed && (
+                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold font-mono bg-rose-100 dark:bg-rose-950/70 text-rose-800 dark:text-rose-300 border border-rose-300 dark:border-rose-700 shadow-xs">
+                            <AlertTriangle className="w-3 h-3 text-rose-600 dark:text-rose-400" />
+                            <span>Declined</span>
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Amount */}
+                      <div className="text-right">
+                        <div className={`text-base font-bold font-mono ${
+                          isCredit
+                            ? 'text-emerald-600 dark:text-emerald-400'
+                            : 'text-slate-900 dark:text-slate-100'
+                        }`}>
+                          {isCredit ? '+' : '-'}${((tx.amountMinor || 0) / 100).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        </div>
+                        {tx.feeMinor > 0 && (
+                          <div className="text-[10px] text-slate-400 font-mono">
+                            Fee: ${(tx.feeMinor / 100).toFixed(2)}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </GlassPanel>
+        </div>
+      )}
+
+      {/* TAB 2: MONTHLY STATEMENTS */}
+      {activeTab === 'STATEMENTS' && (
+        <GlassPanel variant="standard" className="divide-y divide-white/20 dark:divide-white/5 overflow-hidden">
+          {statements.map((stmt) => (
+            <div key={stmt.period} className="p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-white/40 dark:hover:bg-white/[0.04] transition-colors">
+              <div className="flex items-center gap-3.5">
+                <div className="w-11 h-11 rounded-xl bg-white/70 dark:bg-white/10 text-[#8c6d37] dark:text-[#f8c22d] flex items-center justify-center shrink-0 border border-white/60 dark:border-white/10 shadow-sm backdrop-blur-md">
+                  <FileText className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-slate-900 dark:text-white">{stmt.period} Monthly Statement</h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 font-mono">Issued: {stmt.date} • {stmt.size} • Cryptographically Signed</p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <GlassButton
+                  variant="glass-frosted"
+                  size="sm"
+                  onClick={() => setSelectedStatement(stmt)}
+                  iconLeft={<Eye className="w-3.5 h-3.5" />}
+                >
+                  View
+                </GlassButton>
+                <GlassButton
+                  variant="primary-gold"
+                  size="sm"
+                  onClick={() => handleDownload(stmt.period, 'PDF')}
+                  iconLeft={<Download className="w-3.5 h-3.5" />}
+                >
+                  PDF
+                </GlassButton>
+                <GlassButton
+                  variant="glass-ghost"
+                  size="sm"
+                  onClick={() => handleDownload(stmt.period, 'CSV')}
+                >
+                  CSV
+                </GlassButton>
+              </div>
+            </div>
+          ))}
+        </GlassPanel>
+      )}
 
       {/* Statement Preview Modal */}
       {selectedStatement && (

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useBank } from '../../context/BankContext';
 import { InstitutionalCrest } from '../../components/common/InstitutionalCrest';
-import { supabase } from '../../lib/supabaseClient.js';
+import { supabase } from '../../lib/supabaseClient';
 import { safeFetchJson } from '../../lib/apiHelper';
 import {
   Lock,

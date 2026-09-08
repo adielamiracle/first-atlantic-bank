@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Database, CheckCircle2, AlertTriangle, XCircle, RefreshCw, Globe, Shield, Terminal, CloudUpload, FileCode, Check, Copy, HardDrive } from 'lucide-react';
-import { supabase, isSupabaseConfigured, safeSupabaseOp } from '../../lib/supabaseClient.js';
+import { supabase, isSupabaseConfigured, safeSupabaseOp } from '../../lib/supabaseClient';
 
 export interface SupabasePingResult {
   status: 'CHECKING' | 'CONFIGURED_REACHABLE' | 'CONFIGURED_UNREACHABLE' | 'UNCONFIGURED_FALLBACK';

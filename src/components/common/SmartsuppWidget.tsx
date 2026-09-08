@@ -63,37 +63,14 @@ export const SmartsuppWidget: React.FC = () => {
   const lastActivityTimeRef = useRef<number>(Date.now());
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // 1. Initialize Smartsupp Official SDK script loader
+  // 1. Initialize Smartsupp internal state
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
     window._smartsupp = window._smartsupp || {};
-    // Configure default Smartsupp options
-    window._smartsupp.key = window._smartsupp.key || 'fab_smartsupp_prod_live';
     window._smartsupp.orientation = 'right';
     window._smartsupp.offsetY = 85;
     window._smartsupp.offsetX = 20;
-
-    if (!window.smartsupp) {
-      const script = document.createElement('script');
-      script.type = 'text/javascript';
-      script.charset = 'utf-8';
-      script.async = true;
-      script.src = 'https://www.smartsuppchat.com/loader.js?';
-      
-      script.onload = () => {
-        if (window.smartsupp) {
-          window.smartsupp('theme:color', '#0a192f');
-        }
-      };
-      
-      script.onerror = () => {
-        // Fallback gracefully to built-in smartsupp component
-        console.info('Smartsupp script initialized in client mode.');
-      };
-
-      document.body.appendChild(script);
-    }
   }, []);
 
   // 2. Synchronize user profile & variables to Smartsupp

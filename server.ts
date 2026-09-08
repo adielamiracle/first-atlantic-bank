@@ -14,7 +14,8 @@ import {
   loadDataFromSupabase,
   uploadFileToSupabase
 } from './src/server/supabase';
-import { CurrencyCode, BankRegion, SupportCase } from './src/types';
+import { CurrencyCode, BankRegion, SupportCase, TransferRecord, Recipient, WiseTransferStatus } from './src/types';
+import { wiseService, transferStore } from './src/server/wise';
 
 async function startServer() {
   const app = express();
@@ -1097,6 +1098,507 @@ async function startServer() {
       message: 'Outbound transfer successfully queued and settled through the clearing network.' 
     });
   });
+
+  // --- WISE API TRANSFERS & RECIPIENTS ---
+  app.get('/api/transfers/wise/quote', async (req, res) => {
+    try {
+      const sourceCurrency = (req.query.sourceCurrency as CurrencyCode) || 'USD';
+      const targetCurrency = (req.query.targetCurrency as CurrencyCode) || 'GBP';
+      const amountMinor = Number(req.query.amountMinor) || 500000;
+      const quote = await wiseService.createQuote(sourceCurrency, targetCurrency, amountMinor);
+      res.json(quote);
+    } catch (err: any) {
+      res.status(500).json({ error: err.message || 'Error generating Wise quote' });
+    }
+  });
+
+  app.get('/api/transfers/recipients', (req, res) => {
+    const userId = getUserIdFromHeader(req);
+    const recipients = transferStore.getRecipients(userId);
+    res.json({ recipients });
+  });
+
+  app.post('/api/transfers/recipients', (req, res) => {
+    const userId = getUserIdFromHeader(req);
+    const { name, region, currency, bankName, sortCode, accountNumberUk, routingNumber, accountNumberUs, accountType, iban, swiftBic, country, email, phone } = req.body;
+    
+    if (!name || !region || !bankName) {
+      return res.status(400).json({ error: 'Recipient name, region, and bank name are required.' });
+    }
+
+    const recipient = transferStore.addRecipient({
+      userId,
+      name,
+      region,
+      currency: currency || (region === 'UK' ? 'GBP' : region === 'EU' ? 'EUR' : 'USD'),
+      bankName,
+      sortCode: sortCode ? sortCode.trim() : undefined,
+      accountNumberUk: accountNumberUk ? accountNumberUk.trim() : undefined,
+      routingNumber: routingNumber ? routingNumber.trim() : undefined,
+      accountNumberUs: accountNumberUs ? accountNumberUs.trim() : undefined,
+      accountType: accountType || 'CHECKING',
+      iban: iban ? iban.replace(/\s+/g, '').toUpperCase() : undefined,
+      swiftBic: swiftBic ? swiftBic.trim().toUpperCase() : undefined,
+      country: country || (region === 'UK' ? 'United Kingdom' : region === 'EU' ? 'Germany' : 'United States'),
+      email: email ? email.trim() : undefined,
+      phone: phone ? phone.trim() : undefined
+    });
+
+    res.json({ success: true, recipient });
+  });
+
+  app.delete('/api/transfers/recipients/:id', (req, res) => {
+    const { id } = req.params;
+    transferStore.deleteRecipient(id);
+    res.json({ success: true });
+  });
+
+  app.get('/api/transfers/wise', (req, res) => {
+    const userId = getUserIdFromHeader(req);
+    const isAdmin = req.query.admin === 'true' || req.headers['x-admin-role'] === 'ADMIN';
+    if (isAdmin) {
+      return res.json({ transfers: transferStore.getAllTransfers() });
+    }
+    res.json({ transfers: transferStore.getUserTransfers(userId) });
+  });
+
+  app.post('/api/transfers/wise', async (req, res) => {
+    const userId = getUserIdFromHeader(req);
+    const { sourceAccountId, recipient, amountMinor, memo, destCurrency } = req.body;
+
+    const sourceAcc = db.accounts.get(sourceAccountId);
+    if (!sourceAcc) {
+      return res.status(404).json({ error: 'Source account not found.' });
+    }
+    if (sourceAcc.userId !== userId) {
+      return res.status(403).json({ error: 'Unauthorized account access.' });
+    }
+    if (sourceAcc.status !== 'ACTIVE') {
+      return res.status(400).json({ error: 'Account is not in active standing.' });
+    }
+
+    const numAmountMinor = Number(amountMinor);
+    if (isNaN(numAmountMinor) || numAmountMinor <= 0) {
+      return res.status(400).json({ error: 'Invalid transfer amount.' });
+    }
+
+    const targetCurr: CurrencyCode = destCurrency || recipient.currency || (recipient.region === 'UK' ? 'GBP' : recipient.region === 'EU' ? 'EUR' : 'USD');
+    const quote = await wiseService.createQuote(sourceAcc.currency, targetCurr, numAmountMinor);
+    const feeMinor = Math.round(quote.fee * 100);
+    const totalRequired = numAmountMinor + feeMinor;
+
+    if (sourceAcc.availableBalanceMinor < totalRequired) {
+      return res.status(400).json({ 
+        error: `Insufficient funds. Required: ${db.formatMinor(totalRequired, sourceAcc.currency)} (including Wise clearing fee of ${db.formatMinor(feeMinor, sourceAcc.currency)})` 
+      });
+    }
+
+    // Call Wise API execution
+    const ref = `WISE-${Date.now().toString().slice(-8)}`;
+    const wiseExec = await wiseService.executeTransfer({
+      sourceCurrency: sourceAcc.currency,
+      targetCurrency: targetCurr,
+      amountMinor: numAmountMinor,
+      recipient,
+      reference: ref
+    });
+
+    // Debit source account
+    sourceAcc.balanceMinor -= totalRequired;
+    sourceAcc.availableBalanceMinor -= totalRequired;
+
+    // High value transfers (>= $10,000) or international wires undergo Admin approval
+    const requiresAdminApproval = numAmountMinor >= 1000000 || recipient.region !== 'US';
+    const initialStatus: WiseTransferStatus = requiresAdminApproval ? 'PENDING' : 'PROCESSING';
+    const approvalStatus = requiresAdminApproval ? 'PENDING_APPROVAL' : 'APPROVED';
+
+    const userProfile = db.users.get(userId);
+    const transferRecord: TransferRecord = {
+      id: `tx_wise_${Date.now()}`,
+      userId,
+      userName: userProfile ? `${userProfile.firstName} ${userProfile.lastName}` : 'Client Account',
+      userEmail: userProfile?.email || 'client@firstatlanticbank.com',
+      sourceAccountId: sourceAcc.id,
+      sourceAccountName: sourceAcc.name,
+      sourceAccountNumber: `••••${sourceAcc.accountNumber.slice(-4)}`,
+      amountMinor: numAmountMinor,
+      sourceCurrency: sourceAcc.currency,
+      destCurrency: targetCurr,
+      exchangeRate: quote.rate,
+      convertedAmountMinor: Math.round(quote.targetAmount * 100),
+      feeMinor,
+      recipient: {
+        id: recipient.id,
+        name: recipient.name,
+        bankName: recipient.bankName,
+        region: recipient.region,
+        accountNumberOrIban: recipient.accountNumberOrIban || recipient.accountNumberUk || recipient.accountNumberUs || recipient.iban || '',
+        sortCode: recipient.sortCode,
+        routingNumber: recipient.routingNumber,
+        iban: recipient.iban,
+        swiftBic: recipient.swiftBic,
+        country: recipient.country || (recipient.region === 'UK' ? 'United Kingdom' : recipient.region === 'EU' ? 'European Union' : 'United States'),
+        accountType: recipient.accountType,
+        email: recipient.email,
+        phone: recipient.phone
+      },
+      reference: ref,
+      memo: memo || `Wise Payout to ${recipient.name} via ${recipient.bankName}`,
+      wiseTransferId: wiseExec.wiseTransferId,
+      wiseQuoteId: wiseExec.wiseQuoteId,
+      wiseStatus: wiseExec.wiseStatus,
+      status: initialStatus,
+      approvalStatus,
+      estimatedDelivery: wiseExec.estimatedDelivery,
+      createdTimestamp: new Date().toISOString(),
+      updatedTimestamp: new Date().toISOString()
+    };
+
+    transferStore.createTransfer(transferRecord);
+
+    // Ledger entry
+    const ledgerItem = {
+      id: `led_wise_${Date.now()}`,
+      transactionId: transferRecord.id,
+      accountId: sourceAcc.id,
+      direction: 'DEBIT' as const,
+      amountMinor: numAmountMinor,
+      currency: sourceAcc.currency,
+      balanceAfterMinor: sourceAcc.balanceMinor,
+      description: memo || `Wise Outbound to ${recipient.name} (${recipient.bankName})`,
+      category: 'Transfers' as const,
+      counterparty: recipient.name,
+      status: (initialStatus === 'PENDING' ? 'PENDING' : 'SETTLED') as any,
+      channel: 'WIRE' as const,
+      referenceNumber: ref,
+      createdTimestamp: new Date().toISOString(),
+      effectiveTimestamp: new Date().toISOString(),
+      metadata: { wiseTransferId: wiseExec.wiseTransferId, feeMinor }
+    };
+    db.ledger.unshift(ledgerItem as any);
+
+    // Double-entry ledger integration
+    try {
+      doubleEntryLedger.commitJournalTransaction({
+        referenceNumber: ref,
+        transactionType: 'OUTBOUND_WIRE',
+        description: `Wise Dispatch to ${recipient.name}`,
+        lines: [
+          {
+            id: `jl_${Date.now()}_w1`,
+            accountId: sourceAcc.id,
+            accountType: 'CUSTOMER_DEPOSIT',
+            accountName: `${sourceAcc.name} (${sourceAcc.accountNumber})`,
+            direction: 'DEBIT',
+            amountMinor: totalRequired,
+            currency: sourceAcc.currency,
+            description: `Outbound wire transfer (${ref})`
+          },
+          {
+            id: `jl_${Date.now()}_w2`,
+            accountId: 'GL_1001_FED_RESERVE_CASH',
+            accountType: 'GL_ASSET',
+            accountName: 'Wise Clearing Settlement Account',
+            direction: 'CREDIT',
+            amountMinor: totalRequired,
+            currency: sourceAcc.currency,
+            description: `Wise Inbound Interbank Outflow (${ref})`
+          }
+        ],
+        effectiveAt: new Date().toISOString(),
+        metadata: { transferId: transferRecord.id, wiseTransferId: wiseExec.wiseTransferId }
+      });
+    } catch (e) {}
+
+    // Audit log
+    db.addAuditLog({
+      actorId: userId,
+      actorEmail: userProfile?.email || 'customer',
+      actorRole: 'CUSTOMER',
+      action: 'WISE_TRANSFER_DISPATCHED',
+      targetType: 'TRANSACTION',
+      targetId: transferRecord.id,
+      ipAddress: req.ip || '108.45.192.8',
+      userAgent: req.headers['user-agent'] || 'First Atlantic Portal',
+      details: `Dispatched Wise transfer of ${db.formatMinor(numAmountMinor, sourceAcc.currency)} to ${recipient.name} at ${recipient.bankName} [Status: ${initialStatus}]`
+    });
+
+    // Notify admin if approval is needed
+    if (requiresAdminApproval) {
+      adminNotificationService.broadcastNotification({
+        title: 'New High-Value Transfer Awaiting Approval',
+        message: `${transferRecord.userName} queued an outbound transfer of ${db.formatMinor(numAmountMinor, sourceAcc.currency)} to ${recipient.name}. Manual compliance approval required.`,
+        category: 'COMPLIANCE',
+        priority: 'HIGH',
+        metadata: { transferId: transferRecord.id }
+      });
+    }
+
+    res.json({
+      success: true,
+      transfer: transferRecord,
+      message: requiresAdminApproval 
+        ? 'Transfer submitted and is currently PENDING institutional compliance approval.'
+        : 'Transfer dispatched successfully via Wise and is now PROCESSING.'
+    });
+  });
+
+  // Admin Approve Transfer
+  app.post('/api/transfers/wise/:id/approve', (req, res) => {
+    const { id } = req.params;
+    const { approvalNotes } = req.body;
+    const adminUser = req.headers['x-admin-name'] ? String(req.headers['x-admin-name']) : 'Institutional Administrator';
+
+    const transfer = transferStore.getTransferById(id);
+    if (!transfer) {
+      return res.status(404).json({ error: 'Transfer not found.' });
+    }
+
+    if (transfer.status === 'COMPLETED') {
+      return res.status(400).json({ error: 'Transfer has already been settled and completed.' });
+    }
+
+    const updated = transferStore.updateTransferStatus(id, 'COMPLETED', {
+      approvalStatus: 'APPROVED',
+      approvedBy: adminUser,
+      approvalNotes: approvalNotes || 'Approved by Institutional Treasury Operations Desk. Cleared for execution.',
+      wiseStatus: 'outgoing_payment_sent',
+      estimatedDelivery: 'Delivered and confirmed by recipient clearing network.'
+    });
+
+    // Update corresponding ledger entry to SETTLED
+    const ledgerEntry = db.ledger.find(l => l.transactionId === id || l.referenceNumber === transfer.reference);
+    if (ledgerEntry) {
+      ledgerEntry.status = 'SETTLED';
+    }
+
+    // Log Webhook event
+    transferStore.logWebhook({
+      id: `wh_${Date.now()}`,
+      transferId: id,
+      event: 'transfers#state-change',
+      status: 'COMPLETED',
+      payload: {
+        eventType: 'transfers#state-change',
+        transferId: transfer.wiseTransferId,
+        currentStatus: 'outgoing_payment_sent',
+        approvedBy: adminUser,
+        occurredAt: new Date().toISOString()
+      },
+      receivedAt: new Date().toISOString(),
+      source: 'ADMIN_TRIGGER'
+    });
+
+    // Audit log
+    db.addAuditLog({
+      actorId: 'admin_sys',
+      actorEmail: 'admin@firstatlanticbank.com',
+      actorRole: 'SUPER_ADMIN',
+      action: 'TRANSFER_APPROVED',
+      targetType: 'TRANSACTION',
+      targetId: id,
+      ipAddress: req.ip || '127.0.0.1',
+      userAgent: req.headers['user-agent'] || 'First Atlantic Admin Portal',
+      details: `Admin ${adminUser} approved transfer ${transfer.reference} of ${db.formatMinor(transfer.amountMinor, transfer.sourceCurrency)} to ${transfer.recipient.name}`
+    });
+
+    res.json({ success: true, transfer: updated, message: 'Transfer successfully approved and settled.' });
+  });
+
+  // Admin Reject Transfer
+  app.post('/api/transfers/wise/:id/reject', (req, res) => {
+    const { id } = req.params;
+    const { rejectionReason } = req.body;
+    const adminUser = req.headers['x-admin-name'] ? String(req.headers['x-admin-name']) : 'Institutional Compliance Officer';
+
+    const transfer = transferStore.getTransferById(id);
+    if (!transfer) {
+      return res.status(404).json({ error: 'Transfer not found.' });
+    }
+
+    if (transfer.status === 'COMPLETED') {
+      return res.status(400).json({ error: 'Cannot reject a transfer that has already settled.' });
+    }
+
+    // Refund held funds back to customer account
+    const sourceAcc = db.accounts.get(transfer.sourceAccountId);
+    const refundAmount = transfer.amountMinor + transfer.feeMinor;
+    if (sourceAcc) {
+      sourceAcc.balanceMinor += refundAmount;
+      sourceAcc.availableBalanceMinor += refundAmount;
+
+      // Reversal Ledger item
+      db.ledger.unshift({
+        id: `led_rev_${Date.now()}`,
+        transactionId: `rev_${transfer.id}`,
+        accountId: sourceAcc.id,
+        direction: 'CREDIT',
+        amountMinor: refundAmount,
+        currency: sourceAcc.currency,
+        balanceAfterMinor: sourceAcc.balanceMinor,
+        description: `Refund for Rejected Wire Transfer (${transfer.reference}) - ${rejectionReason || 'Compliance Hold'}`,
+        category: 'Adjustments',
+        counterparty: 'First Atlantic Bank Treasury',
+        status: 'SETTLED',
+        channel: 'ADMIN_PORTAL',
+        referenceNumber: `REFUND-${transfer.reference}`,
+        createdTimestamp: new Date().toISOString(),
+        effectiveTimestamp: new Date().toISOString(),
+        settledTimestamp: new Date().toISOString()
+      });
+    }
+
+    const updated = transferStore.updateTransferStatus(id, 'FAILED', {
+      approvalStatus: 'REJECTED',
+      rejectionReason: rejectionReason || 'Rejected by Institutional Compliance Desk due to routing / sanction policy.',
+      wiseStatus: 'cancelled'
+    });
+
+    // Log Webhook event
+    transferStore.logWebhook({
+      id: `wh_${Date.now()}`,
+      transferId: id,
+      event: 'transfers#failed',
+      status: 'FAILED',
+      payload: {
+        eventType: 'transfers#failed',
+        transferId: transfer.wiseTransferId,
+        currentStatus: 'cancelled',
+        reason: rejectionReason,
+        occurredAt: new Date().toISOString()
+      },
+      receivedAt: new Date().toISOString(),
+      source: 'ADMIN_TRIGGER'
+    });
+
+    // Audit log
+    db.addAuditLog({
+      actorId: 'admin_sys',
+      actorEmail: 'admin@firstatlanticbank.com',
+      actorRole: 'SUPER_ADMIN',
+      action: 'TRANSFER_REJECTED',
+      targetType: 'TRANSACTION',
+      targetId: id,
+      ipAddress: req.ip || '127.0.0.1',
+      userAgent: req.headers['user-agent'] || 'First Atlantic Admin Portal',
+      details: `Admin rejected transfer ${transfer.reference} (${rejectionReason}). ${db.formatMinor(refundAmount, transfer.sourceCurrency)} refunded to ${sourceAcc?.name || 'customer'}.`
+    });
+
+    res.json({ success: true, transfer: updated, message: 'Transfer rejected. Customer funds have been fully refunded.' });
+  });
+
+  // --- WEBHOOK ENDPOINTS FOR STATUS UPDATES ---
+  app.post(['/api/webhooks/wise', '/api/webhooks/transfers'], (req, res) => {
+    const rawBody = JSON.stringify(req.body);
+    const signature = req.headers['x-signature-sha256'] as string | undefined;
+
+    if (!wiseService.verifyWebhookSignature(rawBody, signature)) {
+      return res.status(401).json({ error: 'Invalid webhook signature.' });
+    }
+
+    const event = req.body;
+    console.info('[Wise Webhook Received]:', event.event_type || event.eventType, event);
+
+    const wiseTransferId = event.data?.resource?.id || event.transferId || event.data?.transferId;
+    let targetStatus: WiseTransferStatus = 'PROCESSING';
+
+    const statusMap: Record<string, WiseTransferStatus> = {
+      'incoming_payment_waiting': 'PENDING',
+      'processing': 'PROCESSING',
+      'funds_converted': 'PROCESSING',
+      'outgoing_payment_sent': 'COMPLETED',
+      'funds_refunded': 'FAILED',
+      'cancelled': 'FAILED'
+    };
+
+    const currentWiseState = event.data?.current_state || event.currentStatus || event.status;
+    if (currentWiseState && statusMap[currentWiseState]) {
+      targetStatus = statusMap[currentWiseState];
+    } else if (event.event_type === 'transfers#failed') {
+      targetStatus = 'FAILED';
+    } else if (event.event_type === 'transfers#state-change' && currentWiseState === 'outgoing_payment_sent') {
+      targetStatus = 'COMPLETED';
+    }
+
+    // Find transfer by Wise ID
+    const allTransfers = transferStore.getAllTransfers();
+    const matchedTransfer = allTransfers.find(t => t.wiseTransferId === String(wiseTransferId) || t.id === String(wiseTransferId));
+
+    if (matchedTransfer) {
+      transferStore.updateTransferStatus(matchedTransfer.id, targetStatus, {
+        wiseStatus: currentWiseState
+      });
+
+      if (targetStatus === 'COMPLETED') {
+        const ledgerItem = db.ledger.find(l => l.transactionId === matchedTransfer.id);
+        if (ledgerItem) ledgerItem.status = 'SETTLED';
+      }
+    }
+
+    // Log the webhook
+    transferStore.logWebhook({
+      id: `wh_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+      transferId: matchedTransfer ? matchedTransfer.id : String(wiseTransferId || 'unknown'),
+      event: event.event_type || event.eventType || 'transfers#state-change',
+      status: targetStatus,
+      payload: event,
+      receivedAt: new Date().toISOString(),
+      source: 'WISE_WEBHOOK'
+    });
+
+    res.status(200).json({ received: true, transferMatched: Boolean(matchedTransfer) });
+  });
+
+  // Get Webhook Logs
+  app.get('/api/webhooks/logs', (req, res) => {
+    res.json({ webhooks: transferStore.getWebhookLogs() });
+  });
+
+  // Simulate Webhook for Testing
+  app.post('/api/webhooks/simulate', (req, res) => {
+    const { transferId, newStatus } = req.body;
+    const transfer = transferStore.getTransferById(transferId);
+    if (!transfer) {
+      return res.status(404).json({ error: 'Transfer not found.' });
+    }
+
+    const validStatus: WiseTransferStatus = newStatus || 'COMPLETED';
+    const wiseStatusMap: Record<WiseTransferStatus, any> = {
+      PENDING: 'incoming_payment_waiting',
+      PROCESSING: 'processing',
+      COMPLETED: 'outgoing_payment_sent',
+      FAILED: 'cancelled'
+    };
+
+    const updated = transferStore.updateTransferStatus(transferId, validStatus, {
+      wiseStatus: wiseStatusMap[validStatus],
+      ...(validStatus === 'COMPLETED' ? { approvalStatus: 'APPROVED' } : {})
+    });
+
+    if (validStatus === 'COMPLETED') {
+      const ledgerItem = db.ledger.find(l => l.transactionId === transferId);
+      if (ledgerItem) ledgerItem.status = 'SETTLED';
+    }
+
+    transferStore.logWebhook({
+      id: `wh_sim_${Date.now()}`,
+      transferId,
+      event: validStatus === 'FAILED' ? 'transfers#failed' : 'transfers#state-change',
+      status: validStatus,
+      payload: {
+        eventType: validStatus === 'FAILED' ? 'transfers#failed' : 'transfers#state-change',
+        transferId: transfer.wiseTransferId,
+        currentStatus: wiseStatusMap[validStatus],
+        simulated: true,
+        occurredAt: new Date().toISOString()
+      },
+      receivedAt: new Date().toISOString(),
+      source: 'SIMULATOR'
+    });
+
+    res.json({ success: true, transfer: updated, message: `Simulated Wise webhook event for ${transfer.reference}. Status updated to ${validStatus}.` });
+  });
+
 
   app.get('/api/payments/vendors', (req, res) => {
     res.json({ vendors: BILL_PAY_VENDORS });

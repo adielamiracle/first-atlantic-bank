@@ -34,7 +34,7 @@ import {
 } from 'lucide-react';
 import { BankRegion, formatDateTime } from '../../types';
 import { COUNTRIES, NATIONALITIES } from '../../data/countries';
-import { supabase, safeSupabaseOp } from '../../lib/supabaseClient.js';
+import { supabase, safeSupabaseOp } from '../../lib/supabaseClient';
 import { safeFetchJson, DEMO_CLIENT_USER } from '../../lib/apiHelper';
 import { GoogleSignInModal } from '../../components/auth/GoogleSignInModal';
 import { 
@@ -45,7 +45,7 @@ import {
 } from '../../lib/custodySeed';
 
 export const LoginPage: React.FC = () => {
-  const { login, setCurrentView, showToast, openBiometricPrompt, switchToAdmin } = useBank();
+  const { login, setCurrentView, showToast, openBiometricPrompt, switchToAdmin, currentRole } = useBank();
 
   const [isSignUpMode, setIsSignUpMode] = useState(false);
   const [fullName, setFullName] = useState('');
@@ -116,6 +116,14 @@ export const LoginPage: React.FC = () => {
     const emailOrUser = username.trim();
     const enteredPassword = password.trim();
 
+    // Check offline status immediately
+    if (typeof navigator !== 'undefined' && !navigator.onLine) {
+      setErrorMessage('Network error, please check internet');
+      showToast('ERROR', 'Connection Failure', 'Network error, please check internet');
+      setIsLoading(false);
+      return;
+    }
+
     try {
       // Supabase authentication check
       let sbUser = null;
@@ -128,12 +136,33 @@ export const LoginPage: React.FC = () => {
           });
           if (!sbError && sbData?.user) {
             sbUser = sbData.user;
-          } else if (sbError && sbError.message && !sbError.message.includes('Invalid login credentials')) {
-            console.info('Supabase auth feedback:', sbError.message);
+          } else if (sbError) {
+            const errLower = (sbError.message || '').toLowerCase();
+            if (
+              errLower.includes('network') ||
+              errLower.includes('failed to fetch') ||
+              (typeof navigator !== 'undefined' && !navigator.onLine)
+            ) {
+              setErrorMessage('Network error, please check internet');
+              showToast('ERROR', 'Connection Failure', 'Network error, please check internet');
+              setIsLoading(false);
+              return;
+            } else if (errLower.includes('invalid') && (errLower.includes('credential') || errLower.includes('password'))) {
+              setErrorMessage('Invalid password');
+            }
           }
         }
       } catch (sbErr: any) {
-        console.warn('Supabase auth notice:', sbErr?.message || sbErr);
+        if (
+          (typeof navigator !== 'undefined' && !navigator.onLine) ||
+          sbErr?.message?.toLowerCase().includes('network') ||
+          sbErr?.message?.toLowerCase().includes('fetch')
+        ) {
+          setErrorMessage('Network error, please check internet');
+          showToast('ERROR', 'Connection Failure', 'Network error, please check internet');
+          setIsLoading(false);
+          return;
+        }
       }
 
       // After login, if email === 'admin@firstatlanticbank.com' redirect to /admin dashboard
@@ -254,6 +283,14 @@ export const LoginPage: React.FC = () => {
           getStoredUserCredentials(matchedUser.email);
         const expectedPin = savedCreds?.loginPin || matchedUser.loginPin || '1234';
 
+        // Validate password if credentials exist
+        if (savedCreds?.password && enteredPassword && savedCreds.password !== enteredPassword) {
+          setErrorMessage('Invalid password');
+          showToast('ERROR', 'Authentication Error', 'Invalid password');
+          setIsLoading(false);
+          return;
+        }
+
         if (enteredPassword && enteredPassword.trim()) {
           saveStoredUserCredentials(
             matchedUser.id,
@@ -328,7 +365,17 @@ export const LoginPage: React.FC = () => {
       setEnteredPin('1234');
       return;
     } catch (err: any) {
-      const connError = err?.message || 'Unable to connect to core authentication server.';
+      const isOffline = typeof navigator !== 'undefined' && !navigator.onLine;
+      const isNetworkError =
+        isOffline ||
+        err?.name === 'TypeError' ||
+        err?.message?.toLowerCase().includes('network') ||
+        err?.message?.toLowerCase().includes('fetch') ||
+        err?.message?.toLowerCase().includes('failed to fetch');
+
+      const connError = isNetworkError
+        ? 'Network error, please check internet'
+        : (err?.message || 'Invalid password');
       setErrorMessage(connError);
       showToast('ERROR', 'Authentication Error', connError);
     } finally {
@@ -577,6 +624,14 @@ export const LoginPage: React.FC = () => {
             </p>
           </div>
 
+          {/* Loading Indicator */}
+          {isLoading && (
+            <div className="p-3.5 rounded-xl bg-[#00593B]/10 border border-[#00593B]/20 text-[#00593B] dark:text-[#34D399] text-xs flex items-center justify-center gap-2.5 font-medium animate-pulse">
+              <RefreshCw className="w-4 h-4 animate-spin shrink-0" />
+              <span>Loading... Connecting to core banking ledger...</span>
+            </div>
+          )}
+
           {/* Error Message */}
           {errorMessage && (
             <div className="p-3.5 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 text-rose-800 dark:text-rose-300 text-xs flex items-center gap-2.5">
@@ -698,7 +753,7 @@ export const LoginPage: React.FC = () => {
                       value={fullName}
                       onChange={(e) => setFullName(e.target.value)}
                       placeholder="Full name"
-                      className="w-full pl-12 pr-4 py-3 text-[14px] rounded-xl font-sans transition-all focus:outline-none bg-white dark:bg-[#161B22] border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white placeholder-slate-400 focus:border-[#00593B] focus:ring-2 focus:ring-[#00593B]/15"
+                      className="w-full pl-12 pr-4 py-3 min-h-[48px] text-[16px] sm:text-[14px] rounded-xl font-sans transition-all focus:outline-none bg-white dark:bg-[#161B22] border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white placeholder-slate-400 focus:border-[#00593B] focus:ring-2 focus:ring-[#00593B]/15"
                     />
                   </div>
                 </div>
@@ -716,7 +771,7 @@ export const LoginPage: React.FC = () => {
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
                     placeholder={isSignUpMode ? "Email address" : "Email or Username"}
-                    className="w-full pl-12 pr-4 py-3 text-[14px] rounded-xl font-sans transition-all focus:outline-none bg-white dark:bg-[#161B22] border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white placeholder-slate-400 focus:border-[#00593B] focus:ring-2 focus:ring-[#00593B]/15"
+                    className="w-full pl-12 pr-4 py-3 min-h-[48px] text-[16px] sm:text-[14px] rounded-xl font-sans transition-all focus:outline-none bg-white dark:bg-[#161B22] border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white placeholder-slate-400 focus:border-[#00593B] focus:ring-2 focus:ring-[#00593B]/15"
                   />
                 </div>
               </div>
@@ -733,13 +788,13 @@ export const LoginPage: React.FC = () => {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="Password"
-                    className="w-full pl-12 pr-11 py-3 text-[14px] rounded-xl font-sans transition-all focus:outline-none bg-white dark:bg-[#161B22] border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white placeholder-slate-400 focus:border-[#00593B] focus:ring-2 focus:ring-[#00593B]/15"
+                    className="w-full pl-12 pr-11 py-3 min-h-[48px] text-[16px] sm:text-[14px] rounded-xl font-sans transition-all focus:outline-none bg-white dark:bg-[#161B22] border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white placeholder-slate-400 focus:border-[#00593B] focus:ring-2 focus:ring-[#00593B]/15"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
                     aria-label={showPassword ? "Hide password" : "Show password"}
-                    className="absolute right-3.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer p-1 transition-colors"
+                    className="absolute right-3.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer p-2 transition-colors min-h-[44px] flex items-center justify-center"
                   >
                     {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
@@ -756,8 +811,31 @@ export const LoginPage: React.FC = () => {
                     className="w-4 h-4 rounded border-slate-300 dark:border-slate-700 text-[#00593B] focus:ring-[#00593B] cursor-pointer"
                   />
                   {isSignUpMode ? (
-                    <span>
-                      I agree with the <span className="font-semibold text-[#00593B] dark:text-[#34D399] hover:underline">Terms &amp; Condition</span>
+                    <span className="text-xs">
+                      I agree with the{' '}
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          window.location.hash = 'terms';
+                          setCurrentView('PUBLIC_TERMS');
+                        }}
+                        className="font-semibold text-[#00593B] dark:text-[#34D399] hover:underline cursor-pointer"
+                      >
+                        Terms &amp; Conditions
+                      </button>{' '}
+                      and{' '}
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          window.location.hash = 'privacy';
+                          setCurrentView('PUBLIC_PRIVACY');
+                        }}
+                        className="font-semibold text-[#00593B] dark:text-[#34D399] hover:underline cursor-pointer"
+                      >
+                        Privacy Policy
+                      </button>
                     </span>
                   ) : (
                     <span>Remember this device</span>
@@ -767,8 +845,11 @@ export const LoginPage: React.FC = () => {
                 {!isSignUpMode && (
                   <button
                     type="button"
-                    onClick={() => setCurrentView('AUTH_FORGOT_PASSWORD')}
-                    className="text-[12px] font-semibold text-[#00593B] dark:text-[#34D399] hover:underline cursor-pointer"
+                    onClick={() => {
+                      window.location.hash = 'forgot';
+                      setCurrentView('AUTH_FORGOT_PASSWORD');
+                    }}
+                    className="text-[12px] font-semibold text-[#00593B] dark:text-[#34D399] hover:underline cursor-pointer py-1"
                   >
                     Forgot Password?
                   </button>
@@ -780,10 +861,13 @@ export const LoginPage: React.FC = () => {
                 <button
                   type="submit"
                   disabled={isLoading || (!username.trim() && !isSignUpMode)}
-                  className="w-full py-3.5 rounded-xl font-bold text-[15px] transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer bg-[#00593B] hover:bg-[#00482f] text-white disabled:opacity-50 active:scale-[0.99]"
+                  className="w-full py-3.5 min-h-[48px] rounded-xl font-bold text-[15px] transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer bg-[#00593B] hover:bg-[#00482f] text-white disabled:opacity-50 active:scale-[0.99]"
                 >
                   {isLoading ? (
-                    <RefreshCw className="w-4 h-4 animate-spin text-white" />
+                    <span className="flex items-center gap-2">
+                      <RefreshCw className="w-4 h-4 animate-spin text-white" />
+                      <span>Loading...</span>
+                    </span>
                   ) : (
                     <>
                       <span>{isSignUpMode ? 'Continue' : 'Continue'}</span>
@@ -792,29 +876,6 @@ export const LoginPage: React.FC = () => {
                   )}
                 </button>
               </div>
-
-              {/* "or" Divider */}
-              <div className="relative flex py-1 items-center">
-                <div className="grow border-t border-slate-200 dark:border-slate-800" />
-                <span className="shrink mx-3 text-xs text-slate-400 font-medium">or</span>
-                <div className="grow border-t border-slate-200 dark:border-slate-800" />
-              </div>
-
-              {/* Google SSO Button */}
-              <button
-                type="button"
-                onClick={handleGoogleAuth}
-                title="Sign in with Google Sovereign Single Sign-On"
-                className="w-full py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#161B22] hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-800 dark:text-slate-100 font-semibold text-[13px] sm:text-[14px] flex items-center justify-center gap-2.5 cursor-pointer transition-all shadow-xs active:scale-[0.99]"
-              >
-                <svg className="w-4 h-4" viewBox="0 0 24 24">
-                  <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
-                  <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
-                  <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" />
-                  <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" />
-                </svg>
-                <span>{isSignUpMode ? 'Sign Up with Google' : 'Sign In with Google'}</span>
-              </button>
             </form>
           ) : (
             /* Multi-Factor Authentication Challenge */
@@ -840,7 +901,7 @@ export const LoginPage: React.FC = () => {
                   onChange={(e) =>
                     setMfaChallenge({ ...mfaChallenge, code: e.target.value.replace(/\D/g, '').slice(0, 6) })
                   }
-                  className="w-full text-center tracking-[0.5em] text-xl font-mono py-2.5 bg-white dark:bg-[#161B22] border border-slate-300 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:border-[#00593B]"
+                  className="w-full text-center tracking-[0.5em] text-xl font-mono py-3 min-h-[48px] bg-white dark:bg-[#161B22] border border-slate-300 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:border-[#00593B]"
                 />
               </div>
 
@@ -849,7 +910,7 @@ export const LoginPage: React.FC = () => {
                   type="button"
                   disabled={isLoading || mfaChallenge.code.length !== 6}
                   onClick={() => handleMfaVerify(false)}
-                  className="w-full py-3 rounded-xl bg-[#00593B] hover:bg-[#00472f] text-white font-bold text-xs uppercase tracking-widest shadow-md flex items-center justify-center gap-2 cursor-pointer"
+                  className="w-full py-3 min-h-[48px] rounded-xl bg-[#00593B] hover:bg-[#00472f] text-white font-bold text-xs uppercase tracking-widest shadow-md flex items-center justify-center gap-2 cursor-pointer"
                 >
                   <Lock className="w-3.5 h-3.5 text-[#FFC300]" />
                   <span>Verify &amp; Enter Dashboard</span>
@@ -860,7 +921,7 @@ export const LoginPage: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setMfaChallenge(null)}
-                  className="text-xs text-slate-500 hover:text-slate-800 cursor-pointer"
+                  className="text-xs text-slate-500 hover:text-slate-800 cursor-pointer py-2 min-h-[44px] inline-flex items-center"
                 >
                   &larr; Back to sign in
                 </button>
@@ -876,7 +937,7 @@ export const LoginPage: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setIsSignUpMode(false)}
-                  className="font-bold text-[#00593B] dark:text-[#34D399] hover:underline cursor-pointer ml-1"
+                  className="font-bold text-[#00593B] dark:text-[#34D399] hover:underline cursor-pointer ml-1 py-1"
                 >
                   Login
                 </button>
@@ -887,7 +948,7 @@ export const LoginPage: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setIsSignUpMode(true)}
-                  className="font-bold text-[#00593B] dark:text-[#34D399] hover:underline cursor-pointer ml-1"
+                  className="font-bold text-[#00593B] dark:text-[#34D399] hover:underline cursor-pointer ml-1 py-1"
                 >
                   Sign up
                 </button>
@@ -895,32 +956,37 @@ export const LoginPage: React.FC = () => {
             )}
           </div>
 
-          {/* Institutional Admin Gateway Link */}
-          <div className="pt-1 text-center">
-            <button
-              type="button"
-              onClick={() => {
-                window.location.hash = 'admin';
-                setCurrentView('AUTH_ADMIN_LOGIN');
-              }}
-              className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#004281] dark:text-[#7bb3e8] hover:underline cursor-pointer bg-slate-100 dark:bg-slate-800/80 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 transition-colors"
-            >
-              <Shield className="w-3.5 h-3.5 text-[#d4af37]" />
-              <span>Institutional Staff &amp; Administrator Sign In &rarr;</span>
-            </button>
-          </div>
-
         </div>
       </div>
 
-      {/* Security & System Info Footer */}
-      <div className="flex items-center justify-between w-full max-w-[960px] text-[11px] text-slate-500 dark:text-slate-400 px-4 pt-3 font-mono">
+      {/* Security & System Info Footer with Legal Links */}
+      <div className="flex flex-col sm:flex-row items-center justify-between w-full max-w-[960px] text-[11px] text-slate-500 dark:text-slate-400 px-4 pt-3 font-mono gap-2">
         <span className="flex items-center gap-1.5">
           <Shield className="w-3.5 h-3.5 text-[#00593B] dark:text-[#34D399]" /> TLS 1.3 256-Bit SSL Protection
         </span>
-        <span>
-          First Atlantic Private Banking Gateway
-        </span>
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={() => {
+              window.location.hash = 'privacy';
+              setCurrentView('PUBLIC_PRIVACY');
+            }}
+            className="hover:underline hover:text-slate-800 dark:hover:text-slate-200 cursor-pointer"
+          >
+            Privacy Policy
+          </button>
+          <span>•</span>
+          <button
+            type="button"
+            onClick={() => {
+              window.location.hash = 'terms';
+              setCurrentView('PUBLIC_TERMS');
+            }}
+            className="hover:underline hover:text-slate-800 dark:hover:text-slate-200 cursor-pointer"
+          >
+            Terms of Service
+          </button>
+        </div>
       </div>
 
       {/* Google Sovereign SSO Authentication Modal */}
@@ -1048,7 +1114,7 @@ export const ForgotPasswordPage: React.FC = () => {
                   value={emailOrUsername}
                   onChange={(e) => setEmailOrUsername(e.target.value)}
                   placeholder="Email or Username"
-                  className="w-full pl-12 pr-4 py-3 text-[14px] rounded-xl font-sans transition-all focus:outline-none bg-white dark:bg-[#161B22] border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white placeholder-slate-400 focus:border-[#00593B] focus:ring-2 focus:ring-[#00593B]/15"
+                  className="w-full pl-12 pr-4 py-3 min-h-[48px] text-[16px] sm:text-[14px] rounded-xl font-sans transition-all focus:outline-none bg-white dark:bg-[#161B22] border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white placeholder-slate-400 focus:border-[#00593B] focus:ring-2 focus:ring-[#00593B]/15"
                 />
               </div>
             </div>
@@ -1056,7 +1122,7 @@ export const ForgotPasswordPage: React.FC = () => {
             <button
               type="submit"
               disabled={isLoading || !emailOrUsername.trim()}
-              className="w-full py-3.5 rounded-xl font-bold text-[14px] transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer bg-[#00593B] hover:bg-[#00482f] text-white disabled:opacity-50"
+              className="w-full py-3.5 min-h-[48px] rounded-xl font-bold text-[14px] transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer bg-[#00593B] hover:bg-[#00482f] text-white disabled:opacity-50"
             >
               {isLoading ? (
                 <RefreshCw className="w-4 h-4 animate-spin text-white" />
@@ -1080,7 +1146,7 @@ export const ForgotPasswordPage: React.FC = () => {
                 value={code}
                 onChange={(e) => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
                 placeholder="••••••"
-                className="w-full text-center tracking-[0.5em] text-2xl font-mono py-3 rounded-xl bg-white dark:bg-[#161B22] border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white focus:outline-none focus:border-[#00593B]"
+                className="w-full text-center tracking-[0.5em] text-2xl font-mono py-3 min-h-[48px] rounded-xl bg-white dark:bg-[#161B22] border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white focus:outline-none focus:border-[#00593B]"
               />
               <span className="text-[11px] text-slate-400 text-center block pt-1">
                 Demo code: enter any 6 digits (e.g. 123456)
@@ -1090,7 +1156,7 @@ export const ForgotPasswordPage: React.FC = () => {
             <button
               type="submit"
               disabled={isLoading || code.length !== 6}
-              className="w-full py-3.5 rounded-xl font-bold text-[14px] transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer bg-[#00593B] hover:bg-[#00482f] text-white disabled:opacity-50"
+              className="w-full py-3.5 min-h-[48px] rounded-xl font-bold text-[14px] transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer bg-[#00593B] hover:bg-[#00482f] text-white disabled:opacity-50"
             >
               {isLoading ? <RefreshCw className="w-4 h-4 animate-spin" /> : <span>Verify Code</span>}
             </button>
@@ -1110,7 +1176,7 @@ export const ForgotPasswordPage: React.FC = () => {
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
                   placeholder="New Password (min. 8 characters)"
-                  className="w-full pl-12 pr-4 py-3 text-[14px] rounded-xl font-sans transition-all focus:outline-none bg-white dark:bg-[#161B22] border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white placeholder-slate-400 focus:border-[#00593B] focus:ring-2 focus:ring-[#00593B]/15"
+                  className="w-full pl-12 pr-4 py-3 min-h-[48px] text-[16px] sm:text-[14px] rounded-xl font-sans transition-all focus:outline-none bg-white dark:bg-[#161B22] border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white placeholder-slate-400 focus:border-[#00593B] focus:ring-2 focus:ring-[#00593B]/15"
                 />
               </div>
             </div>
@@ -1126,7 +1192,7 @@ export const ForgotPasswordPage: React.FC = () => {
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   placeholder="Confirm New Password"
-                  className="w-full pl-12 pr-4 py-3 text-[14px] rounded-xl font-sans transition-all focus:outline-none bg-white dark:bg-[#161B22] border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white placeholder-slate-400 focus:border-[#00593B] focus:ring-2 focus:ring-[#00593B]/15"
+                  className="w-full pl-12 pr-4 py-3 min-h-[48px] text-[16px] sm:text-[14px] rounded-xl font-sans transition-all focus:outline-none bg-white dark:bg-[#161B22] border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white placeholder-slate-400 focus:border-[#00593B] focus:ring-2 focus:ring-[#00593B]/15"
                 />
               </div>
             </div>
@@ -1134,7 +1200,7 @@ export const ForgotPasswordPage: React.FC = () => {
             <button
               type="submit"
               disabled={isLoading || !newPassword || !confirmPassword}
-              className="w-full py-3.5 rounded-xl font-bold text-[14px] transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer bg-[#00593B] hover:bg-[#00482f] text-white disabled:opacity-50"
+              className="w-full py-3.5 min-h-[48px] rounded-xl font-bold text-[14px] transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer bg-[#00593B] hover:bg-[#00482f] text-white disabled:opacity-50"
             >
               {isLoading ? <RefreshCw className="w-4 h-4 animate-spin" /> : <span>Update Password</span>}
             </button>
@@ -1152,7 +1218,7 @@ export const ForgotPasswordPage: React.FC = () => {
             <button
               type="button"
               onClick={() => setCurrentView('AUTH_LOGIN')}
-              className="w-full py-3.5 rounded-xl font-bold text-[14px] transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer bg-[#00593B] hover:bg-[#00482f] text-white"
+              className="w-full py-3.5 min-h-[48px] rounded-xl font-bold text-[14px] transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer bg-[#00593B] hover:bg-[#00482f] text-white"
             >
               <span>Sign In Now</span>
               <ArrowRight className="w-4 h-4" />
@@ -2106,7 +2172,7 @@ export const EnrollPage: React.FC = () => {
 
               {/* Regulatory Affirmations */}
               <div className="space-y-3 pt-2">
-                <label className="flex items-start gap-2.5 text-xs text-slate-700 cursor-pointer">
+                <label className="flex items-start gap-2.5 text-xs text-slate-700 dark:text-slate-300 cursor-pointer">
                   <input
                     type="checkbox"
                     checked={formData.termsAccepted}
@@ -2114,11 +2180,35 @@ export const EnrollPage: React.FC = () => {
                     className="mt-0.5 rounded border-slate-300 text-[#0a192f] focus:ring-[#8c6d37]"
                   />
                   <span>
-                    I confirm that the information provided is accurate and true, and I agree to First Atlantic Bank Master Client Agreement, European Central Bank electronic settlement regulations, and statutory data governance.
+                    I confirm that the information provided is accurate and true, and I agree to First Atlantic Bank{' '}
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        window.location.hash = 'terms';
+                        setCurrentView('PUBLIC_TERMS');
+                      }}
+                      className="font-semibold text-[#00593B] dark:text-[#34D399] underline cursor-pointer"
+                    >
+                      Terms of Service
+                    </button>
+                    {' and '}
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        window.location.hash = 'privacy';
+                        setCurrentView('PUBLIC_PRIVACY');
+                      }}
+                      className="font-semibold text-[#00593B] dark:text-[#34D399] underline cursor-pointer"
+                    >
+                      Privacy Policy
+                    </button>
+                    , European Central Bank electronic settlement regulations, and statutory data governance.
                   </span>
                 </label>
 
-                <label className="flex items-start gap-2.5 text-xs text-slate-700 cursor-pointer">
+                <label className="flex items-start gap-2.5 text-xs text-slate-700 dark:text-slate-300 cursor-pointer">
                   <input
                     type="checkbox"
                     checked={formData.fatcaAccepted}
@@ -2135,14 +2225,14 @@ export const EnrollPage: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setStep(3)}
-                  className="w-1/3 py-3 rounded-xl border border-slate-300 hover:bg-slate-50 text-slate-700 font-semibold text-xs cursor-pointer"
+                  className="w-1/3 py-3 min-h-[48px] rounded-xl border border-slate-300 hover:bg-slate-50 text-slate-700 font-semibold text-xs cursor-pointer flex items-center justify-center"
                 >
                   Back
                 </button>
                 <button
                   type="submit"
                   disabled={isLoading || !formData.termsAccepted || !formData.fatcaAccepted}
-                  className="w-2/3 py-3 rounded-xl bg-gradient-to-r from-[#c5a880] to-[#b39366] hover:brightness-105 text-slate-950 font-bold text-xs uppercase tracking-widest shadow-lg flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                  className="w-2/3 py-3 min-h-[48px] rounded-xl bg-gradient-to-r from-[#c5a880] to-[#b39366] hover:brightness-105 text-slate-950 font-bold text-xs uppercase tracking-widest shadow-lg flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
                 >
                   {isLoading ? (
                     <RefreshCw className="w-4 h-4 animate-spin" />

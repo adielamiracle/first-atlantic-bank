@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Shield, CheckCircle2, User, ArrowRight, X, Sparkles, Globe, Lock } from 'lucide-react';
 import { useBank } from '../../context/BankContext';
-import { supabase, isSupabaseConfigured } from '../../lib/supabaseClient.js';
+import { supabase, isSupabaseConfigured } from '../../lib/supabaseClient';
 
 interface GoogleSignInModalProps {
   isOpen: boolean;

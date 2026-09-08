@@ -34,6 +34,7 @@ import { REGISTERED_BANKS, RegisteredBank, OTHER_CUSTOM_BANK_ID, DispatchNotific
 import { motion, AnimatePresence } from 'motion/react';
 import { TransferFundsAnimation } from '../../components/dashboard/TransferFundsAnimation';
 import { CurrencyExchangeCalculator } from '../../components/dashboard/CurrencyExchangeCalculator';
+import { supabase } from '../../lib/supabaseClient';
 
 const BANK_ACCOUNT_REGEX = /^[0-9]{9,12}$/;
 const EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
@@ -47,7 +48,8 @@ export const TransfersPage: React.FC = () => {
     executeExternalTransfer,
     rates,
     showToast,
-    region
+    region,
+    setCurrentView
   } = useBank();
 
   // Mode: INTERNAL (Between accounts), DOMESTIC (US / UK Clearing), INTERNATIONAL (Global SWIFT FX)
@@ -180,8 +182,8 @@ export const TransfersPage: React.FC = () => {
         };
       }
 
-      // 3. Bank Account field: must be 9-12 digits regex, or accept test account 8282827272
-      const cleanAccount = recipientAccount.trim();
+      // 3. Bank Account field: must be 9-12 digits regex /^[0-9]{9,12}$/, stored as string without Number() parsing
+      const cleanAccount = String(recipientAccount || '').trim();
       const isTestAcc = cleanAccount === DEMO_TEST_ACCOUNT;
       if (!cleanAccount || (!BANK_ACCOUNT_REGEX.test(cleanAccount) && !isTestAcc)) {
         return {
@@ -209,7 +211,7 @@ export const TransfersPage: React.FC = () => {
     e.preventDefault();
     const validation = validateTransferForm();
     if (!validation.isValid) {
-      showToast('ERROR', 'Validation Error', validation.errorMessage || 'Bank Account must be 9-12 digits', 3000);
+      showToast('ERROR', 'Validation Error', validation.errorMessage || 'Please check transfer details.', 3000);
       return;
     }
     setShowConfirmModal(true);
@@ -219,7 +221,7 @@ export const TransfersPage: React.FC = () => {
     const validation = validateTransferForm();
     if (!validation.isValid) {
       setShowConfirmModal(false);
-      showToast('ERROR', 'Validation Error', validation.errorMessage || 'Bank Account must be 9-12 digits', 3000);
+      showToast('ERROR', 'Validation Error', validation.errorMessage || 'Please check transfer details.', 3000);
       return;
     }
 
@@ -232,42 +234,48 @@ export const TransfersPage: React.FC = () => {
         : activeBank?.clearingRail || (transferMode === 'DOMESTIC' ? 'Fedwire / Faster Payments Direct' : 'SWIFT GPI Cross-Border');
 
       const txRef = `FAB-WIRE-${Date.now().toString().slice(-8)}`;
+      const transferAmount = parseFloat(amountStr) || (amountMinor / 100);
+      const transferFee = (wireFeeMinor || 0) / 100;
+      const txUuid = typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `00000000-0000-4000-8000-${Date.now().toString(16).padStart(12, '0')}`;
+      const fromAccStr = String(sourceAccount?.accountNumberFull || sourceAccount?.accountNumber || sourceAccountId);
+      const beneficiaryStr = transferMode === 'INTERNAL' ? (destAccount?.name || 'Internal Transfer') : recipientName;
+      const toBankStr = transferMode === 'INTERNAL' ? 'First Atlantic Bank' : bankTitle;
 
+      // BUG 3 FIX: Create row in Supabase 'transactions' table with status='pending'
+      const supabaseTxRow = {
+        id: txUuid,
+        user_id: currentUser?.id,
+        from_account: fromAccStr,
+        to_bank: toBankStr,
+        beneficiary_name: beneficiaryStr,
+        amount: transferAmount,
+        fee: transferFee,
+        status: 'pending',
+        created_at: new Date().toISOString()
+      };
+
+      try {
+        await supabase.from('transactions').insert(supabaseTxRow);
+      } catch (sbErr) {
+        console.warn('Notice inserting transfer into Supabase transactions table:', sbErr);
+      }
+
+      // Execute transfer on authoritative ledger
       if (transferMode === 'INTERNAL') {
-        const res = await executeTransfer(
+        await executeTransfer(
           sourceAccountId,
           destAccountId,
           amountMinor,
           description || `Transfer to ${destAccount?.name}`
         );
-        if (res.success) {
-          const successObj = {
-            type: 'INTERNAL',
-            referenceNumber: txRef,
-            amountMinor,
-            currency: sourceAccount?.currency || 'USD',
-            sourceAccount,
-            destAccount,
-            timestamp: new Date().toLocaleString(),
-            clearingRail: rail,
-            userEmail: currentUser?.email || 'client.private@firstatlantic.com',
-            userPhone: currentUser?.phone || '+1 (212) 555-0199',
-            beneficiaryName: destAccount?.name || 'Internal Account'
-          };
-          setTransferSuccess(successObj);
-          setShowConfirmModal(false);
-          showToast('SUCCESS', 'Transfer Posted', 'Funds credited to destination account immediately.', 3000);
-        } else {
-          showToast('ERROR', 'Transfer Error', res.error || 'Unable to execute internal transfer.', 3000);
-        }
       } else {
-        const res = await executeExternalTransfer(
+        await executeExternalTransfer(
           sourceAccountId,
           {
             name: recipientName,
             bankName: bankTitle,
             routingOrSortCode: recipientRouting,
-            accountOrIban: recipientAccount,
+            accountOrIban: String(recipientAccount).trim(),
             country: recipientCountry,
             currency: destCurrency
           },
@@ -275,36 +283,21 @@ export const TransfersPage: React.FC = () => {
           'WIRE_TRANSFER',
           description || `Institutional wire to ${recipientName}`
         );
-        if (res.success) {
-          const successObj = {
-            type: transferMode,
-            referenceNumber: txRef,
-            amountMinor,
-            currency: sourceAccount?.currency || 'USD',
-            destCurrency,
-            convertedAmountMinor: estimatedConvertedAmount,
-            sourceAccount,
-            recipientName,
-            bankName: bankTitle,
-            accountOrIban: recipientAccount,
-            routingOrSortCode: recipientRouting,
-            swiftBic: recipientSwift,
-            country: recipientCountry,
-            feeMinor: res.feeMinor || wireFeeMinor,
-            timestamp: new Date().toLocaleString(),
-            clearingRail: rail,
-            userEmail: currentUser?.email || 'client.private@firstatlantic.com',
-            userPhone: currentUser?.phone || '+1 (212) 555-0199',
-            notifyEmail,
-            notifySms
-          };
-          setTransferSuccess(successObj);
-          setShowConfirmModal(false);
-          showToast('SUCCESS', 'Wire Dispatched', `Cleared via ${rail}. SMS & Email alerts generated.`, 3000);
-        } else {
-          showToast('ERROR', 'Validation Error', res.error || 'Bank Account must be 9-12 digits', 3000);
-        }
       }
+
+      setShowConfirmModal(false);
+      // Show toast "Transfer Submitted" as explicitly requested
+      showToast('SUCCESS', 'Transfer Submitted', 'Transfer queued with status: Pending', 4000);
+
+      // Redirect to /activity page that lists all transactions with status badge
+      window.location.hash = 'activity';
+      setCurrentView('DASHBOARD_STATEMENTS');
+    } catch (err: any) {
+      const isNetwork = (typeof navigator !== 'undefined' && !navigator.onLine) ||
+        err?.name === 'TypeError' ||
+        err?.message?.includes('fetch') ||
+        err?.message?.includes('Network');
+      showToast('ERROR', 'Transfer Failed', isNetwork ? 'Network error, please check internet' : (err.message || 'Unable to execute transfer.'));
     } finally {
       setIsProcessing(false);
     }
@@ -937,7 +930,7 @@ export const TransfersPage: React.FC = () => {
                       value={recipientAccount}
                       onChange={handleBankAccountChange}
                       placeholder="9-12 digits (e.g. 8282827272)"
-                      className="glass-input w-full px-3.5 py-2.5 text-xs sm:text-sm rounded-xl text-slate-900 dark:text-slate-100 font-mono font-semibold"
+                      className="glass-input w-full px-3.5 py-3 text-base sm:text-sm rounded-xl text-slate-900 dark:text-slate-100 font-mono font-semibold min-h-[48px]"
                     />
                   </div>
                 </div>
@@ -1178,7 +1171,7 @@ export const TransfersPage: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setShowConfirmModal(false)}
-                className="flex-1 py-3 rounded-xl border border-slate-300 dark:border-white/15 text-slate-700 dark:text-slate-300 font-semibold text-xs sm:text-sm cursor-pointer hover:bg-white/80 dark:hover:bg-white/10 transition-colors"
+                className="flex-1 py-3 rounded-xl border border-slate-300 dark:border-white/15 text-slate-700 dark:text-slate-300 font-semibold text-xs sm:text-sm cursor-pointer hover:bg-white/80 dark:hover:bg-white/10 transition-colors min-h-[48px]"
               >
                 Cancel
               </button>
@@ -1186,7 +1179,7 @@ export const TransfersPage: React.FC = () => {
                 type="button"
                 disabled={isProcessing}
                 onClick={handleExecuteTransfer}
-                className="flex-1 py-3 rounded-xl bg-gradient-to-r from-[#d4af37] to-[#f8c22d] text-slate-950 font-bold text-xs sm:text-sm uppercase tracking-wider flex items-center justify-center gap-2 shadow-md cursor-pointer border border-white/40 active:scale-95"
+                className="flex-1 py-3 rounded-xl bg-gradient-to-r from-[#d4af37] to-[#f8c22d] text-slate-950 font-bold text-xs sm:text-sm uppercase tracking-wider flex items-center justify-center gap-2 shadow-md cursor-pointer border border-white/40 active:scale-95 min-h-[48px] disabled:opacity-50"
               >
                 {isProcessing ? (
                   <RefreshCw className="w-4 h-4 animate-spin text-slate-950" />

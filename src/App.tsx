@@ -20,6 +20,7 @@ import {
   LocationsPage,
   SecurityPublicPage
 } from './pages/public/PublicPages';
+import { PrivacyPage, TermsPage } from './pages/public/LegalPages';
 
 // Auth pages
 import { LoginPage, EnrollPage, ForgotPasswordPage } from './pages/auth/AuthPages';
@@ -47,11 +48,35 @@ import { GlassmorphicShowcase } from './components/glass/GlassmorphicShowcase';
 const MainAppRouter: React.FC = () => {
   const { currentView, setCurrentView, isAuthenticated, currentRole } = useBank();
 
-  // Handle explicit hash navigation (e.g. #admin, #/admin, #admin-secure-portal) without getting cleared on reload
+  // Handle explicit hash and path navigation with strict role checks
   useEffect(() => {
     const handleHashAndPath = () => {
       const hash = window.location.hash.toLowerCase();
       const pathname = window.location.pathname.toLowerCase();
+
+      // Legal & Privacy routes
+      if (hash === '#privacy' || hash === '#/privacy' || pathname === '/privacy') {
+        setCurrentView('PUBLIC_PRIVACY');
+        return;
+      }
+      if (hash === '#terms' || hash === '#/terms' || pathname === '/terms') {
+        setCurrentView('PUBLIC_TERMS');
+        return;
+      }
+
+      // Password recovery route
+      if (
+        hash === '#forgot' ||
+        hash === '#/forgot' ||
+        hash === '#forgot-password' ||
+        pathname === '/forgot' ||
+        pathname === '/forgot-password'
+      ) {
+        setCurrentView('AUTH_FORGOT_PASSWORD');
+        return;
+      }
+
+      // Admin routes with strict Role-Based Access Control
       if (
         hash.includes('admin') ||
         pathname.includes('admin') ||
@@ -62,7 +87,11 @@ const MainAppRouter: React.FC = () => {
         hash === '#admin-secure-portal' ||
         hash === '#portal-admin'
       ) {
-        if (currentRole === 'ADMIN') {
+        // HIDE COMPLETELY FOR NORMAL USERS:
+        if (currentRole === 'CUSTOMER') {
+          // Normal user guessed /admin -> Keep hidden, redirect to customer dashboard
+          setCurrentView('DASHBOARD_OVERVIEW');
+        } else if (currentRole === 'ADMIN') {
           setCurrentView('ADMIN_DASHBOARD');
         } else {
           setCurrentView('AUTH_ADMIN_LOGIN');
@@ -79,10 +108,11 @@ const MainAppRouter: React.FC = () => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === 'A' || e.key === 'a')) {
         e.preventDefault();
-        window.location.hash = 'admin';
         if (currentRole === 'ADMIN') {
+          window.location.hash = 'admin';
           setCurrentView('ADMIN_DASHBOARD');
-        } else {
+        } else if (currentRole !== 'CUSTOMER') {
+          window.location.hash = 'admin';
           setCurrentView('AUTH_ADMIN_LOGIN');
         }
       }
@@ -95,15 +125,23 @@ const MainAppRouter: React.FC = () => {
     };
   }, [currentRole, setCurrentView]);
 
-  // 1. Dedicated Admin Authentication Route
+  // 1. Dedicated Admin Authentication Route - Hide completely for normal users
   if (currentView === 'AUTH_ADMIN_LOGIN') {
+    if (currentRole === 'CUSTOMER') {
+      setCurrentView('DASHBOARD_OVERVIEW');
+      return null;
+    }
     return <AdminLoginPage />;
   }
 
-  // 2. Protected Institutional Admin View
+  // 2. Protected Institutional Admin View - Strictly accessible only to ADMIN role
   if (currentView === 'ADMIN_DASHBOARD' || currentView.startsWith('ADMIN_')) {
     if (currentRole === 'ADMIN') {
       return <AdminDashboard />;
+    }
+    if (currentRole === 'CUSTOMER') {
+      setCurrentView('DASHBOARD_OVERVIEW');
+      return null;
     }
     return <AdminLoginPage />;
   }
@@ -197,6 +235,8 @@ const MainAppRouter: React.FC = () => {
               {currentView === 'AUTH_LOGIN' && <LoginPage />}
               {currentView === 'AUTH_ENROLL' && <EnrollPage />}
               {(currentView === 'AUTH_FORGOT' || (currentView as any) === 'AUTH_FORGOT_PASSWORD') && <ForgotPasswordPage />}
+              {currentView === 'PUBLIC_PRIVACY' && <PrivacyPage />}
+              {currentView === 'PUBLIC_TERMS' && <TermsPage />}
             </motion.div>
           </AnimatePresence>
         </main>

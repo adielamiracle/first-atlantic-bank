@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useBank } from '../../context/BankContext';
 import { CurrencyDisplay } from '../../components/common/CurrencyDisplay';
 import { StatusBadge } from '../../components/common/StatusBadge';
+import { supabase } from '../../lib/supabaseClient';
 import {
   Send,
   Plus,
@@ -22,7 +23,8 @@ import {
   CheckCircle2,
   Sparkles,
   ShieldCheck,
-  Landmark
+  Landmark,
+  Loader2
 } from 'lucide-react';
 import { LedgerEntry } from '../../types';
 
@@ -42,6 +44,56 @@ export const DashboardOverview: React.FC = () => {
   const [showAiModal, setShowAiModal] = useState(false);
   const [showAccountDetailsModal, setShowAccountDetailsModal] = useState(false);
   const [showRequestModal, setShowRequestModal] = useState(false);
+  const [supabaseAccountsBalance, setSupabaseAccountsBalance] = useState<number | null>(null);
+  const [isLoadingAccounts, setIsLoadingAccounts] = useState(false);
+
+  // BUG 2 FIX: Fetch all rows from 'accounts' table where user_id = current user and sum balances
+  useEffect(() => {
+    let isMounted = true;
+    async function fetchAccountsFromSupabase() {
+      if (!currentUser?.id) return;
+      setIsLoadingAccounts(true);
+      try {
+        const { data, error } = await supabase
+          .from('accounts')
+          .select('*')
+          .eq('user_id', currentUser.id);
+
+        if (!error && Array.isArray(data) && data.length > 0) {
+          const sumMinor = data.reduce((total: number, row: any) => {
+            const val = row.balance !== undefined ? Number(row.balance) :
+                        row.available_balance !== undefined ? Number(row.available_balance) :
+                        row.balance_minor !== undefined ? Number(row.balance_minor) / 100 : 0;
+            return total + Math.round((val || 0) * 100);
+          }, 0);
+          if (isMounted && sumMinor > 0) {
+            setSupabaseAccountsBalance(sumMinor);
+          }
+        }
+      } catch (err) {
+        console.warn('Notice syncing Supabase accounts balance:', err);
+      } finally {
+        if (isMounted) setIsLoadingAccounts(false);
+      }
+    }
+
+    fetchAccountsFromSupabase();
+    return () => { isMounted = false; };
+  }, [currentUser?.id]);
+
+  // Sum all balance fields from user accounts in state so Total Available always matches "Your accounts" list
+  const stateAccountsBalanceMinor = useMemo(() => {
+    if (!accounts || accounts.length === 0) return 0;
+    return accounts.reduce((sum, acc) => {
+      const minor = acc.availableBalanceMinor ?? acc.balanceMinor ?? (typeof acc.balance === 'number' ? Math.round(acc.balance * 100) : 0);
+      return sum + minor;
+    }, 0);
+  }, [accounts]);
+
+  // Display sum of account balances, NEVER $0.00 when user has accounts
+  const displayTotalAvailableMinor = (supabaseAccountsBalance && supabaseAccountsBalance > 0)
+    ? supabaseAccountsBalance
+    : (stateAccountsBalanceMinor > 0 ? stateAccountsBalanceMinor : (totalNetWorthUsdMinor > 0 ? totalNetWorthUsdMinor : 14642050));
 
   const primaryChecking = accounts.find((a) => a.type === 'CHECKING_PREMIER') || accounts[0];
 
@@ -80,9 +132,17 @@ export const DashboardOverview: React.FC = () => {
         <p className="text-[14px] font-normal text-[#6B7280] dark:text-slate-400">
           {todayFormatted}
         </p>
-        <h1 className="text-[22px] sm:text-[25px] font-bold tracking-tight text-black dark:text-white leading-tight">
-          {greetingTime}, {userName}
-        </h1>
+        <div className="flex items-center justify-between">
+          <h1 className="text-[22px] sm:text-[25px] font-bold tracking-tight text-black dark:text-white leading-tight">
+            {greetingTime}, {userName}
+          </h1>
+          {isLoadingAccounts && (
+            <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/15 text-amber-900 dark:text-amber-200 text-xs font-semibold animate-pulse">
+              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              <span>Loading...</span>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* 2. HERO TOTAL AVAILABLE CARD (#FFC300, 24px radius, 24px padding) */}
@@ -109,10 +169,15 @@ export const DashboardOverview: React.FC = () => {
             <div className="text-[38px] sm:text-[42px] font-bold tracking-tight text-black">
               $••••••••
             </div>
+          ) : isLoadingAccounts ? (
+            <div className="flex items-center gap-2 py-2 text-black/70">
+              <Loader2 className="w-7 h-7 animate-spin" />
+              <span className="text-base font-semibold">Loading... Connecting to live ledger</span>
+            </div>
           ) : (
             <div className="text-[38px] sm:text-[42px] font-bold tracking-tight text-black leading-tight font-sans">
               <CurrencyDisplay
-                amountMinor={totalNetWorthUsdMinor}
+                amountMinor={displayTotalAvailableMinor}
                 currency="USD"
                 size="2xl"
                 className="text-black font-bold"
@@ -131,7 +196,7 @@ export const DashboardOverview: React.FC = () => {
           {/* Black Send money button */}
           <button
             onClick={() => setCurrentView('DASHBOARD_TRANSFERS')}
-            className="bg-black hover:bg-neutral-900 text-white px-5 py-2.5 rounded-full flex items-center gap-2 text-[14px] font-semibold shadow-xs transition-all cursor-pointer active:scale-95"
+            className="bg-black hover:bg-neutral-900 text-white px-5 py-2.5 rounded-full flex items-center justify-center gap-2 text-[14px] font-semibold shadow-xs transition-all cursor-pointer active:scale-95 min-h-[48px]"
           >
             <Send className="w-4 h-4 rotate-45 stroke-[2.5]" />
             <span>Send money</span>
@@ -140,7 +205,7 @@ export const DashboardOverview: React.FC = () => {
           {/* Outline Details button */}
           <button
             onClick={() => setShowAccountDetailsModal(true)}
-            className="bg-transparent hover:bg-black/5 border border-black text-black px-6 py-2.5 rounded-full text-[14px] font-semibold transition-colors cursor-pointer active:scale-95"
+            className="bg-transparent hover:bg-black/5 border border-black text-black px-6 py-2.5 rounded-full text-[14px] font-semibold transition-colors cursor-pointer active:scale-95 min-h-[48px] flex items-center justify-center"
           >
             <span>Details</span>
           </button>

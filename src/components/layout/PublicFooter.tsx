@@ -4,7 +4,7 @@ import { useBank } from '../../context/BankContext';
 import { Shield, Lock, Landmark, Award, ArrowUpRight } from 'lucide-react';
 
 export const PublicFooter: React.FC = () => {
-  const { region, setCurrentView, switchToAdmin } = useBank();
+  const { region, setCurrentView, currentRole, switchToAdmin } = useBank();
 
   return (
     <footer className="bg-[#050f1d] text-slate-400 text-xs border-t border-slate-800">
@@ -79,22 +79,44 @@ export const PublicFooter: React.FC = () => {
               &copy; {new Date().getFullYear()} First Atlantic Bank &amp; Trust Corporation. All rights reserved. Equal Housing Lender.
             </div>
             <div className="flex flex-wrap items-center gap-3 sm:gap-4 text-xs font-medium">
-              <span>Privacy Policy</span>
-              <span>•</span>
-              <span>Terms of Online Banking</span>
-              <span>•</span>
-              <span>AML &amp; Patriot Act Disclosure</span>
+              <button
+                type="button"
+                onClick={() => {
+                  window.location.hash = 'privacy';
+                  setCurrentView('PUBLIC_PRIVACY');
+                }}
+                className="hover:text-white transition-colors cursor-pointer"
+              >
+                Privacy Policy
+              </button>
               <span>•</span>
               <button
+                type="button"
                 onClick={() => {
-                  window.location.hash = 'admin';
-                  setCurrentView('AUTH_ADMIN_LOGIN');
+                  window.location.hash = 'terms';
+                  setCurrentView('PUBLIC_TERMS');
                 }}
-                className="text-[#d4af37] hover:text-[#f3e5ab] font-bold flex items-center gap-1 cursor-pointer transition-colors underline decoration-[#d4af37]/40"
+                className="hover:text-white transition-colors cursor-pointer"
               >
-                <Shield className="w-3.5 h-3.5" />
-                <span>Institutional Admin Portal</span>
+                Terms of Online Banking
               </button>
+              <span>•</span>
+              <span>AML &amp; Patriot Act Disclosure</span>
+              {currentRole === 'ADMIN' && (
+                <>
+                  <span>•</span>
+                  <button
+                    onClick={() => {
+                      window.location.hash = 'admin';
+                      setCurrentView('ADMIN_DASHBOARD');
+                    }}
+                    className="text-[#d4af37] hover:text-[#f3e5ab] font-bold flex items-center gap-1 cursor-pointer transition-colors underline decoration-[#d4af37]/40"
+                  >
+                    <Shield className="w-3.5 h-3.5" />
+                    <span>Institutional Admin Portal</span>
+                  </button>
+                </>
+              )}
             </div>
           </div>
         </div>

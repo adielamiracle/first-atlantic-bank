@@ -18,7 +18,11 @@ import {
   AdminNotification,
   EmailDispatchLog,
   BankReceivingAccount,
-  BiometricSecurityState
+  BiometricSecurityState,
+  Recipient,
+  TransferRecord,
+  TransferWebhookEvent,
+  WiseTransferStatus
 } from '../types';
 import {
   safeFetchJson,
@@ -45,6 +49,8 @@ export type AppView =
   | 'PUBLIC_LOCATIONS'
   | 'PUBLIC_SECURITY'
   | 'PUBLIC_GLASS_STUDIO'
+  | 'PUBLIC_PRIVACY'
+  | 'PUBLIC_TERMS'
   | 'AUTH_LOGIN'
   | 'AUTH_ENROLL'
   | 'AUTH_FORGOT'
@@ -225,6 +231,21 @@ interface BankContextType {
   openBiometricPrompt: (config?: { mode?: 'ENROLL' | 'VERIFY'; title?: string; subtitle?: string; onComplete?: (success: boolean) => void }) => void;
   closeBiometricPrompt: () => void;
   purgeCachesAndResync: () => Promise<void>;
+
+  // Wise International Transfers, Local Receiving & Approvals
+  recipients: Recipient[];
+  fetchRecipients: () => Promise<void>;
+  addRecipient: (data: any) => Promise<{ success: boolean; recipient?: Recipient; error?: string }>;
+  deleteRecipient: (id: string) => Promise<boolean>;
+  wiseTransfers: TransferRecord[];
+  fetchWiseTransfers: (admin?: boolean) => Promise<void>;
+  getWiseQuote: (sourceCurrency: CurrencyCode, targetCurrency: CurrencyCode, amountMinor: number) => Promise<any>;
+  executeWiseTransfer: (sourceAccountId: string, recipient: any, amountMinor: number, memo?: string, destCurrency?: CurrencyCode) => Promise<{ success: boolean; transfer?: TransferRecord; error?: string }>;
+  approveWiseTransfer: (transferId: string, notes?: string) => Promise<{ success: boolean; error?: string }>;
+  rejectWiseTransfer: (transferId: string, reason: string) => Promise<{ success: boolean; error?: string }>;
+  webhookLogs: TransferWebhookEvent[];
+  fetchWebhookLogs: () => Promise<void>;
+  simulateWiseWebhook: (transferId: string, newStatus: WiseTransferStatus) => Promise<{ success: boolean; error?: string }>;
 }
 
 const BankContext = createContext<BankContextType | undefined>(undefined);
@@ -1197,18 +1218,20 @@ export const BankProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       });
       const data = await res.json();
       if (!res.ok) {
-        const errorMsg = data.error?.includes('pattern') ? 'Bank Account must be 9-12 digits' : (data.error || 'Outbound payment declined.');
-        showToast('ERROR', 'Validation Error', errorMsg, 3000);
+        const errorMsg = data.error || data.message || 'Outbound payment declined.';
+        showToast('ERROR', 'Transfer Declined', errorMsg, 4000);
         return { success: false, error: errorMsg };
       }
       showToast('SUCCESS', 'Payment Transmitted', `Outbound ${transferType.replace('_', ' ')} dispatched successfully.`, 3000);
       await refreshData();
       return { success: true, feeMinor: data.feeMinor };
     } catch (err: any) {
-      const errorMsg = err.message?.includes('pattern') || err.message?.includes('match')
-        ? 'Bank Account must be 9-12 digits'
-        : (err.message || 'Unable to process transfer request.');
-      showToast('ERROR', 'Validation Error', errorMsg, 3000);
+      const isNetwork = (typeof navigator !== 'undefined' && !navigator.onLine) ||
+        err?.name === 'TypeError' ||
+        err?.message?.includes('fetch') ||
+        err?.message?.includes('Network');
+      const errorMsg = isNetwork ? 'Network error, please check internet' : (err.message || 'Unable to process transfer request.');
+      showToast('ERROR', 'Network Exception', errorMsg, 4000);
       return { success: false, error: errorMsg };
     }
   };
@@ -1616,7 +1639,7 @@ export const BankProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       // Async background Supabase sync if client is configured
       try {
         if (typeof window !== 'undefined') {
-          import('../lib/supabaseClient.js').then(({ supabase, isSupabaseConfigured }) => {
+          import('../lib/supabaseClient').then(({ supabase, isSupabaseConfigured }) => {
             if (isSupabaseConfigured && supabase) {
               supabase.from('users').upsert({
                 id: userId,

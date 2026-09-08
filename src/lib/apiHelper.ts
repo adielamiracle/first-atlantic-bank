@@ -96,12 +96,22 @@ export async function safeFetchJson<T = any>(
       };
     }
   } catch (err: any) {
+    const isNetwork = 
+      (typeof navigator !== 'undefined' && !navigator.onLine) ||
+      err?.name === 'TypeError' ||
+      err?.message?.includes('fetch') ||
+      err?.message?.includes('network') ||
+      err?.message?.includes('Network') ||
+      err?.message?.includes('Failed to fetch') ||
+      err?.message?.includes('abort') ||
+      err?.message?.includes('timeout');
+
     return {
       ok: false,
       status: 0,
       data: null,
       isHtml: false,
-      errorMessage: err?.message || 'Network request interrupted. Switching to local offline vault.'
+      errorMessage: isNetwork ? 'Network error, please check internet' : (err?.message || 'Network error, please check internet')
     };
   }
 }

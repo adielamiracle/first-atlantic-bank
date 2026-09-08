@@ -506,5 +506,85 @@ export interface BiometricSecurityState {
   deviceName: string;
 }
 
+export type RecipientRegion = 'UK' | 'US' | 'EU';
+
+export interface Recipient {
+  id: string;
+  userId: string;
+  name: string;
+  region: RecipientRegion;
+  currency: CurrencyCode;
+  bankName: string;
+  sortCode?: string;
+  accountNumberUk?: string;
+  routingNumber?: string;
+  accountNumberUs?: string;
+  accountType?: 'CHECKING' | 'SAVINGS';
+  iban?: string;
+  swiftBic?: string;
+  country: string;
+  email?: string;
+  phone?: string;
+  createdAt: string;
+}
+
+export type WiseTransferStatus = 'PENDING' | 'PROCESSING' | 'COMPLETED' | 'FAILED';
+export type TransferApprovalStatus = 'PENDING_APPROVAL' | 'APPROVED' | 'REJECTED';
+
+export interface TransferRecord {
+  id: string;
+  userId: string;
+  userName: string;
+  userEmail: string;
+  sourceAccountId: string;
+  sourceAccountName: string;
+  sourceAccountNumber: string;
+  amountMinor: number;
+  sourceCurrency: CurrencyCode;
+  destCurrency: CurrencyCode;
+  exchangeRate?: number;
+  convertedAmountMinor?: number;
+  feeMinor: number;
+  recipient: {
+    id?: string;
+    name: string;
+    bankName: string;
+    region: RecipientRegion;
+    accountNumberOrIban: string;
+    sortCode?: string;
+    routingNumber?: string;
+    iban?: string;
+    swiftBic?: string;
+    country: string;
+    accountType?: string;
+    email?: string;
+    phone?: string;
+  };
+  reference: string;
+  memo?: string;
+  wiseTransferId?: string;
+  wiseQuoteId?: string;
+  wiseStatus?: 'incoming_payment_waiting' | 'processing' | 'funds_converted' | 'outgoing_payment_sent' | 'cancelled';
+  status: WiseTransferStatus;
+  approvalStatus: TransferApprovalStatus;
+  approvedBy?: string;
+  approvalNotes?: string;
+  rejectionReason?: string;
+  estimatedDelivery?: string;
+  createdTimestamp: string;
+  updatedTimestamp: string;
+  completedTimestamp?: string;
+}
+
+export interface TransferWebhookEvent {
+  id: string;
+  transferId: string;
+  event: string;
+  status: WiseTransferStatus;
+  payload: any;
+  receivedAt: string;
+  source: 'WISE_WEBHOOK' | 'ADMIN_TRIGGER' | 'SIMULATOR';
+}
+
 
 
