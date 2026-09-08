@@ -1120,28 +1120,50 @@ async function startServer() {
 
   app.post('/api/transfers/recipients', (req, res) => {
     const userId = getUserIdFromHeader(req);
-    const { name, region, currency, bankName, sortCode, accountNumberUk, routingNumber, accountNumberUs, accountType, iban, swiftBic, country, email, phone } = req.body;
+    const {
+      name,
+      region,
+      currency,
+      bankName,
+      sortCode,
+      accountNumberUk,
+      routingNumber,
+      accountNumberUs,
+      accountType,
+      iban,
+      swiftBic,
+      country,
+      email,
+      phone,
+      accountNumberOrIban
+    } = req.body;
     
     if (!name || !region || !bankName) {
       return res.status(400).json({ error: 'Recipient name, region, and bank name are required.' });
     }
 
+    const cleanAccountOrIban = String(accountNumberOrIban || accountNumberUk || accountNumberUs || iban || '').trim();
+    const resolvedAccountNumberUk = accountNumberUk ? String(accountNumberUk).trim() : (region === 'UK' ? cleanAccountOrIban : undefined);
+    const resolvedAccountNumberUs = accountNumberUs ? String(accountNumberUs).trim() : (region === 'US' ? cleanAccountOrIban : undefined);
+    const resolvedIban = iban ? String(iban).replace(/\s+/g, '').toUpperCase() : (region === 'EU' ? cleanAccountOrIban.replace(/\s+/g, '').toUpperCase() : undefined);
+
     const recipient = transferStore.addRecipient({
       userId,
-      name,
+      name: String(name).trim(),
       region,
       currency: currency || (region === 'UK' ? 'GBP' : region === 'EU' ? 'EUR' : 'USD'),
-      bankName,
-      sortCode: sortCode ? sortCode.trim() : undefined,
-      accountNumberUk: accountNumberUk ? accountNumberUk.trim() : undefined,
-      routingNumber: routingNumber ? routingNumber.trim() : undefined,
-      accountNumberUs: accountNumberUs ? accountNumberUs.trim() : undefined,
+      bankName: String(bankName).trim(),
+      accountNumberOrIban: cleanAccountOrIban || resolvedAccountNumberUk || resolvedAccountNumberUs || resolvedIban || '00000000',
+      sortCode: sortCode ? String(sortCode).trim() : undefined,
+      accountNumberUk: resolvedAccountNumberUk,
+      routingNumber: routingNumber ? String(routingNumber).trim() : undefined,
+      accountNumberUs: resolvedAccountNumberUs,
       accountType: accountType || 'CHECKING',
-      iban: iban ? iban.replace(/\s+/g, '').toUpperCase() : undefined,
-      swiftBic: swiftBic ? swiftBic.trim().toUpperCase() : undefined,
+      iban: resolvedIban,
+      swiftBic: swiftBic ? String(swiftBic).trim().toUpperCase() : undefined,
       country: country || (region === 'UK' ? 'United Kingdom' : region === 'EU' ? 'Germany' : 'United States'),
-      email: email ? email.trim() : undefined,
-      phone: phone ? phone.trim() : undefined
+      email: email ? String(email).trim() : undefined,
+      phone: phone ? String(phone).trim() : undefined
     });
 
     res.json({ success: true, recipient });

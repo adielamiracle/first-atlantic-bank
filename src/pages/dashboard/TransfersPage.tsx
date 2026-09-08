@@ -39,8 +39,8 @@ import { LocalBankDetailsCard } from '../../components/transfers/LocalBankDetail
 import { WiseTransferFlow } from '../../components/transfers/WiseTransferFlow';
 import { TransferStatusTracker } from '../../components/transfers/TransferStatusTracker';
 
-const BANK_ACCOUNT_REGEX = /^[0-9]{9,12}$/;
-const EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+const BANK_ACCOUNT_REGEX = /^[A-Za-z0-9]{6,34}$/;
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const DEMO_TEST_ACCOUNT = '8282827272';
 
 export const TransfersPage: React.FC = () => {
@@ -146,10 +146,10 @@ export const TransfersPage: React.FC = () => {
     setRecipientSwift('');
   };
 
-  // Input mask to enforce numeric only and max 12 digits on the Bank Account field
+  // Input mask to enforce alphanumeric and allow standard account numbers, roll numbers, and IBANs
   const handleBankAccountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const numericOnly = e.target.value.replace(/\D/g, '').slice(0, 12);
-    setRecipientAccount(numericOnly);
+    const clean = e.target.value.replace(/[^A-Za-z0-9- ]/g, '').slice(0, 34);
+    setRecipientAccount(clean);
   };
 
   // Comprehensive pre-submission validation function
@@ -190,18 +190,18 @@ export const TransfersPage: React.FC = () => {
         };
       }
 
-      // 3. Bank Account field: must be 9-12 digits regex /^[0-9]{9,12}$/, stored as string without Number() parsing
-      const cleanAccount = String(recipientAccount || '').trim();
+      // 3. Bank Account field: must be 6-34 alphanumeric characters
+      const cleanAccount = String(recipientAccount || '').replace(/[\s-]/g, '').trim();
       const isTestAcc = cleanAccount === DEMO_TEST_ACCOUNT;
       if (!cleanAccount || (!BANK_ACCOUNT_REGEX.test(cleanAccount) && !isTestAcc)) {
         return {
           isValid: false,
           errorField: 'bankAccount',
-          errorMessage: 'Bank Account must be 9-12 digits'
+          errorMessage: 'Bank Account or IBAN must be between 6 and 34 characters.'
         };
       }
 
-      // 4. Email: must match email regex
+      // 4. Email: optional or valid email
       const cleanEmail = recipientEmail.trim();
       if (cleanEmail && !EMAIL_REGEX.test(cleanEmail)) {
         return {
@@ -1004,7 +1004,7 @@ export const TransfersPage: React.FC = () => {
                   <div>
                     <div className="flex items-center justify-between mb-1">
                       <label htmlFor="transfer-recipient-bank-account" className="block text-xs font-bold text-slate-700 dark:text-slate-300">
-                        Bank Account # (9-12 Digits) *
+                        Bank Account # / IBAN *
                       </label>
                       <button
                         type="button"
@@ -1018,12 +1018,11 @@ export const TransfersPage: React.FC = () => {
                     <input
                       id="transfer-recipient-bank-account"
                       type="text"
-                      inputMode="numeric"
-                      maxLength={12}
+                      maxLength={34}
                       required
                       value={recipientAccount}
                       onChange={handleBankAccountChange}
-                      placeholder="9-12 digits (e.g. 8282827272)"
+                      placeholder="Account Number or IBAN (e.g. 8282827272)"
                       className="glass-input w-full px-3.5 py-3 text-base sm:text-sm rounded-xl text-slate-900 dark:text-slate-100 font-mono font-semibold min-h-[48px]"
                     />
                   </div>
@@ -1037,11 +1036,14 @@ export const TransfersPage: React.FC = () => {
                     </label>
                     <input
                       id="transfer-recipient-email"
-                      type="email"
+                      type="text"
+                      inputMode="email"
                       value={recipientEmail}
                       onChange={(e) => setRecipientEmail(e.target.value)}
-                      placeholder="beneficiary.wires@morganstanley.com"
-                      className="glass-input w-full px-3.5 py-2.5 text-xs sm:text-sm rounded-xl text-slate-900 dark:text-slate-100 font-medium"
+                      placeholder="beneficiary.wires@bank.com"
+                      className="glass-input w-full px-3.5 py-2.5 text-xs sm:text-sm rounded-xl text-slate-900 dark:text-slate-100 font-medium min-h-[44px]"
+                      autoCapitalize="none"
+                      autoCorrect="off"
                     />
                   </div>
 

@@ -512,7 +512,8 @@ export const CreateCustomerModal: React.FC<CreateCustomerModalProps> = ({
     const iban = account?.iban || (region === 'UK' ? 'GB29FATL40128877291038' : region === 'EU' ? 'DE89FATL6031177291038' : 'US84FATL02100077291038');
     const routing = region === 'UK' ? '40-12-88 (CHAPS/FPS)' : region === 'EU' ? 'FATLDEFF (SEPA)' : '021000089 (Fedwire/ACH)';
     const swift = region === 'UK' ? 'FATLGB22' : region === 'EU' ? 'FATLDEFF' : 'FATLUS33';
-    const initBal = currency === 'EUR' ? `€${(parseFloat(initialDepositDollars) || 25000).toLocaleString('en-US', { minimumFractionDigits: 2 })}` : currency === 'GBP' ? `£${(parseFloat(initialDepositDollars) || 25000).toLocaleString('en-US', { minimumFractionDigits: 2 })}` : `$${(parseFloat(initialDepositDollars) || 25000).toLocaleString('en-US', { minimumFractionDigits: 2 })}`;
+    const depositAmountNum = isNaN(parseFloat(initialDepositDollars)) ? 0 : Math.max(0, parseFloat(initialDepositDollars));
+    const initBal = currency === 'EUR' ? `€${depositAmountNum.toLocaleString('en-US', { minimumFractionDigits: 2 })}` : currency === 'GBP' ? `£${depositAmountNum.toLocaleString('en-US', { minimumFractionDigits: 2 })}` : `$${depositAmountNum.toLocaleString('en-US', { minimumFractionDigits: 2 })}`;
 
     const letterHtml = `
       <!DOCTYPE html>
@@ -647,7 +648,7 @@ export const CreateCustomerModal: React.FC<CreateCustomerModalProps> = ({
                   <span className="text-slate-500 block text-[9px] uppercase">Starting Balance</span>
                   <span className="font-bold text-[#00A651]">
                     {currency === 'EUR' ? '€' : currency === 'GBP' ? '£' : '$'}
-                    {(parseFloat(initialDepositDollars) || 25000).toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                    {(isNaN(parseFloat(initialDepositDollars)) ? 0 : Math.max(0, parseFloat(initialDepositDollars))).toLocaleString('en-US', { minimumFractionDigits: 2 })}
                   </span>
                 </div>
                 <div className="bg-slate-950/60 p-2 rounded-lg border border-slate-800/80">

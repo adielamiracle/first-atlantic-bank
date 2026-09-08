@@ -224,9 +224,9 @@ export const WiseTransferFlow: React.FC<Props> = ({ onTransferDispatched }) => {
                           <span>{r.bankName}</span>
                         </div>
                         <div className="text-[10px] font-mono text-slate-400 truncate mt-0.5">
-                          {r.region === 'UK' && `Sort: ${r.sortCode || '20-04-15'} • Acc: ${r.accountNumberOrIban}`}
-                          {r.region === 'US' && `ABA: ${r.routingNumber || '021000021'} • Acc: ••••${r.accountNumberOrIban.slice(-4)}`}
-                          {r.region === 'EU' && `IBAN: ••••${r.accountNumberOrIban.slice(-6)}`}
+                          {r.region === 'UK' && `Sort: ${r.sortCode || '20-04-15'} • Acc: ${r.accountNumberOrIban || r.accountNumberUk || '••••'}`}
+                          {r.region === 'US' && `ABA: ${r.routingNumber || '021000021'} • Acc: ••••${String(r.accountNumberOrIban || r.accountNumberUs || '0000').slice(-4)}`}
+                          {r.region === 'EU' && `IBAN: ••••${String(r.accountNumberOrIban || r.iban || '000000').slice(-6)}`}
                         </div>
                       </div>
                     </button>
@@ -244,7 +244,7 @@ export const WiseTransferFlow: React.FC<Props> = ({ onTransferDispatched }) => {
             <select
               value={sourceAccountId}
               onChange={e => setSourceAccountId(e.target.value)}
-              className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white font-semibold text-xs focus:outline-hidden focus:ring-2 focus:ring-[#004281]"
+              className="w-full px-3 py-3 sm:py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white font-semibold text-xs focus:outline-hidden focus:ring-2 focus:ring-[#004281] min-h-[44px]"
             >
               {accounts.map(acc => (
                 <option key={acc.id} value={acc.id}>
@@ -261,16 +261,19 @@ export const WiseTransferFlow: React.FC<Props> = ({ onTransferDispatched }) => {
                 3. Amount to Send ({sourceAccount?.currency || 'USD'})
               </label>
               <div className="relative">
-                <span className="absolute left-3.5 top-2.5 font-bold text-slate-400 text-sm">
+                <span className="absolute left-3.5 top-3 sm:top-2.5 font-bold text-slate-400 text-sm">
                   {sourceAccount?.currency === 'GBP' ? '£' : sourceAccount?.currency === 'EUR' ? '€' : '$'}
                 </span>
                 <input
-                  type="number"
-                  step="any"
+                  type="text"
+                  inputMode="decimal"
                   value={amountStr}
-                  onChange={e => setAmountStr(e.target.value)}
+                  onChange={e => {
+                    const cleanVal = e.target.value.replace(/[^0-9.]/g, '');
+                    setAmountStr(cleanVal);
+                  }}
                   placeholder="2500"
-                  className="w-full pl-8 pr-3 py-2 text-sm font-bold font-mono rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-[#004281]"
+                  className="w-full pl-8 pr-3 py-2.5 sm:py-2 text-sm font-bold font-mono rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-[#004281] min-h-[44px]"
                 />
               </div>
             </div>
@@ -282,7 +285,7 @@ export const WiseTransferFlow: React.FC<Props> = ({ onTransferDispatched }) => {
               <select
                 value={destCurrency}
                 onChange={e => setDestCurrency(e.target.value as CurrencyCode)}
-                className="w-full px-3 py-2 text-xs font-bold rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-[#004281]"
+                className="w-full px-3 py-2.5 sm:py-2 text-xs font-bold rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-[#004281] min-h-[44px]"
               >
                 <option value="GBP">GBP (£ - UK Faster Payments)</option>
                 <option value="USD">USD ($ - US Fedwire / ACH)</option>
@@ -301,7 +304,7 @@ export const WiseTransferFlow: React.FC<Props> = ({ onTransferDispatched }) => {
               value={memo}
               onChange={e => setMemo(e.target.value)}
               placeholder="e.g. Commercial advisory settlement / Property invoice #918"
-              className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-xs focus:outline-hidden focus:ring-2 focus:ring-[#004281]"
+              className="w-full px-3 py-2.5 sm:py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-xs focus:outline-hidden focus:ring-2 focus:ring-[#004281] min-h-[44px]"
             />
           </div>
 
@@ -310,7 +313,7 @@ export const WiseTransferFlow: React.FC<Props> = ({ onTransferDispatched }) => {
             type="button"
             onClick={() => setShowConfirmModal(true)}
             disabled={!selectedRecipient || !amountStr || parseFloat(amountStr) <= 0 || isSubmitting}
-            className="w-full py-3.5 px-4 rounded-xl bg-[#004281] hover:bg-[#003366] text-white font-bold text-sm shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+            className="w-full py-3.5 px-4 rounded-xl bg-[#004281] hover:bg-[#003366] text-white font-bold text-sm shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 min-h-[48px]"
           >
             <Send className="w-4 h-4" />
             <span>Review &amp; Send Transfer</span>
@@ -407,8 +410,8 @@ export const WiseTransferFlow: React.FC<Props> = ({ onTransferDispatched }) => {
 
       {/* CONFIRMATION MODAL */}
       {showConfirmModal && selectedRecipient && quote && (
-        <div className="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-[#0f172a] rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200 dark:border-slate-800 space-y-5 animate-in fade-in zoom-in-95 duration-150">
+        <div className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+          <div className="bg-white dark:bg-[#0f172a] rounded-2xl max-w-md w-full p-4 sm:p-6 shadow-2xl border border-slate-200 dark:border-slate-800 space-y-4 sm:space-y-5 animate-in fade-in zoom-in-95 duration-150 my-auto max-h-[92vh] overflow-y-auto">
             <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
               <div>
                 <span className="text-[10px] font-bold uppercase tracking-wider text-amber-500">
@@ -419,15 +422,16 @@ export const WiseTransferFlow: React.FC<Props> = ({ onTransferDispatched }) => {
                 </h3>
               </div>
               <button
+                type="button"
                 onClick={() => setShowConfirmModal(false)}
-                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 cursor-pointer"
+                className="p-2 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 cursor-pointer shrink-0"
               >
                 &times;
               </button>
             </div>
 
             <div className="space-y-3 text-xs">
-              <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/60 space-y-2 border border-slate-100 dark:border-slate-800">
+              <div className="p-3.5 sm:p-4 rounded-xl bg-slate-50 dark:bg-slate-800/60 space-y-2 border border-slate-100 dark:border-slate-800">
                 <div className="flex justify-between">
                   <span className="text-slate-500">Funding Account:</span>
                   <span className="font-bold text-slate-900 dark:text-white">{sourceAccount?.name}</span>
@@ -443,7 +447,7 @@ export const WiseTransferFlow: React.FC<Props> = ({ onTransferDispatched }) => {
                 <div className="flex justify-between">
                   <span className="text-slate-500">Routing / Account:</span>
                   <span className="font-mono text-slate-900 dark:text-white">
-                    {selectedRecipient.sortCode || selectedRecipient.routingNumber || 'IBAN'} • {selectedRecipient.accountNumberOrIban}
+                    {selectedRecipient.sortCode || selectedRecipient.routingNumber || 'IBAN'} • {selectedRecipient.accountNumberOrIban || selectedRecipient.accountNumberUk || selectedRecipient.accountNumberUs || selectedRecipient.iban || '••••'}
                   </span>
                 </div>
                 <div className="flex justify-between pt-2 border-t border-slate-200 dark:border-slate-700">
@@ -462,7 +466,7 @@ export const WiseTransferFlow: React.FC<Props> = ({ onTransferDispatched }) => {
               </div>
 
               <div className="p-3 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 rounded-xl text-[11px] text-amber-800 dark:text-amber-300">
-                Note: Transfers above institutional thresholds are submitted with <strong>PENDING</strong> status for compliance clearance before instantaneous dispatch.
+                Note: Transfers are dispatched through the verified banking network. Your funds are secured and traceable.
               </div>
             </div>
 
@@ -470,7 +474,7 @@ export const WiseTransferFlow: React.FC<Props> = ({ onTransferDispatched }) => {
               <button
                 type="button"
                 onClick={() => setShowConfirmModal(false)}
-                className="py-2.5 px-4 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 font-bold hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
+                className="py-3 px-4 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 font-bold hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer min-h-[44px]"
               >
                 Cancel
               </button>
@@ -478,7 +482,7 @@ export const WiseTransferFlow: React.FC<Props> = ({ onTransferDispatched }) => {
                 type="button"
                 onClick={handleSendTransfer}
                 disabled={isSubmitting}
-                className="py-2.5 px-5 rounded-xl bg-[#004281] hover:bg-[#003366] text-white font-bold shadow-md flex items-center gap-2 cursor-pointer disabled:opacity-50"
+                className="py-3 px-5 rounded-xl bg-[#004281] hover:bg-[#003366] text-white font-bold shadow-md flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 min-h-[44px]"
               >
                 <Send className="w-4 h-4" />
                 <span>{isSubmitting ? 'Dispatching...' : 'Authorize & Send'}</span>

@@ -48,7 +48,7 @@ export const AddRecipientModal: React.FC<Props> = ({ isOpen, onClose, onRecipien
   if (!isOpen) return null;
 
   const handleSortCodeChange = (val: string) => {
-    // strip non-digits and limit to 6 digits, auto-insert dashes
+    // strip non-digits and limit to 6 digits, auto-insert dashes smoothly
     const digits = val.replace(/\D/g, '').slice(0, 6);
     if (digits.length <= 2) {
       setSortCode(digits);
@@ -84,7 +84,7 @@ export const AddRecipientModal: React.FC<Props> = ({ isOpen, onClose, onRecipien
       return;
     }
 
-    let payload: Partial<Recipient> = {
+    let payload: any = {
       name: name.trim(),
       bankName: bankName.trim(),
       region,
@@ -93,24 +93,27 @@ export const AddRecipientModal: React.FC<Props> = ({ isOpen, onClose, onRecipien
     };
 
     if (region === 'UK') {
-      const cleanSort = sortCode.replace(/-/g, '');
-      if (cleanSort.length !== 6) {
-        setErrorMessage('UK Sort Code must be exactly 6 digits (e.g. 20-04-15).');
+      const cleanSort = sortCode.replace(/\D/g, '');
+      if (cleanSort.length < 6) {
+        setErrorMessage('UK Sort Code must be 6 digits (e.g. 20-04-15).');
         return;
       }
+      const formattedSort = `${cleanSort.slice(0, 2)}-${cleanSort.slice(2, 4)}-${cleanSort.slice(4, 6)}`;
       const cleanAcc = ukAccountNumber.replace(/\D/g, '');
-      if (cleanAcc.length !== 8) {
-        setErrorMessage('UK Bank Account Number must be exactly 8 digits.');
+      if (cleanAcc.length < 6 || cleanAcc.length > 10) {
+        setErrorMessage('UK Bank Account Number must be between 6 and 10 digits (standard 8 digits).');
         return;
       }
       payload = {
         ...payload,
-        sortCode: sortCode.trim(),
+        sortCode: formattedSort,
+        accountNumberUk: cleanAcc,
         accountNumberOrIban: cleanAcc,
         country: 'United Kingdom'
       };
     } else if (region === 'US') {
-      if (routingNumber.length !== 9) {
+      const cleanRouting = routingNumber.replace(/\D/g, '');
+      if (cleanRouting.length !== 9) {
         setErrorMessage('US ABA Routing Number must be exactly 9 digits.');
         return;
       }
@@ -121,15 +124,16 @@ export const AddRecipientModal: React.FC<Props> = ({ isOpen, onClose, onRecipien
       }
       payload = {
         ...payload,
-        routingNumber,
+        routingNumber: cleanRouting,
+        accountNumberUs: cleanAcc,
         accountNumberOrIban: cleanAcc,
         accountType,
         country: 'United States'
       };
     } else if (region === 'EU') {
-      const cleanIban = iban.replace(/\s/g, '');
-      if (cleanIban.length < 15 || cleanIban.length > 34) {
-        setErrorMessage('Please enter a valid International Bank Account Number (IBAN).');
+      const cleanIban = iban.replace(/[^A-Za-z0-9]/g, '').toUpperCase();
+      if (cleanIban.length < 14 || cleanIban.length > 34) {
+        setErrorMessage('Please enter a valid International Bank Account Number (IBAN, 14-34 characters).');
         return;
       }
       payload = {
@@ -158,37 +162,38 @@ export const AddRecipientModal: React.FC<Props> = ({ isOpen, onClose, onRecipien
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
-      <div className="bg-white dark:bg-[#0f172a] rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 dark:border-slate-800 space-y-5 animate-in fade-in zoom-in-95 duration-150 my-8">
+    <div className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+      <div className="bg-white dark:bg-[#0f172a] rounded-2xl max-w-lg w-full p-4 sm:p-6 shadow-2xl border border-slate-200 dark:border-slate-800 space-y-4 sm:space-y-5 animate-in fade-in zoom-in-95 duration-150 my-auto sm:my-8 max-h-[92vh] overflow-y-auto">
         {/* Header */}
         <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
-          <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-[#004281]/10 dark:bg-[#004281]/20 flex items-center justify-center text-[#004281] dark:text-sky-400">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className="w-9 h-9 rounded-xl bg-[#004281]/10 dark:bg-[#004281]/20 flex items-center justify-center text-[#004281] dark:text-sky-400 shrink-0">
               <Building className="w-5 h-5" />
             </div>
-            <div>
-              <h3 className="text-base font-bold text-slate-900 dark:text-white">Add Bank Recipient</h3>
-              <p className="text-xs text-slate-400">Register verified transfer destination for UK, US, or EU</p>
+            <div className="min-w-0">
+              <h3 className="text-base font-bold text-slate-900 dark:text-white truncate">Add Bank Recipient</h3>
+              <p className="text-[11px] text-slate-400 truncate">Instant transfer beneficiary for UK, US, or EU</p>
             </div>
           </div>
           <button
+            type="button"
             onClick={onClose}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all cursor-pointer"
+            className="p-2 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all cursor-pointer shrink-0"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        {/* Region Selector */}
+        {/* Region Selector - Mobile optimized */}
         <div className="space-y-1.5">
           <label className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
             Recipient Bank Region
           </label>
-          <div className="grid grid-cols-3 gap-2">
+          <div className="grid grid-cols-3 gap-1.5 sm:gap-2">
             {[
-              { id: 'UK', label: 'UK (GBP)', flag: '🇬🇧', rail: 'Sort Code + Account' },
-              { id: 'US', label: 'USA (USD)', flag: '🇺🇸', rail: 'Routing + Account' },
-              { id: 'EU', label: 'Europe (EUR)', flag: '🇪🇺', rail: 'IBAN + BIC' }
+              { id: 'UK', label: 'UK', sub: 'GBP', flag: '🇬🇧', rail: 'Sort Code' },
+              { id: 'US', label: 'USA', sub: 'USD', flag: '🇺🇸', rail: 'Routing' },
+              { id: 'EU', label: 'Europe', sub: 'EUR', flag: '🇪🇺', rail: 'Euro IBAN' }
             ].map(tab => (
               <button
                 key={tab.id}
@@ -197,15 +202,16 @@ export const AddRecipientModal: React.FC<Props> = ({ isOpen, onClose, onRecipien
                   setRegion(tab.id as RecipientRegion);
                   setErrorMessage('');
                 }}
-                className={`py-2 px-3 rounded-xl border text-left cursor-pointer transition-all ${
+                className={`py-2 px-2 sm:px-3 rounded-xl border text-left cursor-pointer transition-all ${
                   region === tab.id
                     ? 'border-[#004281] bg-[#004281]/10 dark:bg-[#004281]/20 text-[#004281] dark:text-sky-300 font-bold'
                     : 'border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600 text-slate-600 dark:text-slate-400'
                 }`}
               >
-                <div className="flex items-center gap-1.5 text-sm">
+                <div className="flex items-center gap-1 text-xs sm:text-sm">
                   <span>{tab.flag}</span>
                   <span className="font-bold">{tab.label}</span>
+                  <span className="text-[10px] opacity-75 font-normal hidden sm:inline">({tab.sub})</span>
                 </div>
                 <div className="text-[10px] text-slate-400 truncate mt-0.5">{tab.rail}</div>
               </button>
@@ -220,20 +226,22 @@ export const AddRecipientModal: React.FC<Props> = ({ isOpen, onClose, onRecipien
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-3.5 text-xs">
+        <form onSubmit={handleSubmit} noValidate className="space-y-3.5 text-xs">
           {/* Recipient Full Name */}
           <div className="space-y-1">
             <label className="font-semibold text-slate-700 dark:text-slate-300">
               Beneficiary Full Name or Company Name *
             </label>
             <div className="relative">
-              <User className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
+              <User className="w-4 h-4 text-slate-400 absolute left-3 top-3.5" />
               <input
                 type="text"
                 value={name}
                 onChange={e => setName(e.target.value)}
                 placeholder="e.g. Oliver Kensington or Global Holdings Ltd"
-                className="w-full pl-9 pr-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-[#004281]"
+                className="w-full pl-9 pr-3 py-2.5 sm:py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-[#004281] min-h-[44px]"
+                autoCapitalize="words"
+                autoCorrect="off"
                 required
               />
             </div>
@@ -245,7 +253,7 @@ export const AddRecipientModal: React.FC<Props> = ({ isOpen, onClose, onRecipien
               Receiving Bank Name *
             </label>
             <div className="relative">
-              <Building className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
+              <Building className="w-4 h-4 text-slate-400 absolute left-3 top-3.5" />
               <input
                 type="text"
                 value={bankName}
@@ -257,7 +265,9 @@ export const AddRecipientModal: React.FC<Props> = ({ isOpen, onClose, onRecipien
                     ? 'e.g. JPMorgan Chase Bank N.A.'
                     : 'e.g. Deutsche Bank AG'
                 }
-                className="w-full pl-9 pr-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-[#004281]"
+                className="w-full pl-9 pr-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-[#004281] min-h-[44px]"
+                autoCapitalize="words"
+                autoCorrect="off"
                 required
               />
             </div>
@@ -272,13 +282,14 @@ export const AddRecipientModal: React.FC<Props> = ({ isOpen, onClose, onRecipien
                 </label>
                 <input
                   type="text"
+                  inputMode="numeric"
                   value={sortCode}
                   onChange={e => handleSortCodeChange(e.target.value)}
                   placeholder="20-04-15"
-                  className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white font-mono focus:outline-hidden focus:ring-2 focus:ring-[#004281]"
+                  className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white font-mono focus:outline-hidden focus:ring-2 focus:ring-[#004281] min-h-[44px]"
                   required
                 />
-                <span className="text-[10px] text-slate-400">Format: XX-XX-XX</span>
+                <span className="text-[10px] text-slate-400">Format: 20-04-15 or 6 digits</span>
               </div>
 
               <div className="space-y-1">
@@ -287,13 +298,14 @@ export const AddRecipientModal: React.FC<Props> = ({ isOpen, onClose, onRecipien
                 </label>
                 <input
                   type="text"
+                  inputMode="numeric"
                   value={ukAccountNumber}
-                  onChange={e => setUkAccountNumber(e.target.value.replace(/\D/g, '').slice(0, 8))}
+                  onChange={e => setUkAccountNumber(e.target.value.replace(/\D/g, '').slice(0, 10))}
                   placeholder="83920194"
-                  className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white font-mono focus:outline-hidden focus:ring-2 focus:ring-[#004281]"
+                  className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white font-mono focus:outline-hidden focus:ring-2 focus:ring-[#004281] min-h-[44px]"
                   required
                 />
-                <span className="text-[10px] text-slate-400">Standard 8-digit UK account</span>
+                <span className="text-[10px] text-slate-400">Standard UK bank account</span>
               </div>
             </div>
           )}
@@ -307,13 +319,14 @@ export const AddRecipientModal: React.FC<Props> = ({ isOpen, onClose, onRecipien
                   </label>
                   <input
                     type="text"
+                    inputMode="numeric"
                     value={routingNumber}
                     onChange={e => handleRoutingChange(e.target.value)}
                     placeholder="021000021"
-                    className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white font-mono focus:outline-hidden focus:ring-2 focus:ring-[#004281]"
+                    className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white font-mono focus:outline-hidden focus:ring-2 focus:ring-[#004281] min-h-[44px]"
                     required
                   />
-                  <span className="text-[10px] text-slate-400">Fedwire / ACH 9-digit ABA</span>
+                  <span className="text-[10px] text-slate-400">9-digit ABA Fedwire / ACH</span>
                 </div>
 
                 <div className="space-y-1">
@@ -323,7 +336,7 @@ export const AddRecipientModal: React.FC<Props> = ({ isOpen, onClose, onRecipien
                   <select
                     value={accountType}
                     onChange={e => setAccountType(e.target.value as any)}
-                    className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-[#004281]"
+                    className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-[#004281] min-h-[44px]"
                   >
                     <option value="CHECKING">Checking Account</option>
                     <option value="SAVINGS">Savings Account</option>
@@ -333,14 +346,15 @@ export const AddRecipientModal: React.FC<Props> = ({ isOpen, onClose, onRecipien
 
               <div className="space-y-1">
                 <label className="font-semibold text-slate-700 dark:text-slate-300">
-                  Account Number *
+                  Account Number (4-17 digits) *
                 </label>
                 <input
                   type="text"
+                  inputMode="numeric"
                   value={usAccountNumber}
                   onChange={e => setUsAccountNumber(e.target.value.replace(/\D/g, '').slice(0, 17))}
                   placeholder="991827364512"
-                  className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white font-mono focus:outline-hidden focus:ring-2 focus:ring-[#004281]"
+                  className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white font-mono focus:outline-hidden focus:ring-2 focus:ring-[#004281] min-h-[44px]"
                   required
                 />
               </div>
@@ -358,7 +372,9 @@ export const AddRecipientModal: React.FC<Props> = ({ isOpen, onClose, onRecipien
                   value={iban}
                   onChange={e => handleIbanChange(e.target.value)}
                   placeholder="DE89 5007 0010 0123 4567 89"
-                  className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white font-mono uppercase focus:outline-hidden focus:ring-2 focus:ring-[#004281]"
+                  className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white font-mono uppercase focus:outline-hidden focus:ring-2 focus:ring-[#004281] min-h-[44px]"
+                  autoCapitalize="characters"
+                  autoCorrect="off"
                   required
                 />
                 <span className="text-[10px] text-slate-400">Supports SEPA Instant across Eurozone</span>
@@ -373,7 +389,9 @@ export const AddRecipientModal: React.FC<Props> = ({ isOpen, onClose, onRecipien
                   value={swiftBic}
                   onChange={e => setSwiftBic(e.target.value.toUpperCase().slice(0, 11))}
                   placeholder="DEUTDEDDFXX"
-                  className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white font-mono uppercase focus:outline-hidden focus:ring-2 focus:ring-[#004281]"
+                  className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white font-mono uppercase focus:outline-hidden focus:ring-2 focus:ring-[#004281] min-h-[44px]"
+                  autoCapitalize="characters"
+                  autoCorrect="off"
                 />
               </div>
             </div>
@@ -387,11 +405,14 @@ export const AddRecipientModal: React.FC<Props> = ({ isOpen, onClose, onRecipien
                 <span>Recipient Email (Optional)</span>
               </label>
               <input
-                type="email"
+                type="text"
+                inputMode="email"
                 value={email}
                 onChange={e => setEmail(e.target.value)}
                 placeholder="beneficiary@company.com"
-                className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-[#004281]"
+                className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-[#004281] min-h-[44px]"
+                autoCapitalize="none"
+                autoCorrect="off"
               />
             </div>
 
@@ -401,11 +422,13 @@ export const AddRecipientModal: React.FC<Props> = ({ isOpen, onClose, onRecipien
                 <span>Phone Number (Optional)</span>
               </label>
               <input
-                type="tel"
+                type="text"
+                inputMode="tel"
                 value={phone}
                 onChange={e => setPhone(e.target.value)}
                 placeholder="+44 20 7946 0912"
-                className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-[#004281]"
+                className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-[#004281] min-h-[44px]"
+                autoCorrect="off"
               />
             </div>
           </div>
@@ -414,14 +437,14 @@ export const AddRecipientModal: React.FC<Props> = ({ isOpen, onClose, onRecipien
             <button
               type="button"
               onClick={onClose}
-              className="py-2.5 px-4 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 font-bold hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
+              className="py-3 px-4 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 font-bold hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer min-h-[44px]"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={isSubmitting}
-              className="py-2.5 px-5 rounded-xl bg-[#004281] hover:bg-[#003366] text-white font-bold shadow-xs flex items-center gap-2 cursor-pointer disabled:opacity-50"
+              className="py-3 px-5 rounded-xl bg-[#004281] hover:bg-[#003366] text-white font-bold shadow-xs flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 min-h-[44px]"
             >
               <ShieldCheck className="w-4 h-4" />
               <span>{isSubmitting ? 'Verifying & Saving...' : 'Save Recipient'}</span>
