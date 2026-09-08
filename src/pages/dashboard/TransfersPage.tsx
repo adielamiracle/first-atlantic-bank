@@ -35,6 +35,9 @@ import { motion, AnimatePresence } from 'motion/react';
 import { TransferFundsAnimation } from '../../components/dashboard/TransferFundsAnimation';
 import { CurrencyExchangeCalculator } from '../../components/dashboard/CurrencyExchangeCalculator';
 import { supabase } from '../../lib/supabaseClient';
+import { LocalBankDetailsCard } from '../../components/transfers/LocalBankDetailsCard';
+import { WiseTransferFlow } from '../../components/transfers/WiseTransferFlow';
+import { TransferStatusTracker } from '../../components/transfers/TransferStatusTracker';
 
 const BANK_ACCOUNT_REGEX = /^[0-9]{9,12}$/;
 const EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
@@ -49,8 +52,13 @@ export const TransfersPage: React.FC = () => {
     rates,
     showToast,
     region,
-    setCurrentView
+    setCurrentView,
+    wiseTransfers,
+    fetchWiseTransfers
   } = useBank();
+
+  // Primary Hub Tab
+  const [activeMainTab, setActiveMainTab] = useState<'WISE_RAILS' | 'TRACKER' | 'RECEIVE_DETAILS' | 'DIRECT_WIRE'>('WISE_RAILS');
 
   // Mode: INTERNAL (Between accounts), DOMESTIC (US / UK Clearing), INTERNATIONAL (Global SWIFT FX)
   const [transferMode, setTransferMode] = useState<'INTERNAL' | 'DOMESTIC' | 'INTERNATIONAL'>('DOMESTIC');
@@ -337,6 +345,92 @@ export const TransfersPage: React.FC = () => {
 
   return (
     <div className="max-w-5xl mx-auto space-y-6 pb-12 font-sans">
+      {/* PRIMARY TRANSFERS & WIRE NAVIGATION TABS */}
+      <div className="bg-white/80 dark:bg-[#0f172a]/90 backdrop-blur-md p-1.5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs flex items-center gap-1.5 overflow-x-auto">
+        {[
+          {
+            id: 'WISE_RAILS',
+            label: 'Send via Wise (UK, US, EU)',
+            icon: Globe,
+            badge: 'Mid-Market Rates'
+          },
+          {
+            id: 'TRACKER',
+            label: 'Transfer Status Tracker',
+            icon: Clock,
+            badge: wiseTransfers.length > 0 ? `${wiseTransfers.length}` : null
+          },
+          {
+            id: 'RECEIVE_DETAILS',
+            label: 'Local Receiving Details',
+            icon: Building,
+            badge: 'UK, US, EU'
+          },
+          {
+            id: 'DIRECT_WIRE',
+            label: 'Classic Direct Wire & FX',
+            icon: ArrowLeftRight,
+            badge: null
+          }
+        ].map(tab => (
+          <button
+            key={tab.id}
+            type="button"
+            onClick={() => {
+              setActiveMainTab(tab.id as any);
+              if (tab.id === 'TRACKER') {
+                fetchWiseTransfers(true);
+              }
+            }}
+            className={`py-2.5 px-4 rounded-xl text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap cursor-pointer ${
+              activeMainTab === tab.id
+                ? 'bg-[#004281] text-white shadow-sm'
+                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800'
+            }`}
+          >
+            <tab.icon className="w-4 h-4" />
+            <span>{tab.label}</span>
+            {tab.badge && (
+              <span
+                className={`text-[10px] px-1.5 py-0.5 rounded-md font-mono font-bold ${
+                  activeMainTab === tab.id
+                    ? 'bg-white/20 text-white'
+                    : 'bg-[#004281]/10 dark:bg-[#004281]/30 text-[#004281] dark:text-sky-300'
+                }`}
+              >
+                {tab.badge}
+              </span>
+            )}
+          </button>
+        ))}
+      </div>
+
+      {/* TAB 1: SEND VIA WISE (UK, US, EU) */}
+      {activeMainTab === 'WISE_RAILS' && (
+        <WiseTransferFlow
+          onTransferDispatched={() => {
+            fetchWiseTransfers(true);
+            setActiveMainTab('TRACKER');
+          }}
+        />
+      )}
+
+      {/* TAB 2: TRANSFER STATUS & COMPLIANCE TIMELINE TRACKER */}
+      {activeMainTab === 'TRACKER' && (
+        <TransferStatusTracker
+          transfers={wiseTransfers}
+          onRefresh={() => fetchWiseTransfers(true)}
+        />
+      )}
+
+      {/* TAB 3: LOCAL BANK RECEIVING DETAILS (UK, US, EU) */}
+      {activeMainTab === 'RECEIVE_DETAILS' && (
+        <LocalBankDetailsCard />
+      )}
+
+      {/* TAB 4: CLASSIC DIRECT WIRE & FX CALCULATOR */}
+      {activeMainTab === 'DIRECT_WIRE' && (
+        <>
       {/* Header & Mode Switcher (Glassmorphic) */}
       <div className="glass-panel-elevated rounded-2xl p-5 sm:p-7 space-y-5">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
@@ -1193,6 +1287,8 @@ export const TransfersPage: React.FC = () => {
             </div>
           </div>
         </div>
+      )}
+        </>
       )}
     </div>
   );

@@ -16,7 +16,8 @@ import {
   ArrowUpRight,
   TrendingUp,
   Building2,
-  CheckCircle2
+  CheckCircle2,
+  FileText
 } from 'lucide-react';
 import { CurrencyDisplay } from '../../components/common/CurrencyDisplay';
 import { StatusBadge } from '../../components/common/StatusBadge';
@@ -24,12 +25,14 @@ import { BankAccount } from '../../types';
 
 interface CustomerAccountsTabProps {
   onNavigateToFunds?: (accountId: string) => void;
+  onNavigateToTransactions?: (accountId: string) => void;
   onInspectCustomer?: (userId: string) => void;
   onOpenCreateCustomer?: () => void;
 }
 
 export const CustomerAccountsTab: React.FC<CustomerAccountsTabProps> = ({
   onNavigateToFunds,
+  onNavigateToTransactions,
   onInspectCustomer,
   onOpenCreateCustomer
 }) => {
@@ -217,6 +220,15 @@ export const CustomerAccountsTab: React.FC<CustomerAccountsTabProps> = ({
                     <span>Credit / Debit</span>
                   </button>
                 )}
+                {onNavigateToTransactions && (
+                  <button
+                    onClick={() => onNavigateToTransactions(erinAccount.id)}
+                    className="px-3 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-all shadow-xs flex items-center gap-1 cursor-pointer whitespace-nowrap"
+                  >
+                    <FileText className="w-3.5 h-3.5" />
+                    <span>Tx History</span>
+                  </button>
+                )}
                 {onInspectCustomer && (
                   <button
                     onClick={() => onInspectCustomer(erinAccount.userId)}
@@ -368,6 +380,16 @@ export const CustomerAccountsTab: React.FC<CustomerAccountsTabProps> = ({
                         >
                           <DollarSign className="w-3.5 h-3.5" />
                           <span>Funds</span>
+                        </button>
+                      )}
+                      {onNavigateToTransactions && (
+                        <button
+                          onClick={() => onNavigateToTransactions(acc.id)}
+                          title="View, add, or edit transaction history"
+                          className="px-2.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center gap-1 shadow-xs cursor-pointer"
+                        >
+                          <FileText className="w-3.5 h-3.5" />
+                          <span>Txns</span>
                         </button>
                       )}
                       {onInspectCustomer && acc.userId && (
@@ -534,6 +556,17 @@ export const CustomerAccountsTab: React.FC<CustomerAccountsTabProps> = ({
                             >
                               <DollarSign className="w-3 h-3" />
                               <span>Funds</span>
+                            </button>
+                          )}
+
+                          {onNavigateToTransactions && (
+                            <button
+                              onClick={() => onNavigateToTransactions(acc.id)}
+                              title="View, add or edit ledger transactions for this account"
+                              className="px-2.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[11px] flex items-center gap-1 shadow-xs transition-colors cursor-pointer"
+                            >
+                              <FileText className="w-3 h-3" />
+                              <span>Txns</span>
                             </button>
                           )}
 

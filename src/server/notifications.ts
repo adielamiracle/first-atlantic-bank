@@ -359,6 +359,27 @@ export class AdminNotificationService {
     return false;
   }
 
+  public broadcastNotification(params: {
+    title: string;
+    message: string;
+    category?: string;
+    priority?: string;
+    metadata?: Record<string, any>;
+  }): void {
+    const notifId = `notif_trans_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
+    const notification: AdminNotification = {
+      id: notifId,
+      type: 'COMPLIANCE_ALERT' as any,
+      title: params.title,
+      message: params.message,
+      severity: (params.priority === 'HIGH' ? 'WARNING' : 'INFO') as NotificationSeverity,
+      recipientAdminEmail: 'alexandra.vance@firstatlanticbank.com',
+      status: 'UNREAD',
+      timestamp: new Date().toISOString()
+    };
+    this.notifications.unshift(notification);
+  }
+
   private generateEmailHtml(data: {
     referenceNumber: string;
     applicantName: string;

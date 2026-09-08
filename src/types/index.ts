@@ -515,6 +515,7 @@ export interface Recipient {
   region: RecipientRegion;
   currency: CurrencyCode;
   bankName: string;
+  accountNumberOrIban?: string;
   sortCode?: string;
   accountNumberUk?: string;
   routingNumber?: string;

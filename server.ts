@@ -742,7 +742,7 @@ async function startServer() {
         approvalStatus: 'APPROVED',
         requestedAccountType: 'CHECKING_PREMIER',
         currency: 'USD',
-        initialDepositMinor: 5000000, // $50,000.00
+        initialDepositMinor: 0, // Fresh empty account with no demo deposit
         issueDebitCard: true
       });
 
@@ -2312,6 +2312,21 @@ async function startServer() {
     });
 
     res.json({ total, transactions });
+  });
+
+  app.post('/api/admin/transactions', (req, res) => {
+    const admin = getAdminFromHeader(req);
+    const result = db.addLedgerTransaction(admin, req.body);
+    if (!result.success) {
+      return res.status(400).json({ error: result.error });
+    }
+
+    res.status(201).json({
+      success: true,
+      transaction: result.transaction,
+      account: result.account,
+      message: 'Transaction successfully created and posted to account ledger.'
+    });
   });
 
   app.put('/api/admin/transactions/:id', (req, res) => {

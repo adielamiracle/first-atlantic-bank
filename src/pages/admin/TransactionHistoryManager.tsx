@@ -19,15 +19,26 @@ import {
   ChevronLeft,
   ChevronRight,
   Eye,
-  CheckSquare
+  CheckSquare,
+  Plus,
+  Sparkles,
+  Landmark,
+  Layers
 } from 'lucide-react';
 import { CurrencyDisplay } from '../../components/common/CurrencyDisplay';
 import { StatusBadge } from '../../components/common/StatusBadge';
 import { LedgerEntry } from '../../types';
 
-export const TransactionHistoryManager: React.FC = () => {
+interface TransactionHistoryManagerProps {
+  preselectedAccountId?: string;
+}
+
+export const TransactionHistoryManager: React.FC<TransactionHistoryManagerProps> = ({
+  preselectedAccountId
+}) => {
   const {
     fetchAdminTransactions,
+    addAdminTransaction,
     editAdminTransaction,
     deleteAdminTransaction,
     showToast,
@@ -39,7 +50,22 @@ export const TransactionHistoryManager: React.FC = () => {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [statusFilter, setStatusFilter] = useState<string>('ALL');
-  const [selectedAccountId, setSelectedAccountId] = useState<string>('');
+  const [selectedAccountId, setSelectedAccountId] = useState<string>(preselectedAccountId || '');
+
+  // Add Transaction Modal State
+  const [isAddModalOpen, setIsAddModalOpen] = useState<boolean>(false);
+  const [addAccountId, setAddAccountId] = useState<string>('');
+  const [addAmountStr, setAddAmountStr] = useState<string>('');
+  const [addDirection, setAddDirection] = useState<'CREDIT' | 'DEBIT'>('CREDIT');
+  const [addDescription, setAddDescription] = useState<string>('Direct Deposit - Salary');
+  const [addCategory, setAddCategory] = useState<string>('Deposits');
+  const [addChannel, setAddChannel] = useState<string>('ADMIN_PORTAL');
+  const [addCounterparty, setAddCounterparty] = useState<string>('Treasury Reserve Settlement Desk');
+  const [addReference, setAddReference] = useState<string>('');
+  const [addStatus, setAddStatus] = useState<string>('SETTLED');
+  const [addTimestamp, setAddTimestamp] = useState<string>(new Date().toISOString().slice(0, 16));
+  const [addAdjustBalance, setAddAdjustBalance] = useState<boolean>(true);
+  const [isSubmittingAdd, setIsSubmittingAdd] = useState<boolean>(false);
 
   // Edit Modal State
   const [editingTx, setEditingTx] = useState<any | null>(null);
@@ -58,6 +84,12 @@ export const TransactionHistoryManager: React.FC = () => {
   const [deletingTx, setDeletingTx] = useState<any | null>(null);
   const [revertBalanceOnDelete, setRevertBalanceOnDelete] = useState<boolean>(true);
   const [isDeleting, setIsDeleting] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (preselectedAccountId) {
+      setSelectedAccountId(preselectedAccountId);
+    }
+  }, [preselectedAccountId]);
 
   const loadTransactions = async () => {
     setIsLoading(true);
@@ -83,6 +115,62 @@ export const TransactionHistoryManager: React.FC = () => {
     }, 250);
     return () => clearTimeout(delayDebounce);
   }, [searchQuery, statusFilter, selectedAccountId]);
+
+  const openAddModal = (accountIdToUse?: string) => {
+    const targetAccId = accountIdToUse || selectedAccountId || (accounts.length > 0 ? accounts[0].id : '');
+    setAddAccountId(targetAccId);
+    setAddAmountStr('');
+    setAddDirection('CREDIT');
+    setAddDescription('Direct Deposit - Salary');
+    setAddCategory('Deposits');
+    setAddChannel('ADMIN_PORTAL');
+    setAddCounterparty('Treasury Reserve Settlement Desk');
+    setAddReference(`TXN-ADM-${Date.now().toString().slice(-7)}${Math.floor(10 + Math.random() * 90)}`);
+    setAddStatus('SETTLED');
+    setAddTimestamp(new Date().toISOString().slice(0, 16));
+    setAddAdjustBalance(true);
+    setIsAddModalOpen(true);
+  };
+
+  const handleSaveAdd = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!addAccountId) {
+      showToast('ERROR', 'Missing Account', 'Please select a customer target account.');
+      return;
+    }
+    const numAmount = parseFloat(addAmountStr);
+    if (isNaN(numAmount) || numAmount <= 0) {
+      showToast('ERROR', 'Invalid Amount', 'Please enter an amount greater than zero.');
+      return;
+    }
+
+    const minorAmount = Math.round(numAmount * 100);
+    setIsSubmittingAdd(true);
+    try {
+      const res = await addAdminTransaction({
+        accountId: addAccountId,
+        amountMinor: minorAmount,
+        direction: addDirection,
+        description: addDescription.trim() || 'Authorized Direct Deposit',
+        category: addCategory,
+        channel: addChannel,
+        counterparty: addCounterparty.trim() || 'Treasury Desk',
+        referenceNumber: addReference.trim(),
+        status: addStatus,
+        effectiveTimestamp: addTimestamp ? new Date(addTimestamp).toISOString() : undefined,
+        adjustAccountBalance: addAdjustBalance
+      });
+
+      if (res.success) {
+        setIsAddModalOpen(false);
+        await loadTransactions();
+      }
+    } catch (err: any) {
+      showToast('ERROR', 'Error Posting Transaction', err.message);
+    } finally {
+      setIsSubmittingAdd(false);
+    }
+  };
 
   const openEditModal = (tx: any) => {
     setEditingTx(tx);
@@ -170,15 +258,22 @@ export const TransactionHistoryManager: React.FC = () => {
           </div>
 
           <div className="flex items-center gap-2">
-            <span className="text-xs font-mono px-2.5 py-1 rounded-lg bg-slate-100 text-slate-700 font-bold">
+            <span className="text-xs font-mono px-2.5 py-1 rounded-lg bg-slate-100 text-slate-700 font-bold hidden sm:inline">
               {totalCount} Total Entries
             </span>
             <button
               onClick={loadTransactions}
-              className="p-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 transition-colors"
+              className="p-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 transition-colors cursor-pointer"
               title="Refresh Transactions"
             >
               <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
+            </button>
+            <button
+              onClick={() => openAddModal()}
+              className="px-3.5 py-2 rounded-xl bg-[#00A651] hover:bg-[#008f45] text-white font-bold text-xs flex items-center gap-1.5 shadow-xs transition-all cursor-pointer"
+            >
+              <Plus className="w-4 h-4" />
+              <span>+ Add Transaction</span>
             </button>
           </div>
         </div>
@@ -578,7 +673,7 @@ export const TransactionHistoryManager: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setDeletingTx(null)}
-                className="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition-colors"
+                className="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer"
               >
                 Cancel
               </button>
@@ -586,7 +681,7 @@ export const TransactionHistoryManager: React.FC = () => {
                 type="button"
                 onClick={handleDelete}
                 disabled={isDeleting}
-                className="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold flex items-center gap-2 shadow-sm transition-colors disabled:opacity-50"
+                className="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold flex items-center gap-2 shadow-sm transition-colors disabled:opacity-50 cursor-pointer"
               >
                 {isDeleting ? (
                   <>
@@ -601,6 +696,294 @@ export const TransactionHistoryManager: React.FC = () => {
                 )}
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* 3. ADD TRANSACTION MODAL (ADMIN DIRECT ENTRY) */}
+      {isAddModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs">
+          <div className="bg-white dark:bg-[#0f172a] rounded-2xl max-w-xl w-full border border-slate-200 dark:border-slate-800 shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+            {/* Modal Header */}
+            <div className="px-6 py-4 bg-gradient-to-r from-[#004281] to-[#002b53] text-white flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center text-amber-300">
+                  <Plus className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold tracking-tight">Add Transaction to Customer Account</h3>
+                  <p className="text-[11px] text-slate-300">
+                    Post authorized deposit, wire remittance, or adjustment to core ledger
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsAddModalOpen(false)}
+                className="p-1 rounded-lg text-slate-300 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Modal Form */}
+            <form onSubmit={handleSaveAdd} className="p-6 space-y-4 max-h-[82vh] overflow-y-auto text-xs">
+              {/* 1. Target Account */}
+              <div className="space-y-1.5">
+                <label className="font-bold text-slate-700 dark:text-slate-300 flex items-center justify-between">
+                  <span>1. Target Customer Account *</span>
+                  <span className="text-[10px] text-slate-400 font-normal">Select beneficiary account</span>
+                </label>
+                <select
+                  value={addAccountId}
+                  onChange={e => setAddAccountId(e.target.value)}
+                  required
+                  className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white font-semibold focus:ring-2 focus:ring-[#004281]"
+                >
+                  <option value="">-- Choose Account --</option>
+                  {accounts.map(acc => (
+                    <option key={acc.id} value={acc.id}>
+                      {acc.name} ({acc.accountNumber}) — {acc.currency} (Bal: {acc.currency} {(acc.balanceMinor / 100).toLocaleString('en-US', { minimumFractionDigits: 2 })})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* 2. Direction & Amount */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <label className="font-bold text-slate-700 dark:text-slate-300">2. Transaction Flow *</label>
+                  <div className="grid grid-cols-2 gap-1.5 p-1 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+                    <button
+                      type="button"
+                      onClick={() => setAddDirection('CREDIT')}
+                      className={`py-2 rounded-lg font-bold text-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                        addDirection === 'CREDIT'
+                          ? 'bg-[#00A651] text-white shadow-xs'
+                          : 'text-slate-600 dark:text-slate-300 hover:text-slate-900'
+                      }`}
+                    >
+                      <ArrowDownLeft className="w-3.5 h-3.5" />
+                      <span>Credit (Inflow)</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setAddDirection('DEBIT')}
+                      className={`py-2 rounded-lg font-bold text-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                        addDirection === 'DEBIT'
+                          ? 'bg-rose-600 text-white shadow-xs'
+                          : 'text-slate-600 dark:text-slate-300 hover:text-slate-900'
+                      }`}
+                    >
+                      <ArrowUpRight className="w-3.5 h-3.5" />
+                      <span>Debit (Outflow)</span>
+                    </button>
+                  </div>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="font-bold text-slate-700 dark:text-slate-300">3. Amount *</label>
+                  <div className="relative">
+                    <input
+                      type="number"
+                      step="0.01"
+                      min="0.01"
+                      placeholder="0.00"
+                      value={addAmountStr}
+                      onChange={e => setAddAmountStr(e.target.value)}
+                      required
+                      className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white font-mono font-bold text-sm focus:ring-2 focus:ring-[#004281]"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Preset Quick Tags */}
+              <div className="space-y-1">
+                <label className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Quick Preset Templates</label>
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  {[
+                    { label: 'Salary Deposit', desc: 'Direct Deposit - Monthly Executive Salary', cat: 'Income', dir: 'CREDIT' },
+                    { label: 'Wire Inflow', desc: 'Inbound Institutional Wire Remittance', cat: 'Deposits', dir: 'CREDIT' },
+                    { label: 'Consulting Retainer', desc: 'Commercial Consulting Retainer Settlement', cat: 'Income', dir: 'CREDIT' },
+                    { label: 'Investment Return', desc: 'Private Equity Capital Distribution', cat: 'Income', dir: 'CREDIT' },
+                    { label: 'Wire Outflow', desc: 'Authorized Swift International Wire Outbound', cat: 'Transfers', dir: 'DEBIT' },
+                    { label: 'Ledger Adjustment', desc: 'Administrative Reconciled Ledger Adjustment', cat: 'Adjustments', dir: 'CREDIT' }
+                  ].map(p => (
+                    <button
+                      key={p.label}
+                      type="button"
+                      onClick={() => {
+                        setAddDescription(p.desc);
+                        setAddCategory(p.cat);
+                        setAddDirection(p.dir as any);
+                      }}
+                      className="px-2 py-1 rounded-md text-[10.5px] font-semibold bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-200/60 dark:border-slate-700 transition-colors cursor-pointer"
+                    >
+                      {p.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* 4. Description & Counterparty */}
+              <div className="space-y-1.5">
+                <label className="font-bold text-slate-700 dark:text-slate-300">4. Transaction Description *</label>
+                <input
+                  type="text"
+                  placeholder="e.g. Inbound Wire Settlement via London Clearing House"
+                  value={addDescription}
+                  onChange={e => setAddDescription(e.target.value)}
+                  required
+                  className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <label className="font-bold text-slate-700 dark:text-slate-300">5. Counterparty / Entity</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. JPMorgan Chase Bank N.A."
+                    value={addCounterparty}
+                    onChange={e => setAddCounterparty(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="font-bold text-slate-700 dark:text-slate-300">6. Reference Number</label>
+                  <div className="flex items-center gap-1.5">
+                    <input
+                      type="text"
+                      value={addReference}
+                      onChange={e => setAddReference(e.target.value)}
+                      className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white font-mono text-xs"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setAddReference(`TXN-ADM-${Date.now().toString().slice(-7)}${Math.floor(10 + Math.random() * 90)}`)}
+                      className="p-2 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 transition-colors cursor-pointer"
+                      title="Generate Reference"
+                    >
+                      <RefreshCw className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* 7. Category, Channel & Status */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className="space-y-1.5">
+                  <label className="font-bold text-slate-700 dark:text-slate-300">Category</label>
+                  <select
+                    value={addCategory}
+                    onChange={e => setAddCategory(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
+                  >
+                    <option value="Deposits">Deposits</option>
+                    <option value="Income">Income</option>
+                    <option value="Transfers">Transfers</option>
+                    <option value="Bills & Utilities">Bills &amp; Utilities</option>
+                    <option value="Shopping & Dining">Shopping &amp; Dining</option>
+                    <option value="Fees & Interest">Fees &amp; Interest</option>
+                    <option value="Adjustments">Adjustments</option>
+                  </select>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="font-bold text-slate-700 dark:text-slate-300">Channel</label>
+                  <select
+                    value={addChannel}
+                    onChange={e => setAddChannel(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
+                  >
+                    <option value="ADMIN_PORTAL">Admin Portal Entry</option>
+                    <option value="WIRE">Fedwire / SWIFT Wire</option>
+                    <option value="FPS">Faster Payments (FPS)</option>
+                    <option value="CHAPS">CHAPS High-Value</option>
+                    <option value="ACH">ACH Direct Deposit</option>
+                    <option value="ONLINE">Online Banking</option>
+                  </select>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="font-bold text-slate-700 dark:text-slate-300">Status</label>
+                  <select
+                    value={addStatus}
+                    onChange={e => setAddStatus(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white font-semibold"
+                  >
+                    <option value="SETTLED">Settled (Completed)</option>
+                    <option value="PENDING">Pending Approval</option>
+                    <option value="PROCESSING">Processing</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* 8. Effective Date & Time (Allows Backdating) */}
+              <div className="space-y-1.5">
+                <label className="font-bold text-slate-700 dark:text-slate-300 flex items-center justify-between">
+                  <span>Effective Date &amp; Time (Backdating Support)</span>
+                  <span className="text-[10px] text-slate-400 font-normal">Custom historical or live timestamp</span>
+                </label>
+                <input
+                  type="datetime-local"
+                  value={addTimestamp}
+                  onChange={e => setAddTimestamp(e.target.value)}
+                  required
+                  className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white font-mono"
+                />
+              </div>
+
+              {/* 9. Adjust Account Balance Option */}
+              <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700">
+                <label className="flex items-start gap-2.5 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={addAdjustBalance}
+                    onChange={e => setAddAdjustBalance(e.target.checked)}
+                    className="mt-0.5 rounded text-[#00A651] focus:ring-[#00A651]"
+                  />
+                  <div className="text-xs text-slate-800 dark:text-slate-200">
+                    <span className="font-bold block">Immediately Update Customer Account Balance</span>
+                    <span className="text-[11px] text-slate-500 dark:text-slate-400 block">
+                      {addDirection === 'CREDIT'
+                        ? 'Account balance will be increased by this amount.'
+                        : 'Account balance will be decreased by this amount.'}
+                    </span>
+                  </div>
+                </label>
+              </div>
+
+              {/* Actions */}
+              <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-200 dark:border-slate-800">
+                <button
+                  type="button"
+                  onClick={() => setIsAddModalOpen(false)}
+                  className="px-4 py-2 rounded-xl font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSubmittingAdd}
+                  className="px-5 py-2 rounded-xl bg-[#00A651] hover:bg-[#008f45] text-white font-bold flex items-center gap-2 shadow-sm transition-colors cursor-pointer disabled:opacity-50"
+                >
+                  {isSubmittingAdd ? (
+                    <>
+                      <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                      <span>Posting to Ledger...</span>
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle2 className="w-3.5 h-3.5" />
+                      <span>Post Transaction to Ledger</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

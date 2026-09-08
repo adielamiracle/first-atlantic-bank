@@ -34,13 +34,15 @@ import {
   Sparkles,
   BarChart2,
   Calendar,
-  Clock
+  Clock,
+  ArrowLeftRight
 } from 'lucide-react';
 import { DirectFundsManager } from './DirectFundsManager';
 import { CustomerAccountsTab } from './CustomerAccountsTab';
 import { TransactionHistoryManager } from './TransactionHistoryManager';
 import { UserDetailsInspector } from './UserDetailsInspector';
 import { TreasuryReceivingAccountsTab } from './TreasuryReceivingAccountsTab';
+import { AdminTransfersTab } from './AdminTransfersTab';
 import { AccountActivationTab } from './AccountActivationTab';
 import { AdminNotificationsTab } from './AdminNotificationsTab';
 import { EnrollmentTrendWidget } from './EnrollmentTrendWidget';
@@ -65,14 +67,16 @@ export const AdminDashboard: React.FC = () => {
     accounts,
     setCurrentView,
     showToast,
-    adminSessionRole
+    adminSessionRole,
+    wiseTransfers
   } = useBank();
 
   const [activeTab, setActiveTab] = useState<
-    'ACCOUNTS' | 'FUNDS' | 'USERS' | 'TRANSACTIONS' | 'RECEIVING_ACCOUNTS' | 'APPLICATIONS' | 'NOTIFICATIONS' | 'AUDIT_LOGS'
+    'ACCOUNTS' | 'FUNDS' | 'USERS' | 'TRANSACTIONS' | 'WISE_TRANSFERS' | 'RECEIVING_ACCOUNTS' | 'APPLICATIONS' | 'NOTIFICATIONS' | 'AUDIT_LOGS'
   >('ACCOUNTS');
 
   const [selectedAccountIdForFunds, setSelectedAccountIdForFunds] = useState<string | undefined>(undefined);
+  const [selectedAccountIdForTransactions, setSelectedAccountIdForTransactions] = useState<string | undefined>(undefined);
   const [selectedUserIdForInspector, setSelectedUserIdForInspector] = useState<string | undefined>(undefined);
 
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -151,6 +155,14 @@ export const AdminDashboard: React.FC = () => {
       title: 'TREASURY & ONBOARDING',
       items: [
         { id: 'RECEIVING_ACCOUNTS', label: 'Treasury Accounts', icon: Landmark, badge: 'Active' },
+        {
+          id: 'WISE_TRANSFERS',
+          label: 'Global Transfers & Wise',
+          icon: ArrowLeftRight,
+          badge: wiseTransfers.filter(t => t.status === 'PENDING').length > 0
+            ? `${wiseTransfers.filter(t => t.status === 'PENDING').length} Pending`
+            : null
+        },
         {
           id: 'APPLICATIONS',
           label: 'Customer Applications',
@@ -471,6 +483,10 @@ export const AdminDashboard: React.FC = () => {
                   setSelectedAccountIdForFunds(accId);
                   setActiveTab('FUNDS');
                 }}
+                onNavigateToTransactions={accId => {
+                  setSelectedAccountIdForTransactions(accId);
+                  setActiveTab('TRANSACTIONS');
+                }}
                 onInspectCustomer={userId => {
                   setSelectedUserIdForInspector(userId);
                   setActiveTab('USERS');
@@ -495,10 +511,15 @@ export const AdminDashboard: React.FC = () => {
             )}
 
             {/* TAB 3: TRANSACTION HISTORY & LEDGER */}
-            {activeTab === 'TRANSACTIONS' && <TransactionHistoryManager />}
+            {activeTab === 'TRANSACTIONS' && (
+              <TransactionHistoryManager preselectedAccountId={selectedAccountIdForTransactions} />
+            )}
 
             {/* TAB 4: BANK RECEIVING ACCOUNTS */}
             {activeTab === 'RECEIVING_ACCOUNTS' && <TreasuryReceivingAccountsTab />}
+
+            {/* TAB: GLOBAL TRANSFERS & WISE APPROVAL DESK */}
+            {activeTab === 'WISE_TRANSFERS' && <AdminTransfersTab />}
 
             {/* TAB 5: APPLICATIONS & KYC APPROVALS */}
             {activeTab === 'APPLICATIONS' && (

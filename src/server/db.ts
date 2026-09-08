@@ -1409,7 +1409,8 @@ export class BankDatabase {
     const referenceNumber = `FAB-${regionPrefix}-${new Date().getFullYear()}-${Math.floor(10000 + Math.random() * 90000)}`;
     
     const requestedCurrency = raw.requestedCurrency || (requestedRegion === 'EU' ? 'EUR' : requestedRegion === 'UK' ? 'GBP' : 'USD');
-    const initialDepositMinor = raw.initialDepositAmountMinor || (raw.initialDepositAmount ? Math.round(Number(raw.initialDepositAmount) * 100) : 0);
+    // For fresh accounts, no demo transactions or initial funds are added unless explicitly authorized by an admin
+    const initialDepositMinor = raw.authorizedByAdmin ? (raw.initialDepositAmountMinor || (raw.initialDepositAmount ? Math.round(Number(raw.initialDepositAmount) * 100) : 0)) : 0;
 
     // Normalize address
     const address = {
@@ -1563,8 +1564,8 @@ export class BankDatabase {
       name: application.requestedRegion === 'EU' ? 'European Premier Private Checking' : application.requestedRegion === 'UK' ? 'UK Premier Sterling Current Account' : 'Premier Private Checking (USD)',
       type: 'CHECKING_PREMIER',
       currency: application.requestedCurrency,
-      balanceMinor: application.initialDepositAmountMinor,
-      availableBalanceMinor: application.initialDepositAmountMinor,
+      balanceMinor: raw.authorizedByAdmin ? application.initialDepositAmountMinor : 0,
+      availableBalanceMinor: raw.authorizedByAdmin ? application.initialDepositAmountMinor : 0,
       pendingHoldMinor: 0,
       interestRateAPY: 1.20,
       status: 'ACTIVE',
@@ -1575,7 +1576,7 @@ export class BankDatabase {
     };
     this.accounts.set(primaryChecking.id, primaryChecking);
 
-    // Also create secondary High-Yield Savings Account
+    // Also create secondary High-Yield Savings Account (always starts at 0 for clean new accounts)
     const savingsAccNum = `${Math.floor(100000000000 + Math.random() * 900000000000)}`;
     const savingsAcc: BankAccount = {
       id: `acc_${newUser.id}_sav_02`,
@@ -1589,8 +1590,8 @@ export class BankDatabase {
       name: 'Apex High-Yield Treasury Reserve',
       type: 'SAVINGS_HIGH_YIELD',
       currency: application.requestedCurrency,
-      balanceMinor: Math.round(application.initialDepositAmountMinor * 0.4),
-      availableBalanceMinor: Math.round(application.initialDepositAmountMinor * 0.4),
+      balanceMinor: 0,
+      availableBalanceMinor: 0,
       pendingHoldMinor: 0,
       interestRateAPY: 5.15,
       status: 'ACTIVE',
@@ -1627,8 +1628,8 @@ export class BankDatabase {
       this.cards.set(card.id, card);
     }
 
-    // Seed Initial Deposit Ledger Entry
-    if (application.initialDepositAmountMinor > 0) {
+    // Seed Initial Deposit Ledger Entry ONLY if explicitly authorized by admin
+    if (raw.authorizedByAdmin && application.initialDepositAmountMinor > 0) {
       try {
         doubleEntryLedger.commitJournalTransaction({
           referenceNumber: `DEP-INIT-${application.referenceNumber}`,
@@ -1791,8 +1792,8 @@ export class BankDatabase {
       name: accountName,
       type: app.requestedAccountType,
       currency: app.requestedCurrency,
-      balanceMinor: app.initialDepositAmountMinor || 0,
-      availableBalanceMinor: app.initialDepositAmountMinor || 0,
+      balanceMinor: (app as any).authorizedByAdmin ? (app.initialDepositAmountMinor || 0) : 0,
+      availableBalanceMinor: (app as any).authorizedByAdmin ? (app.initialDepositAmountMinor || 0) : 0,
       pendingHoldMinor: 0,
       interestRateAPY: app.requestedAccountType === 'SAVINGS_HIGH_YIELD' ? 5.15 : 1.20,
       status: 'ACTIVE',
@@ -1831,8 +1832,8 @@ export class BankDatabase {
       this.cards.set(card.id, card);
     }
 
-    // 4. Initial Funding Journal Transaction (Double-Entry Balanced)
-    if (app.initialDepositAmountMinor > 0) {
+    // 4. Initial Funding Journal Transaction (Double-Entry Balanced) - only if authorized by admin
+    if ((app as any).authorizedByAdmin && app.initialDepositAmountMinor > 0) {
       const glCashAcc = app.requestedCurrency === 'EUR' ? 'GL_1001_FED_RESERVE_CASH' :
                         app.requestedCurrency === 'GBP' ? 'GL_1002_BOE_SETTLEMENT_CASH' : 'GL_1001_FED_RESERVE_CASH';
 
@@ -3156,7 +3157,101 @@ export class BankDatabase {
       newState: tx
     });
 
+    this.saveToDiskSync();
+
     return { success: true, transaction: tx, account: acc };
+  }
+
+  /**
+   * Add a new transaction history record for a user account (Admin direct manual entry)
+   */
+  addLedgerTransaction(
+    admin: AdminUser,
+    data: {
+      accountId: string;
+      amountMinor: number;
+      direction: TransactionDirection;
+      description: string;
+      category?: any;
+      counterparty?: string;
+      referenceNumber?: string;
+      status?: TransactionStatus;
+      effectiveTimestamp?: string;
+      createdTimestamp?: string;
+      channel?: any;
+      adjustAccountBalance?: boolean;
+    }
+  ): { success: boolean; transaction?: LedgerEntry; account?: BankAccount; error?: string } {
+    const acc = this.accounts.get(data.accountId);
+    if (!acc) return { success: false, error: 'Target customer account not found.' };
+
+    const amountMinor = Math.max(0, Math.round(Number(data.amountMinor) || 0));
+    if (amountMinor <= 0) {
+      return { success: false, error: 'Transaction amount must be greater than zero.' };
+    }
+
+    const direction: TransactionDirection = data.direction === 'DEBIT' ? 'DEBIT' : 'CREDIT';
+    const adjustBalance = data.adjustAccountBalance !== false;
+
+    if (adjustBalance) {
+      if (direction === 'CREDIT') {
+        acc.balanceMinor += amountMinor;
+        acc.availableBalanceMinor += amountMinor;
+      } else {
+        acc.balanceMinor -= amountMinor;
+        acc.availableBalanceMinor -= amountMinor;
+      }
+    }
+
+    const nowIso = new Date().toISOString();
+    const effTime = data.effectiveTimestamp ? new Date(data.effectiveTimestamp).toISOString() : nowIso;
+    const ref = data.referenceNumber?.trim() || `TXN-ADM-${Date.now().toString().slice(-7)}${Math.floor(10 + Math.random() * 90)}`;
+    const txId = `tx_adm_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+
+    const newTx: LedgerEntry = {
+      id: txId,
+      transactionId: `txn_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+      accountId: acc.id,
+      direction,
+      amountMinor,
+      currency: acc.currency,
+      balanceAfterMinor: acc.balanceMinor,
+      description: data.description?.trim() || (direction === 'CREDIT' ? 'Authorized Inbound Direct Deposit' : 'Authorized Wire Outflow'),
+      category: data.category || (direction === 'CREDIT' ? 'Deposits' : 'Transfers'),
+      counterparty: data.counterparty?.trim() || (direction === 'CREDIT' ? 'Treasury Asset Desk' : 'External Beneficiary Account'),
+      status: data.status || 'SETTLED',
+      channel: data.channel || 'ADMIN_PORTAL',
+      referenceNumber: ref,
+      createdTimestamp: data.createdTimestamp || nowIso,
+      effectiveTimestamp: effTime,
+      settledTimestamp: data.status === 'SETTLED' || !data.status ? effTime : undefined,
+      metadata: {
+        authorizedByAdminId: admin.id,
+        authorizedByAdminName: admin.name,
+        createdVia: 'ADMIN_LEDGER_EDITOR',
+        adjustAccountBalance: adjustBalance
+      }
+    };
+
+    // Prepend to ledger so it appears immediately at the top
+    this.ledger.unshift(newTx);
+
+    this.addAuditLog({
+      actorId: admin.id,
+      actorEmail: admin.email,
+      actorRole: admin.role,
+      action: 'ADMIN_TRANSACTION_CREATED',
+      targetType: 'TRANSACTION',
+      targetId: newTx.id,
+      ipAddress: '199.16.156.12',
+      userAgent: 'First Atlantic Executive Suite v4.9',
+      details: `Administrator ${admin.name} manually posted transaction ${ref} (${newTx.direction} ${this.formatMinor(amountMinor, acc.currency)}) to account ${acc.name} (${acc.accountNumber}). Balance adjustment: ${adjustBalance}.`,
+      newState: newTx
+    });
+
+    this.saveToDiskSync();
+
+    return { success: true, transaction: newTx, account: acc };
   }
 
   /**
@@ -3196,6 +3291,8 @@ export class BankDatabase {
       userAgent: 'First Atlantic Executive Suite v4.9',
       details: `Administrator ${admin.name} removed transaction ${tx.referenceNumber} (${tx.description}, ${this.formatMinor(tx.amountMinor, tx.currency)}) with balance reversion = ${revertBalance}.`
     });
+
+    this.saveToDiskSync();
 
     return { success: true, message: 'Transaction record successfully removed.' };
   }

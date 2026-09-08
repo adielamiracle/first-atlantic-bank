@@ -149,6 +149,7 @@ interface BankContextType {
     customTimestamp?: string;
   }) => Promise<{ success: boolean; account?: BankAccount; ledgerEntry?: LedgerEntry; error?: string }>;
   fetchAdminTransactions: (params?: { search?: string; accountId?: string; userId?: string; status?: string; limit?: number }) => Promise<{ total: number; transactions: any[] }>;
+  addAdminTransaction: (data: any) => Promise<{ success: boolean; transaction?: LedgerEntry; account?: BankAccount; error?: string }>;
   editAdminTransaction: (id: string, updates: any) => Promise<{ success: boolean; transaction?: LedgerEntry; account?: BankAccount; error?: string }>;
   deleteAdminTransaction: (id: string, revertBalance?: boolean) => Promise<{ success: boolean; message?: string; error?: string }>;
   fetchUserBackendDetails: (userId: string) => Promise<any>;
@@ -281,6 +282,9 @@ export const BankProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [emailDispatchLogs, setEmailDispatchLogs] = useState<EmailDispatchLog[]>([]);
   const [unreadNotificationsCount, setUnreadNotificationsCount] = useState<number>(0);
   const [bankReceivingAccounts, setBankReceivingAccounts] = useState<BankReceivingAccount[]>([]);
+  const [recipients, setRecipients] = useState<Recipient[]>([]);
+  const [wiseTransfers, setWiseTransfers] = useState<TransferRecord[]>([]);
+  const [webhookLogs, setWebhookLogs] = useState<TransferWebhookEvent[]>([]);
 
   const [isLoading, setIsLoading] = useState(false);
   const [isInitialSplash, setIsInitialSplash] = useState(false);
@@ -1388,6 +1392,31 @@ export const BankProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
+  const addAdminTransaction = async (data: any) => {
+    try {
+      const res = await fetch('/api/admin/transactions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-admin-id': 'adm_master_01'
+        },
+        body: JSON.stringify(data)
+      });
+      const resData = await res.json();
+      if (!res.ok) {
+        showToast('ERROR', 'Failed to Add Transaction', resData.error || 'Unable to record transaction.');
+        return { success: false, error: resData.error };
+      }
+
+      showToast('SUCCESS', 'Transaction Created', 'Transaction successfully recorded in account ledger.');
+      await Promise.all([refreshData(), fetchAuditLogs(), fetchAdminStats()]);
+      return { success: true, transaction: resData.transaction, account: resData.account };
+    } catch (err: any) {
+      showToast('ERROR', 'System Error', err.message);
+      return { success: false, error: err.message };
+    }
+  };
+
   const editAdminTransaction = async (id: string, updates: any) => {
     try {
       const res = await fetch(`/api/admin/transactions/${id}`, {
@@ -1887,9 +1916,228 @@ export const BankProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
+  // Wise International Transfers & Beneficiaries Methods
+  const fetchRecipients = async () => {
+    try {
+      const res = await fetch('/api/transfers/recipients', {
+        headers: { ...getAuthHeader() }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setRecipients(data.recipients || []);
+      }
+    } catch (e) {
+      console.warn('Failed to fetch recipients:', e);
+    }
+  };
+
+  const addRecipient = async (data: any) => {
+    try {
+      const res = await fetch('/api/transfers/recipients', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...getAuthHeader()
+        },
+        body: JSON.stringify(data)
+      });
+      const resData = await res.json();
+      if (!res.ok) {
+        showToast('ERROR', 'Add Recipient Failed', resData.error || 'Could not register recipient.');
+        return { success: false, error: resData.error };
+      }
+      showToast('SUCCESS', 'Recipient Saved', `${resData.recipient.name} added to your verified transfer beneficiaries.`);
+      setRecipients(prev => [resData.recipient, ...prev.filter(r => r.id !== resData.recipient.id)]);
+      return { success: true, recipient: resData.recipient };
+    } catch (err: any) {
+      showToast('ERROR', 'System Error', err.message);
+      return { success: false, error: err.message };
+    }
+  };
+
+  const deleteRecipient = async (id: string) => {
+    try {
+      const res = await fetch(`/api/transfers/recipients/${id}`, {
+        method: 'DELETE',
+        headers: { ...getAuthHeader() }
+      });
+      if (res.ok) {
+        setRecipients(prev => prev.filter(r => r.id !== id));
+        showToast('INFO', 'Recipient Removed', 'Beneficiary has been removed.');
+        return true;
+      }
+      return false;
+    } catch {
+      return false;
+    }
+  };
+
+  const fetchWiseTransfers = async (admin?: boolean) => {
+    try {
+      const url = `/api/transfers/wise${admin ? '?admin=true' : ''}`;
+      const res = await fetch(url, {
+        headers: {
+          ...getAuthHeader(),
+          ...(admin ? { 'x-admin-role': 'ADMIN' } : {})
+        }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setWiseTransfers(data.transfers || []);
+      }
+    } catch (e) {
+      console.warn('Failed to fetch transfers:', e);
+    }
+  };
+
+  const getWiseQuote = async (sourceCurrency: CurrencyCode, targetCurrency: CurrencyCode, amountMinor: number) => {
+    try {
+      const res = await fetch(`/api/transfers/wise/quote?sourceCurrency=${sourceCurrency}&targetCurrency=${targetCurrency}&amountMinor=${amountMinor}`);
+      if (res.ok) {
+        return await res.json();
+      }
+      return null;
+    } catch (e) {
+      return null;
+    }
+  };
+
+  const executeWiseTransfer = async (
+    sourceAccountId: string,
+    recipient: any,
+    amountMinor: number,
+    memo?: string,
+    destCurrency?: CurrencyCode
+  ) => {
+    try {
+      const res = await fetch('/api/transfers/wise', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...getAuthHeader()
+        },
+        body: JSON.stringify({
+          sourceAccountId,
+          recipient,
+          amountMinor,
+          memo,
+          destCurrency
+        })
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        showToast('ERROR', 'Transfer Failed', data.error || 'Failed to dispatch outbound transfer.');
+        return { success: false, error: data.error };
+      }
+
+      showToast(
+        'SUCCESS',
+        data.transfer.status === 'PENDING' ? 'Transfer Submitted' : 'Transfer Dispatched',
+        data.message || 'Transfer submitted through the global banking rail.'
+      );
+      setWiseTransfers(prev => [data.transfer, ...prev]);
+      await refreshData();
+      return { success: true, transfer: data.transfer };
+    } catch (err: any) {
+      showToast('ERROR', 'Transfer Error', err.message);
+      return { success: false, error: err.message };
+    }
+  };
+
+  const approveWiseTransfer = async (transferId: string, notes?: string) => {
+    try {
+      const res = await fetch(`/api/transfers/wise/${transferId}/approve`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-admin-name': 'Institutional Operations Desk',
+          'x-admin-role': 'SUPER_ADMIN'
+        },
+        body: JSON.stringify({ approvalNotes: notes })
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        showToast('ERROR', 'Approval Failed', data.error || 'Failed to approve transfer.');
+        return { success: false, error: data.error };
+      }
+
+      showToast('SUCCESS', 'Transfer Approved', `Transfer settled and payment instructions executed.`);
+      setWiseTransfers(prev => prev.map(t => t.id === transferId ? data.transfer : t));
+      await fetchWiseTransfers(true);
+      return { success: true };
+    } catch (err: any) {
+      showToast('ERROR', 'System Error', err.message);
+      return { success: false, error: err.message };
+    }
+  };
+
+  const rejectWiseTransfer = async (transferId: string, reason: string) => {
+    try {
+      const res = await fetch(`/api/transfers/wise/${transferId}/reject`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-admin-name': 'Institutional Compliance Desk',
+          'x-admin-role': 'SUPER_ADMIN'
+        },
+        body: JSON.stringify({ rejectionReason: reason })
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        showToast('ERROR', 'Rejection Failed', data.error || 'Failed to reject transfer.');
+        return { success: false, error: data.error };
+      }
+
+      showToast('INFO', 'Transfer Rejected', `Transfer rejected. Client balance has been refunded in full.`);
+      setWiseTransfers(prev => prev.map(t => t.id === transferId ? data.transfer : t));
+      await fetchWiseTransfers(true);
+      return { success: true };
+    } catch (err: any) {
+      showToast('ERROR', 'System Error', err.message);
+      return { success: false, error: err.message };
+    }
+  };
+
+  const fetchWebhookLogs = async () => {
+    try {
+      const res = await fetch('/api/webhooks/logs');
+      if (res.ok) {
+        const data = await res.json();
+        setWebhookLogs(data.webhooks || []);
+      }
+    } catch (e) {
+      console.warn('Failed to fetch webhook logs:', e);
+    }
+  };
+
+  const simulateWiseWebhook = async (transferId: string, newStatus: WiseTransferStatus) => {
+    try {
+      const res = await fetch('/api/webhooks/simulate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ transferId, newStatus })
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        showToast('ERROR', 'Webhook Simulation Failed', data.error);
+        return { success: false, error: data.error };
+      }
+
+      showToast('SUCCESS', 'Webhook Simulated', `State changed to ${newStatus} for transfer.`);
+      setWiseTransfers(prev => prev.map(t => t.id === transferId ? data.transfer : t));
+      await fetchWebhookLogs();
+      return { success: true };
+    } catch (err: any) {
+      showToast('ERROR', 'Simulation Error', err.message);
+      return { success: false, error: err.message };
+    }
+  };
+
   useEffect(() => {
     if (currentUser || currentRole === 'ADMIN') {
       refreshData();
+      fetchRecipients();
+      fetchWiseTransfers(currentRole === 'ADMIN');
     }
     if (currentRole === 'ADMIN') {
       fetchAdminStats();
@@ -1899,6 +2147,7 @@ export const BankProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       fetchAuditLogs();
       fetchAdminNotifications();
       fetchBankReceivingAccounts();
+      fetchWebhookLogs();
     }
   }, [currentUser, currentRole, selectedAccountId, adminSessionRole]);
 
@@ -1953,6 +2202,7 @@ export const BankProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         triggerTestEnrollmentNotification,
         creditDebitAccount,
         fetchAdminTransactions,
+        addAdminTransaction,
         editAdminTransaction,
         deleteAdminTransaction,
         fetchUserBackendDetails,
@@ -1996,7 +2246,20 @@ export const BankProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         biometricModalConfig,
         openBiometricPrompt,
         closeBiometricPrompt,
-        purgeCachesAndResync
+        purgeCachesAndResync,
+        recipients,
+        fetchRecipients,
+        addRecipient,
+        deleteRecipient,
+        wiseTransfers,
+        fetchWiseTransfers,
+        getWiseQuote,
+        executeWiseTransfer,
+        approveWiseTransfer,
+        rejectWiseTransfer,
+        webhookLogs,
+        fetchWebhookLogs,
+        simulateWiseWebhook
       }}
     >
       {children}

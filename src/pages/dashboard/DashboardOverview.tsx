@@ -27,6 +27,7 @@ import {
   Loader2
 } from 'lucide-react';
 import { LedgerEntry } from '../../types';
+import { LocalBankDetailsCard } from '../../components/transfers/LocalBankDetailsCard';
 
 export const DashboardOverview: React.FC = () => {
   const {
@@ -271,6 +272,11 @@ export const DashboardOverview: React.FC = () => {
             </span>
           </button>
         </div>
+      </section>
+
+      {/* LOCAL RECEIVING BANK DETAILS FOR UK, US, EU */}
+      <section>
+        <LocalBankDetailsCard />
       </section>
 
       {/* 4. YOUR ACCOUNTS WITH "VIEW ALL >" */}
