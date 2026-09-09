@@ -45,6 +45,9 @@ import { AdminLoginPage } from './pages/admin/AdminLoginPage';
 // Glassmorphism UI Kit & Vector Interface Showcase
 import { GlassmorphicShowcase } from './components/glass/GlassmorphicShowcase';
 
+// Route Guards (RBAC & Session Enforcers)
+import { UserRoute, AdminRoute } from './components/common/RouteGuards';
+
 const MainAppRouter: React.FC = () => {
   const { currentView, setCurrentView, isAuthenticated, currentRole } = useBank();
 
@@ -136,65 +139,64 @@ const MainAppRouter: React.FC = () => {
 
   // 2. Protected Institutional Admin View - Strictly accessible only to ADMIN role
   if (currentView === 'ADMIN_DASHBOARD' || currentView.startsWith('ADMIN_')) {
-    if (currentRole === 'ADMIN') {
-      return <AdminDashboard />;
-    }
-    if (currentRole === 'CUSTOMER') {
-      setCurrentView('DASHBOARD_OVERVIEW');
-      return null;
-    }
-    return <AdminLoginPage />;
+    return (
+      <AdminRoute>
+        <AdminDashboard />
+      </AdminRoute>
+    );
   }
 
-  // 3. Authenticated Customer Dashboard Layout
+  // 3. Authenticated Customer Dashboard Layout (Protected by UserRoute)
   const isDashboardView =
     currentView.startsWith('DASHBOARD_') || (isAuthenticated && currentView === 'PUBLIC_HOME');
 
-  if (isDashboardView && isAuthenticated) {
+  if (isDashboardView) {
     return (
-      <div className="relative min-h-screen bg-[#f8fafc] dark:bg-[#07101e] text-slate-800 dark:text-slate-100 flex flex-col md:flex-row transition-colors duration-200 overflow-x-hidden">
-        {/* Ambient Glassmorphic Background Glowing Meshes */}
-        <div className="fixed inset-0 pointer-events-none overflow-hidden z-0" aria-hidden="true">
-          <div className="absolute -top-40 -left-40 w-96 h-96 rounded-full bg-blue-500/10 dark:bg-blue-600/15 blur-3xl" />
-          <div className="absolute top-1/3 -right-40 w-96 h-96 rounded-full bg-amber-500/10 dark:bg-amber-600/10 blur-3xl" />
-          <div className="absolute -bottom-40 left-1/3 w-[500px] h-[500px] rounded-full bg-indigo-500/8 dark:bg-indigo-700/12 blur-3xl" />
+      <UserRoute>
+        <div className="relative min-h-screen bg-[#f8fafc] dark:bg-[#07101e] text-slate-800 dark:text-slate-100 flex flex-col md:flex-row transition-colors duration-200 overflow-x-hidden">
+          {/* Ambient Glassmorphic Background Glowing Meshes */}
+          <div className="fixed inset-0 pointer-events-none overflow-hidden z-0" aria-hidden="true">
+            <div className="absolute -top-40 -left-40 w-96 h-96 rounded-full bg-blue-500/10 dark:bg-blue-600/15 blur-3xl" />
+            <div className="absolute top-1/3 -right-40 w-96 h-96 rounded-full bg-amber-500/10 dark:bg-amber-600/10 blur-3xl" />
+            <div className="absolute -bottom-40 left-1/3 w-[500px] h-[500px] rounded-full bg-indigo-500/8 dark:bg-indigo-700/12 blur-3xl" />
+          </div>
+
+          {/* Persistent Desktop Sidebar */}
+          <CustomerSidebar />
+
+          {/* Main Content Pane */}
+          <div className="relative z-10 flex-1 flex flex-col min-w-0 pb-16 md:pb-0">
+            <CustomerHeader />
+            <main className="flex-1 p-2.5 xs:p-3.5 sm:p-5 lg:p-6 max-w-7xl w-full mx-auto overflow-x-hidden min-w-0">
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={currentView}
+                  initial={{ opacity: 0, y: 10, filter: 'blur(2px)' }}
+                  animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+                  exit={{ opacity: 0, y: -8, filter: 'blur(2px)' }}
+                  transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
+                  className="w-full"
+                >
+                  {currentView === 'DASHBOARD_OVERVIEW' && <DashboardOverview />}
+                  {currentView === 'DASHBOARD_ACCOUNT_DETAIL' && <AccountDetailPage />}
+                  {currentView === 'DASHBOARD_TRANSFERS' && <TransfersPage />}
+                  {currentView === 'DASHBOARD_BILLPAY' && <BillPayPage />}
+                  {currentView === 'DASHBOARD_CARDS' && <CardsPage />}
+                  {currentView === 'DASHBOARD_DEPOSIT' && <DepositCheckPage />}
+                  {currentView === 'DASHBOARD_STATEMENTS' && <StatementsPage />}
+                  {currentView === 'DASHBOARD_SECURITY' && <SecurityCenterPage />}
+                  {currentView === 'DASHBOARD_MESSAGES' && <MessagesPage />}
+                  {currentView === 'DASHBOARD_PROFILE' && <ProfilePage />}
+                  {currentView === 'DASHBOARD_GLASS_STUDIO' && <GlassmorphicShowcase />}
+                </motion.div>
+              </AnimatePresence>
+            </main>
+          </div>
+
+          {/* Mobile Bottom Bar */}
+          <MobileBottomNav />
         </div>
-
-        {/* Persistent Desktop Sidebar */}
-        <CustomerSidebar />
-
-        {/* Main Content Pane */}
-        <div className="relative z-10 flex-1 flex flex-col min-w-0 pb-16 md:pb-0">
-          <CustomerHeader />
-          <main className="flex-1 p-2.5 xs:p-3.5 sm:p-5 lg:p-6 max-w-7xl w-full mx-auto overflow-x-hidden min-w-0">
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={currentView}
-                initial={{ opacity: 0, y: 10, filter: 'blur(2px)' }}
-                animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
-                exit={{ opacity: 0, y: -8, filter: 'blur(2px)' }}
-                transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
-                className="w-full"
-              >
-                {currentView === 'DASHBOARD_OVERVIEW' && <DashboardOverview />}
-                {currentView === 'DASHBOARD_ACCOUNT_DETAIL' && <AccountDetailPage />}
-                {currentView === 'DASHBOARD_TRANSFERS' && <TransfersPage />}
-                {currentView === 'DASHBOARD_BILLPAY' && <BillPayPage />}
-                {currentView === 'DASHBOARD_CARDS' && <CardsPage />}
-                {currentView === 'DASHBOARD_DEPOSIT' && <DepositCheckPage />}
-                {currentView === 'DASHBOARD_STATEMENTS' && <StatementsPage />}
-                {currentView === 'DASHBOARD_SECURITY' && <SecurityCenterPage />}
-                {currentView === 'DASHBOARD_MESSAGES' && <MessagesPage />}
-                {currentView === 'DASHBOARD_PROFILE' && <ProfilePage />}
-                {currentView === 'DASHBOARD_GLASS_STUDIO' && <GlassmorphicShowcase />}
-              </motion.div>
-            </AnimatePresence>
-          </main>
-        </div>
-
-        {/* Mobile Bottom Bar */}
-        <MobileBottomNav />
-      </div>
+      </UserRoute>
     );
   }
 

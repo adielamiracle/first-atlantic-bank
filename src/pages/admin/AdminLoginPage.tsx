@@ -74,6 +74,11 @@ export const AdminLoginPage: React.FC = () => {
         }
 
         if (data.isAdmin || trimmedUser.toLowerCase() === 'admin@firstatlanticbank.com') {
+          if (data.token) {
+            localStorage.setItem('admin_token', data.token);
+            localStorage.setItem('token', data.token);
+            localStorage.setItem('fab_token', data.token);
+          }
           showToast(
             'SUCCESS',
             'Executive Admin Session Verified',

@@ -1,6 +1,7 @@
 import express from 'express';
 import path from 'path';
 import fs from 'fs';
+import jwt from 'jsonwebtoken';
 import { createServer as createViteServer } from 'vite';
 import { db, BILL_PAY_VENDORS, EXCHANGE_RATES } from './src/server/db';
 import { doubleEntryLedger, ledgerRouter } from './src/server/ledger';
@@ -16,6 +17,29 @@ import {
 } from './src/server/supabase';
 import { CurrencyCode, BankRegion, SupportCase, TransferRecord, Recipient, WiseTransferStatus } from './src/types';
 import { wiseService, transferStore } from './src/server/wise';
+
+const JWT_SECRET = process.env.JWT_SECRET || 'fab_bank_secure_jwt_secret_2026_key';
+
+export function signJwtToken(payload: { id: string; email?: string; role: 'admin' | 'customer' }): string {
+  return jwt.sign(payload, JWT_SECRET, { expiresIn: '7d' });
+}
+
+export function verifyJwtToken(token: string): { id: string; email?: string; role: 'admin' | 'customer' } | null {
+  try {
+    return jwt.verify(token, JWT_SECRET) as { id: string; email?: string; role: 'admin' | 'customer' };
+  } catch {
+    return null;
+  }
+}
+
+// Safe execution for Supabase queries to avoid unhandled rejections and TypeScript PostgrestFilterBuilder issues
+async function safeSbQuery(action: () => any): Promise<void> {
+  try {
+    await action();
+  } catch (err) {
+    // Non-blocking database background catch
+  }
+}
 
 async function startServer() {
   const app = express();
@@ -37,9 +61,31 @@ async function startServer() {
   app.use('/uploads', express.static(dataUploadsDir));
   app.use('/uploads', express.static(publicUploadsDir));
 
-  // Helper auth extractor supporting JWT-style session tokens, custom user headers, and user IDs
+  // Helper auth extractor supporting JWT tokens, session tokens, custom user headers, and user IDs
   const getUserIdFromHeader = (req: express.Request): string => {
-    // 1. Direct explicit user header
+    // 1. Authorization Bearer Token
+    const auth = req.headers.authorization;
+    if (auth && auth.startsWith('Bearer ')) {
+      const rawToken = auth.substring(7).trim();
+      const decoded = verifyJwtToken(rawToken);
+      if (decoded && decoded.id) {
+        return decoded.id;
+      }
+      // Check active sessions map
+      if (db.activeSessions.has(rawToken)) {
+        return db.activeSessions.get(rawToken)!.userId;
+      }
+      if (db.users.has(rawToken)) {
+        return rawToken;
+      }
+      if (rawToken.startsWith('usr_')) {
+        const stripped = rawToken.substring(4);
+        if (db.users.has(stripped)) return stripped;
+        if (db.users.has(rawToken)) return rawToken;
+      }
+    }
+
+    // 2. Direct explicit user header
     const customUserHeader = (req.headers['x-user-id'] as string || '').trim();
     if (customUserHeader) {
       if (db.users.has(customUserHeader)) return customUserHeader;
@@ -47,56 +93,123 @@ async function startServer() {
       if (db.users.has(clean)) return clean;
     }
 
-    // 2. Authorization Bearer Token
-    const auth = req.headers.authorization;
-    if (auth && auth.startsWith('Bearer ')) {
-      let raw = auth.substring(7).trim();
-      
-      // Check active sessions map
-      if (db.activeSessions.has(raw)) {
-        return db.activeSessions.get(raw)!.userId;
-      }
-
-      // Check direct user ID
-      if (db.users.has(raw)) {
-        return raw;
-      }
-
-      // Clean double prefix if any
-      if (raw.startsWith('usr_usr_')) {
-        const clean = raw.replace(/^usr_usr_/, 'usr_');
-        if (db.users.has(clean)) return clean;
-      }
-
-      // Single prefix stripping/matching
-      if (raw.startsWith('usr_')) {
-        if (db.users.has(raw)) return raw;
-        const stripped = raw.substring(4);
-        if (db.users.has(stripped)) return stripped;
-      }
-
-      // Check all registered users by ID or username matching in token
-      for (const [id] of db.users.entries()) {
-        if (raw.includes(id)) {
-          return id;
-        }
-      }
-    }
-
-    // If still not matched, check if primary demo user exists
+    // If still not matched, fallback to primary demo user
     return 'usr_sterling_01';
   };
 
   const getAdminFromHeader = (req: express.Request) => {
-    const auth = req.headers['x-admin-id'] as string;
-    if (auth && db.adminUsers.has(auth)) {
-      return db.adminUsers.get(auth)!;
+    const auth = req.headers.authorization;
+    if (auth && auth.startsWith('Bearer ')) {
+      const decoded = verifyJwtToken(auth.substring(7).trim());
+      if (decoded && decoded.role === 'admin' && db.adminUsers.has(decoded.id)) {
+        return db.adminUsers.get(decoded.id)!;
+      }
     }
-    if (db.adminUsers.has('adm_master_01')) {
-      return db.adminUsers.get('adm_master_01')!;
+    const adminHeader = req.headers['x-admin-id'] as string;
+    if (adminHeader && db.adminUsers.has(adminHeader)) {
+      return db.adminUsers.get(adminHeader)!;
     }
-    return Array.from(db.adminUsers.values())[0];
+    return db.adminUsers.get('adm_master_01') || Array.from(db.adminUsers.values())[0];
   };
+
+  // RBAC Middleware: Strict Administrator access enforcement on all /api/admin/* endpoints
+  const requireAdminMiddleware = (req: express.Request, res: express.Response, next: express.NextFunction) => {
+    // Exclude public endpoints if any
+    if (req.path === '/login' || req.path === '/auth/admin-login') {
+      return next();
+    }
+    const auth = req.headers.authorization;
+    if (!auth || !auth.startsWith('Bearer ')) {
+      return res.status(403).json({ error: 'Access forbidden: Administrator authorization token required.' });
+    }
+    const token = auth.substring(7).trim();
+    const decoded = verifyJwtToken(token);
+
+    if (decoded && decoded.role === 'admin') {
+      (req as any).user = decoded;
+      return next();
+    }
+
+    // Legacy admin master token
+    if (token.startsWith('adm_master_session_') || token === 'adm_master_01') {
+      (req as any).user = { id: 'adm_master_01', role: 'admin', email: 'admin@firstatlanticbank.com' };
+      return next();
+    }
+
+    return res.status(403).json({ 
+      error: 'Access forbidden: Administrator privileges required.',
+      role: decoded ? decoded.role : 'unauthorized'
+    });
+  };
+
+  app.use('/api/admin', requireAdminMiddleware);
+
+  // Authenticated Role & Profile Verification Endpoint (/api/me and /api/auth/me)
+  app.get(['/api/me', '/api/auth/me'], (req, res) => {
+    const auth = req.headers.authorization;
+    if (!auth || !auth.startsWith('Bearer ')) {
+      return res.status(401).json({ authenticated: false, role: null, error: 'Authorization header missing or invalid.' });
+    }
+    const token = auth.substring(7).trim();
+    const decoded = verifyJwtToken(token);
+
+    if (!decoded) {
+      // Legacy token check
+      if (token.startsWith('adm_master_session_') || token === 'adm_master_01') {
+        const masterAdmin = db.adminUsers.get('adm_master_01');
+        return res.json({
+          authenticated: true,
+          role: 'admin',
+          user: masterAdmin,
+          id: masterAdmin?.id,
+          email: masterAdmin?.email
+        });
+      }
+      if (token.startsWith('usr_')) {
+        const rawId = token.replace(/^usr_/, '');
+        const u = db.users.get(rawId) || db.users.get(token);
+        if (u) {
+          return res.json({
+            authenticated: true,
+            role: 'customer',
+            user: u,
+            id: u.id,
+            email: u.email
+          });
+        }
+      }
+      return res.status(401).json({ authenticated: false, role: null, error: 'Invalid or expired session token.' });
+    }
+
+    if (decoded.role === 'admin') {
+      const adminUser = db.adminUsers.get(decoded.id) || db.adminUsers.get('adm_master_01') || {
+        id: decoded.id,
+        email: decoded.email || 'admin@firstatlanticbank.com',
+        name: 'Alexandra Vance',
+        role: 'SUPER_ADMIN' as const
+      };
+      return res.json({
+        authenticated: true,
+        role: 'admin',
+        user: adminUser,
+        id: adminUser.id,
+        email: adminUser.email
+      });
+    }
+
+    // Role is customer
+    const user = db.users.get(decoded.id) || Array.from(db.users.values()).find(u => u.email === decoded.email);
+    if (!user) {
+      return res.status(401).json({ authenticated: false, role: null, error: 'Customer profile not found.' });
+    }
+    return res.json({
+      authenticated: true,
+      role: 'customer',
+      user,
+      id: user.id,
+      email: user.email
+    });
+  });
 
   // --- HEALTH & RATES ---
   app.get('/api/health', (req, res) => {
@@ -250,9 +363,11 @@ async function startServer() {
         signatureHash: `sig_admin_sec_${Date.now()}`
       });
 
+      const adminJwt = signJwtToken({ id: masterAdmin.id, email: masterAdmin.email, role: 'admin' });
       return res.json({
         isAdmin: true,
-        token: `adm_master_session_${Date.now()}`,
+        role: 'admin',
+        token: adminJwt,
         adminUser: masterAdmin,
         message: 'Master Administrator Session Established'
       });
@@ -487,9 +602,11 @@ async function startServer() {
       signatureHash: `sig_admin_sec_${Date.now()}`
     });
 
+    const adminJwt = signJwtToken({ id: masterAdmin.id, email: masterAdmin.email, role: 'admin' });
     return res.json({
       isAdmin: true,
-      token: `adm_master_session_${Date.now()}`,
+      role: 'admin',
+      token: adminJwt,
       adminUser: masterAdmin,
       message: 'Master Administrator Session Established'
     });
@@ -526,7 +643,7 @@ async function startServer() {
       db.saveToDisk();
     }
 
-    const token = `usr_${user.id}`;
+    const token = signJwtToken({ id: user.id, email: user.email, role: 'customer' });
     user.lastLogin = new Date().toISOString();
 
     db.addAuditLog({
@@ -543,8 +660,9 @@ async function startServer() {
 
     res.json({
       token,
+      role: 'customer',
       user,
-      sessionExpiresAt: new Date(Date.now() + 3600000 * 8).toISOString()
+      sessionExpiresAt: new Date(Date.now() + 3600000 * 24 * 7).toISOString()
     });
   });
 
@@ -1054,49 +1172,389 @@ async function startServer() {
     });
   });
 
+  // --- DEMO TRANSFER ENGINE (US / UK / EU Core Simulation) ---
+  const processDemoTransfer = async (params: {
+    userId: string;
+    sourceAccountId?: string;
+    beneficiaryAccount: string;
+    beneficiaryName: string;
+    amount: number;
+    amountMinor?: number;
+    notes?: string;
+    bankName?: string;
+    transferType?: string;
+  }) => {
+    const {
+      userId,
+      sourceAccountId,
+      beneficiaryAccount,
+      beneficiaryName,
+      notes,
+      bankName,
+      transferType
+    } = params;
+
+    // 1. Account format validation only (no external APIs, do not validate account name)
+    const cleanAccount = (beneficiaryAccount || '').replace(/[^A-Za-z0-9]/g, '');
+    if (!cleanAccount || cleanAccount.length < 4 || cleanAccount.length > 34) {
+      return {
+        success: false,
+        status: 'FAILED' as const,
+        error: 'Invalid beneficiary account number format (must be 4-34 alphanumeric characters).',
+        beneficiary: beneficiaryName || 'Beneficiary'
+      };
+    }
+
+    // 2. Resolve sender account
+    let senderAcc = sourceAccountId ? db.accounts.get(sourceAccountId) : undefined;
+    if (!senderAcc || senderAcc.userId !== userId) {
+      senderAcc = Array.from(db.accounts.values()).find(a => a.userId === userId && a.status === 'ACTIVE') ||
+                  Array.from(db.accounts.values()).find(a => a.userId === userId);
+    }
+    if (!senderAcc) {
+      return {
+        success: false,
+        status: 'FAILED' as const,
+        error: 'Source bank account not found.',
+        beneficiary: beneficiaryName
+      };
+    }
+
+    // 3. Resolve amounts
+    const numAmount = params.amount > 0 ? params.amount : ((params.amountMinor || 0) / 100);
+    const numAmountMinor = params.amountMinor && params.amountMinor > 0 
+      ? Math.round(params.amountMinor) 
+      : Math.round(numAmount * 100);
+
+    if (numAmountMinor <= 0) {
+      return {
+        success: false,
+        status: 'FAILED' as const,
+        error: 'Transfer amount must be greater than zero.',
+        beneficiary: beneficiaryName
+      };
+    }
+
+    // 4. a. Check if sender.balance >= amount. If not, return FAILED.
+    if (senderAcc.balanceMinor < numAmountMinor) {
+      const failedTx = {
+        id: `tx_${Date.now()}_${Math.floor(1000 + Math.random() * 9000)}`,
+        sender_id: userId,
+        beneficiary_account: beneficiaryAccount,
+        amount: numAmount,
+        status: 'FAILED',
+        timestamp: new Date().toISOString(),
+        notes: `Transfer failed: Insufficient funds (Balance: ${db.formatMinor(senderAcc.balanceMinor, senderAcc.currency)}, Attempted: ${db.formatMinor(numAmountMinor, senderAcc.currency)})`
+      };
+      db.recordTransferAttempt(failedTx);
+      const sb = getServerSupabase();
+      if (sb) {
+        safeSbQuery(() => sb.from('transactions').insert([failedTx]));
+      }
+      return {
+        success: false,
+        status: 'FAILED' as const,
+        error: `Transfer failed: Insufficient balance. Available: ${db.formatMinor(senderAcc.balanceMinor, senderAcc.currency)}.`,
+        transaction: failedTx,
+        beneficiary: beneficiaryName
+      };
+    }
+
+    // 5. b. Deduct amount from sender.balance immediately in DB
+    senderAcc.balanceMinor -= numAmountMinor;
+    senderAcc.availableBalanceMinor -= numAmountMinor;
+    db.saveToDisk();
+
+    // 6. Check account_transfer_config for this sender account
+    const config = db.getAccountTransferConfig(senderAcc.id) || 'instant_success';
+    const txId = `tx_${Date.now()}_${Math.floor(1000 + Math.random() * 9000)}`;
+    const nowIso = new Date().toISOString();
+
+    // e. Add amount to beneficiary.balance IF beneficiary exists in our DB
+    const beneficiaryAcc = db.findAccountByNumber(beneficiaryAccount);
+    const isInternal = Boolean(beneficiaryAcc);
+    const defaultNotes = isInternal 
+      ? `Internal Settlement to ${beneficiaryAcc?.name || beneficiaryName}`
+      : 'External Account';
+    const fullNotes = notes ? `${defaultNotes} - ${notes}` : defaultNotes;
+
+    // Determine initial status based on config:
+    // 'instant_success' -> SUCCESS
+    // 'pending_review' -> PENDING (auto-converts to SUCCESS after 10s)
+    // 'manual_approval' -> PENDING (waits for admin approval)
+    let initialStatus: 'SUCCESS' | 'PENDING' = 'SUCCESS';
+    if (config === 'pending_review' || config === 'manual_approval') {
+      initialStatus = 'PENDING';
+    }
+
+    const txRecord = {
+      id: txId,
+      sender_id: userId,
+      beneficiary_account: beneficiaryAccount,
+      amount: numAmount,
+      status: initialStatus,
+      timestamp: nowIso,
+      notes: config === 'pending_review'
+        ? `${fullNotes} (Pending review)`
+        : config === 'manual_approval'
+        ? `${fullNotes} (Held for Admin Approval)`
+        : fullNotes
+    };
+
+    db.recordTransferAttempt(txRecord);
+
+    const formattedSenderAmount = db.formatMinor(numAmountMinor, senderAcc.currency);
+
+    if (initialStatus === 'SUCCESS') {
+      // f. Create notification for BOTH sender and beneficiary
+      db.addNotification(
+        userId,
+        'Transfer Sent',
+        `You sent ${formattedSenderAmount} to ${beneficiaryName} (${beneficiaryAccount}).`,
+        'TRANSFER'
+      );
+
+      if (beneficiaryAcc) {
+        beneficiaryAcc.balanceMinor += numAmountMinor;
+        beneficiaryAcc.availableBalanceMinor += numAmountMinor;
+        db.saveToDisk();
+
+        const formattedBeneficiaryAmount = db.formatMinor(numAmountMinor, beneficiaryAcc.currency);
+        db.addNotification(
+          beneficiaryAcc.userId,
+          'Transfer Received',
+          `You received ${formattedBeneficiaryAmount} from ${senderAcc.customerName || 'First Atlantic Client'}.`,
+          'TRANSFER'
+        );
+      }
+    } else {
+      // Status is PENDING
+      db.addNotification(
+        userId,
+        'Transfer Pending',
+        `Your transfer of ${formattedSenderAmount} to ${beneficiaryName} is currently pending.`,
+        'TRANSFER'
+      );
+
+      if (config === 'pending_review') {
+        // "If 'pending_review', keep status PENDING for 10s then auto SUCCESS"
+        setTimeout(() => {
+          const found = db.transferAttempts.find(t => t.id === txId);
+          if (found && found.status === 'PENDING') {
+            found.status = 'SUCCESS';
+            found.notes = `${fullNotes} (Cleared automatically after 10s review)`;
+            if (beneficiaryAcc) {
+              beneficiaryAcc.balanceMinor += numAmountMinor;
+              beneficiaryAcc.availableBalanceMinor += numAmountMinor;
+              const bAmount = db.formatMinor(numAmountMinor, beneficiaryAcc.currency);
+              db.addNotification(
+                beneficiaryAcc.userId,
+                'Transfer Received',
+                `You received ${bAmount} from ${senderAcc.customerName || 'Client'}.`,
+                'TRANSFER'
+              );
+            }
+            db.addNotification(
+              userId,
+              'Transfer Successful',
+              `Your transfer of ${formattedSenderAmount} to ${beneficiaryName} was completed successfully.`,
+              'TRANSFER'
+            );
+            db.saveToDisk();
+
+            const sb = getServerSupabase();
+            if (sb) {
+              safeSbQuery(() => sb.from('transactions').update({ status: 'SUCCESS', notes: found.notes }).eq('id', txId));
+            }
+          }
+        }, 10000);
+      }
+    }
+
+    // 5. Log transfer attempt in Supabase transactions table
+    const sb = getServerSupabase();
+    if (sb) {
+      safeSbQuery(() => sb.from('transactions').insert([{
+        id: txRecord.id,
+        sender_id: txRecord.sender_id,
+        beneficiary_account: txRecord.beneficiary_account,
+        amount: txRecord.amount,
+        status: txRecord.status,
+        timestamp: txRecord.timestamp,
+        notes: txRecord.notes,
+        user_id: txRecord.sender_id,
+        beneficiary_name: beneficiaryName,
+        from_account: senderAcc.accountNumberFull || senderAcc.accountNumber
+      }]));
+    }
+
+    // Ledger entry for customer statements
+    db.ledger.unshift({
+      id: `led_${txId}`,
+      transactionId: txId,
+      accountId: senderAcc.id,
+      direction: 'DEBIT',
+      amountMinor: numAmountMinor,
+      currency: senderAcc.currency,
+      balanceAfterMinor: senderAcc.balanceMinor,
+      description: `Transfer to ${beneficiaryName} (${beneficiaryAccount})`,
+      category: 'Transfers',
+      counterparty: beneficiaryName,
+      status: initialStatus === 'PENDING' ? 'PENDING' : 'SETTLED',
+      channel: 'WIRE',
+      referenceNumber: txId,
+      createdTimestamp: nowIso,
+      effectiveTimestamp: nowIso,
+      metadata: { beneficiaryAccount, beneficiaryName, bankName, transferType }
+    } as any);
+
+    // Also mirror to transferStore for Wise tracker components
+    transferStore.createTransfer({
+      id: txId,
+      userId,
+      userName: senderAcc.customerName || 'Client Account',
+      userEmail: 'client@firstatlanticbank.com',
+      sourceAccountId: senderAcc.id,
+      sourceAccountName: senderAcc.name,
+      sourceAccountNumber: `••••${senderAcc.accountNumber.slice(-4)}`,
+      amountMinor: numAmountMinor,
+      sourceCurrency: senderAcc.currency,
+      destCurrency: senderAcc.currency,
+      exchangeRate: 1.0,
+      convertedAmountMinor: numAmountMinor,
+      feeMinor: 0,
+      recipient: {
+        name: beneficiaryName,
+        bankName: bankName || 'Destination Bank',
+        region: 'US',
+        accountNumberOrIban: beneficiaryAccount,
+        country: 'United States'
+      },
+      reference: txId,
+      memo: fullNotes,
+      wiseTransferId: txId,
+      wiseQuoteId: `quote_${txId}`,
+      wiseStatus: initialStatus === 'SUCCESS' ? 'outgoing_payment_sent' : 'processing',
+      status: initialStatus === 'SUCCESS' ? 'COMPLETED' : 'PENDING',
+      approvalStatus: initialStatus === 'SUCCESS' ? 'APPROVED' : 'PENDING_APPROVAL',
+      estimatedDelivery: initialStatus === 'SUCCESS' ? 'Delivered' : 'Estimated 1 business day',
+      createdTimestamp: nowIso,
+      updatedTimestamp: nowIso
+    });
+
+    return {
+      success: true,
+      status: initialStatus,
+      transaction: txRecord,
+      beneficiary: beneficiaryName,
+      senderBalanceAfterMinor: senderAcc.balanceMinor,
+      message: initialStatus === 'SUCCESS'
+        ? `Transfer of ${formattedSenderAmount} to ${beneficiaryName} completed successfully.`
+        : `Transfer of ${formattedSenderAmount} to ${beneficiaryName} is queued with status: Pending.`
+    };
+  };
+
   // --- TRANSFERS & PAYMENTS ---
-  app.post('/api/transfers/internal', (req, res) => {
+  // Direct Unified Demo Transfer Endpoint
+  app.post('/api/transfers', async (req, res) => {
+    const userId = getUserIdFromHeader(req);
+    const {
+      sourceAccountId,
+      beneficiaryAccount,
+      recipientAccount,
+      beneficiaryName,
+      recipientName,
+      recipient,
+      amount,
+      amountMinor,
+      notes,
+      description,
+      bankName
+    } = req.body;
+
+    const resolvedBeneficiaryAccount = beneficiaryAccount || recipientAccount || recipient?.accountNumberOrIban || recipient?.accountOrIban || recipient?.accountNumberUs || recipient?.accountNumberUk || recipient?.iban || '';
+    const resolvedBeneficiaryName = beneficiaryName || recipientName || recipient?.name || 'Beneficiary';
+    const resolvedNotes = notes || description || recipient?.memo || '';
+
+    const result = await processDemoTransfer({
+      userId,
+      sourceAccountId,
+      beneficiaryAccount: String(resolvedBeneficiaryAccount).trim(),
+      beneficiaryName: String(resolvedBeneficiaryName).trim(),
+      amount: Number(amount) || (Number(amountMinor) ? Number(amountMinor) / 100 : 0),
+      amountMinor: Number(amountMinor) || (Number(amount) ? Math.round(Number(amount) * 100) : undefined),
+      notes: resolvedNotes,
+      bankName: bankName || recipient?.bankName
+    });
+
+    if (!result.success) {
+      return res.status(400).json(result);
+    }
+    return res.json(result);
+  });
+
+  app.post('/api/transfers/internal', async (req, res) => {
     const userId = getUserIdFromHeader(req);
     const { sourceAccountId, destAccountId, amountMinor, description } = req.body;
 
-    const result = db.executeInternalTransfer(
+    const destAcc = db.accounts.get(destAccountId);
+    const beneficiaryAccount = destAcc ? (destAcc.accountNumberFull || destAcc.accountNumber) : destAccountId;
+    const beneficiaryName = destAcc ? destAcc.name : 'Internal Account';
+
+    const result = await processDemoTransfer({
       userId,
       sourceAccountId,
-      destAccountId,
-      Number(amountMinor),
-      description
-    );
+      beneficiaryAccount,
+      beneficiaryName,
+      amount: Number(amountMinor) / 100,
+      amountMinor: Number(amountMinor),
+      notes: description || 'Internal Account Transfer',
+      transferType: 'INTERNAL'
+    });
 
     if (!result.success) {
-      return res.status(400).json({ error: result.error });
+      return res.status(400).json(result);
     }
-
-    res.json({ success: true, transactionId: result.transactionId, message: 'Transfer posted successfully.' });
+    res.json({ success: true, transactionId: result.transaction?.id, ...result });
   });
 
-  app.post('/api/transfers/external', (req, res) => {
+  app.post('/api/transfers/external', async (req, res) => {
     const userId = getUserIdFromHeader(req);
     const { sourceAccountId, recipient, amountMinor, transferType, memo } = req.body;
 
-    const result = db.executeExternalTransfer(
+    const beneficiaryAccount = recipient?.accountOrIban || recipient?.accountNumberOrIban || recipient?.accountNumberUs || recipient?.accountNumberUk || recipient?.iban || '';
+    const beneficiaryName = recipient?.name || 'External Beneficiary';
+
+    const result = await processDemoTransfer({
       userId,
       sourceAccountId,
-      recipient,
-      Number(amountMinor),
-      transferType || 'WIRE_TRANSFER',
-      memo
-    );
+      beneficiaryAccount: String(beneficiaryAccount).trim(),
+      beneficiaryName: String(beneficiaryName).trim(),
+      amount: Number(amountMinor) / 100,
+      amountMinor: Number(amountMinor),
+      notes: memo || `Wire to ${beneficiaryName}`,
+      bankName: recipient?.bankName,
+      transferType: transferType || 'WIRE_TRANSFER'
+    });
 
     if (!result.success) {
-      return res.status(400).json({ error: result.error });
+      return res.status(400).json(result);
     }
+    res.json({ success: true, transactionId: result.transaction?.id, feeMinor: 0, ...result });
+  });
 
-    res.json({ 
-      success: true, 
-      transactionId: result.transactionId, 
-      feeMinor: result.feeMinor,
-      message: 'Outbound transfer successfully queued and settled through the clearing network.' 
-    });
+  // User Notifications Endpoint
+  app.get('/api/notifications', (req, res) => {
+    const userId = getUserIdFromHeader(req);
+    res.json({ notifications: db.getUserNotifications(userId) });
+  });
+
+  app.post('/api/notifications/:id/read', (req, res) => {
+    const { id } = req.params;
+    const notif = db.userNotifications.find(n => n.id === id);
+    if (notif) notif.isRead = true;
+    db.saveToDisk();
+    res.json({ success: true });
   });
 
   // --- WISE API TRANSFERS & RECIPIENTS ---
@@ -1188,180 +1646,36 @@ async function startServer() {
     const userId = getUserIdFromHeader(req);
     const { sourceAccountId, recipient, amountMinor, memo, destCurrency } = req.body;
 
-    const sourceAcc = db.accounts.get(sourceAccountId);
-    if (!sourceAcc) {
-      return res.status(404).json({ error: 'Source account not found.' });
-    }
-    if (sourceAcc.userId !== userId) {
-      return res.status(403).json({ error: 'Unauthorized account access.' });
-    }
-    if (sourceAcc.status !== 'ACTIVE') {
-      return res.status(400).json({ error: 'Account is not in active standing.' });
-    }
+    const beneficiaryAccount = recipient?.accountNumberOrIban || recipient?.accountOrIban || recipient?.accountNumberUs || recipient?.accountNumberUk || recipient?.iban || '';
+    const beneficiaryName = recipient?.name || 'Wise Beneficiary';
 
-    const numAmountMinor = Number(amountMinor);
-    if (isNaN(numAmountMinor) || numAmountMinor <= 0) {
-      return res.status(400).json({ error: 'Invalid transfer amount.' });
-    }
-
-    const targetCurr: CurrencyCode = destCurrency || recipient.currency || (recipient.region === 'UK' ? 'GBP' : recipient.region === 'EU' ? 'EUR' : 'USD');
-    const quote = await wiseService.createQuote(sourceAcc.currency, targetCurr, numAmountMinor);
-    const feeMinor = Math.round(quote.fee * 100);
-    const totalRequired = numAmountMinor + feeMinor;
-
-    if (sourceAcc.availableBalanceMinor < totalRequired) {
-      return res.status(400).json({ 
-        error: `Insufficient funds. Required: ${db.formatMinor(totalRequired, sourceAcc.currency)} (including Wise clearing fee of ${db.formatMinor(feeMinor, sourceAcc.currency)})` 
-      });
-    }
-
-    // Call Wise API execution
-    const ref = `WISE-${Date.now().toString().slice(-8)}`;
-    const wiseExec = await wiseService.executeTransfer({
-      sourceCurrency: sourceAcc.currency,
-      targetCurrency: targetCurr,
-      amountMinor: numAmountMinor,
-      recipient,
-      reference: ref
-    });
-
-    // Debit source account
-    sourceAcc.balanceMinor -= totalRequired;
-    sourceAcc.availableBalanceMinor -= totalRequired;
-
-    // High value transfers (>= $10,000) or international wires undergo Admin approval
-    const requiresAdminApproval = numAmountMinor >= 1000000 || recipient.region !== 'US';
-    const initialStatus: WiseTransferStatus = requiresAdminApproval ? 'PENDING' : 'PROCESSING';
-    const approvalStatus = requiresAdminApproval ? 'PENDING_APPROVAL' : 'APPROVED';
-
-    const userProfile = db.users.get(userId);
-    const transferRecord: TransferRecord = {
-      id: `tx_wise_${Date.now()}`,
+    const result = await processDemoTransfer({
       userId,
-      userName: userProfile ? `${userProfile.firstName} ${userProfile.lastName}` : 'Client Account',
-      userEmail: userProfile?.email || 'client@firstatlanticbank.com',
-      sourceAccountId: sourceAcc.id,
-      sourceAccountName: sourceAcc.name,
-      sourceAccountNumber: `••••${sourceAcc.accountNumber.slice(-4)}`,
-      amountMinor: numAmountMinor,
-      sourceCurrency: sourceAcc.currency,
-      destCurrency: targetCurr,
-      exchangeRate: quote.rate,
-      convertedAmountMinor: Math.round(quote.targetAmount * 100),
-      feeMinor,
-      recipient: {
-        id: recipient.id,
-        name: recipient.name,
-        bankName: recipient.bankName,
-        region: recipient.region,
-        accountNumberOrIban: recipient.accountNumberOrIban || recipient.accountNumberUk || recipient.accountNumberUs || recipient.iban || '',
-        sortCode: recipient.sortCode,
-        routingNumber: recipient.routingNumber,
-        iban: recipient.iban,
-        swiftBic: recipient.swiftBic,
-        country: recipient.country || (recipient.region === 'UK' ? 'United Kingdom' : recipient.region === 'EU' ? 'European Union' : 'United States'),
-        accountType: recipient.accountType,
-        email: recipient.email,
-        phone: recipient.phone
-      },
-      reference: ref,
-      memo: memo || `Wise Payout to ${recipient.name} via ${recipient.bankName}`,
-      wiseTransferId: wiseExec.wiseTransferId,
-      wiseQuoteId: wiseExec.wiseQuoteId,
-      wiseStatus: wiseExec.wiseStatus,
-      status: initialStatus,
-      approvalStatus,
-      estimatedDelivery: wiseExec.estimatedDelivery,
-      createdTimestamp: new Date().toISOString(),
-      updatedTimestamp: new Date().toISOString()
-    };
-
-    transferStore.createTransfer(transferRecord);
-
-    // Ledger entry
-    const ledgerItem = {
-      id: `led_wise_${Date.now()}`,
-      transactionId: transferRecord.id,
-      accountId: sourceAcc.id,
-      direction: 'DEBIT' as const,
-      amountMinor: numAmountMinor,
-      currency: sourceAcc.currency,
-      balanceAfterMinor: sourceAcc.balanceMinor,
-      description: memo || `Wise Outbound to ${recipient.name} (${recipient.bankName})`,
-      category: 'Transfers' as const,
-      counterparty: recipient.name,
-      status: (initialStatus === 'PENDING' ? 'PENDING' : 'SETTLED') as any,
-      channel: 'WIRE' as const,
-      referenceNumber: ref,
-      createdTimestamp: new Date().toISOString(),
-      effectiveTimestamp: new Date().toISOString(),
-      metadata: { wiseTransferId: wiseExec.wiseTransferId, feeMinor }
-    };
-    db.ledger.unshift(ledgerItem as any);
-
-    // Double-entry ledger integration
-    try {
-      doubleEntryLedger.commitJournalTransaction({
-        referenceNumber: ref,
-        transactionType: 'OUTBOUND_WIRE',
-        description: `Wise Dispatch to ${recipient.name}`,
-        lines: [
-          {
-            id: `jl_${Date.now()}_w1`,
-            accountId: sourceAcc.id,
-            accountType: 'CUSTOMER_DEPOSIT',
-            accountName: `${sourceAcc.name} (${sourceAcc.accountNumber})`,
-            direction: 'DEBIT',
-            amountMinor: totalRequired,
-            currency: sourceAcc.currency,
-            description: `Outbound wire transfer (${ref})`
-          },
-          {
-            id: `jl_${Date.now()}_w2`,
-            accountId: 'GL_1001_FED_RESERVE_CASH',
-            accountType: 'GL_ASSET',
-            accountName: 'Wise Clearing Settlement Account',
-            direction: 'CREDIT',
-            amountMinor: totalRequired,
-            currency: sourceAcc.currency,
-            description: `Wise Inbound Interbank Outflow (${ref})`
-          }
-        ],
-        effectiveAt: new Date().toISOString(),
-        metadata: { transferId: transferRecord.id, wiseTransferId: wiseExec.wiseTransferId }
-      });
-    } catch (e) {}
-
-    // Audit log
-    db.addAuditLog({
-      actorId: userId,
-      actorEmail: userProfile?.email || 'customer',
-      actorRole: 'CUSTOMER',
-      action: 'WISE_TRANSFER_DISPATCHED',
-      targetType: 'TRANSACTION',
-      targetId: transferRecord.id,
-      ipAddress: req.ip || '108.45.192.8',
-      userAgent: req.headers['user-agent'] || 'First Atlantic Portal',
-      details: `Dispatched Wise transfer of ${db.formatMinor(numAmountMinor, sourceAcc.currency)} to ${recipient.name} at ${recipient.bankName} [Status: ${initialStatus}]`
+      sourceAccountId,
+      beneficiaryAccount: String(beneficiaryAccount).trim(),
+      beneficiaryName: String(beneficiaryName).trim(),
+      amount: Number(amountMinor) / 100,
+      amountMinor: Number(amountMinor),
+      notes: memo || `Wise Payout to ${beneficiaryName}`,
+      bankName: recipient?.bankName,
+      transferType: 'WISE_GLOBAL_RAIL'
     });
 
-    // Notify admin if approval is needed
-    if (requiresAdminApproval) {
-      adminNotificationService.broadcastNotification({
-        title: 'New High-Value Transfer Awaiting Approval',
-        message: `${transferRecord.userName} queued an outbound transfer of ${db.formatMinor(numAmountMinor, sourceAcc.currency)} to ${recipient.name}. Manual compliance approval required.`,
-        category: 'COMPLIANCE',
-        priority: 'HIGH',
-        metadata: { transferId: transferRecord.id }
-      });
+    if (!result.success) {
+      return res.status(400).json(result);
     }
+
+    const transferRecord = transferStore.getTransferById(result.transaction?.id);
 
     res.json({
       success: true,
-      transfer: transferRecord,
-      message: requiresAdminApproval 
-        ? 'Transfer submitted and is currently PENDING institutional compliance approval.'
-        : 'Transfer dispatched successfully via Wise and is now PROCESSING.'
+      transfer: transferRecord || {
+        id: result.transaction?.id,
+        status: result.status === 'SUCCESS' ? 'COMPLETED' : 'PENDING',
+        amountMinor: Number(amountMinor)
+      },
+      status: result.status,
+      message: result.message
     });
   });
 
@@ -2437,6 +2751,88 @@ async function startServer() {
     }
 
     res.json({ success: true, message: 'Bank receiving account removed.' });
+  });
+
+  // --- ACCOUNT TRANSFER CONFIGURATION & TRANSFER LOGS (DEMO BANK RULES) ---
+  app.get('/api/admin/account-transfer-config', (req, res) => {
+    res.json({ configs: db.getAllAccountTransferConfigs() });
+  });
+
+  app.post('/api/admin/account-transfer-config', async (req, res) => {
+    const { accountId, defaultStatus } = req.body;
+    if (!accountId || !['instant_success', 'pending_review', 'manual_approval'].includes(defaultStatus)) {
+      return res.status(400).json({ error: 'Valid accountId and defaultStatus (instant_success | pending_review | manual_approval) required.' });
+    }
+    db.setAccountTransferConfig(accountId, defaultStatus);
+    const sb = getServerSupabase();
+    if (sb) {
+      await safeSbQuery(() => sb.from('account_transfer_config').upsert([{
+        account_id: accountId,
+        default_status: defaultStatus,
+        updated_at: new Date().toISOString()
+      }]));
+    }
+    res.json({ success: true, accountId, defaultStatus });
+  });
+
+  app.get('/api/admin/transactions-log', (req, res) => {
+    res.json({ transactions: db.getAllTransferAttempts() });
+  });
+
+  app.post('/api/admin/transfers/:id/approve', (req, res) => {
+    const { id } = req.params;
+    const tx = db.transferAttempts.find(t => t.id === id);
+    if (!tx) {
+      return res.status(404).json({ error: 'Transaction not found.' });
+    }
+    tx.status = 'SUCCESS';
+    tx.notes += ' [Approved by Institutional Administrator]';
+
+    const bAcc = db.findAccountByNumber(tx.beneficiary_account);
+    if (bAcc) {
+      const minor = Math.round(tx.amount * 100);
+      bAcc.balanceMinor += minor;
+      bAcc.availableBalanceMinor += minor;
+      db.addNotification(bAcc.userId, 'Transfer Received', `You received $${tx.amount.toFixed(2)} from institutional transfer approval.`, 'TRANSFER');
+    }
+
+    db.addNotification(tx.sender_id, 'Transfer Approved', `Your transfer of $${tx.amount.toFixed(2)} to ${tx.beneficiary_account} was approved.`, 'TRANSFER');
+    db.saveToDisk();
+
+    const sb = getServerSupabase();
+    if (sb) {
+      safeSbQuery(() => sb.from('transactions').update({ status: 'SUCCESS', notes: tx.notes }).eq('id', id));
+    }
+
+    res.json({ success: true, transaction: tx });
+  });
+
+  app.post('/api/admin/transfers/:id/reject', (req, res) => {
+    const { id } = req.params;
+    const tx = db.transferAttempts.find(t => t.id === id);
+    if (!tx) {
+      return res.status(404).json({ error: 'Transaction not found.' });
+    }
+    tx.status = 'FAILED';
+    tx.notes += ' [Rejected by Institutional Administrator]';
+
+    // Refund sender balance
+    const sAcc = Array.from(db.accounts.values()).find(a => a.userId === tx.sender_id);
+    if (sAcc) {
+      const minor = Math.round(tx.amount * 100);
+      sAcc.balanceMinor += minor;
+      sAcc.availableBalanceMinor += minor;
+    }
+
+    db.addNotification(tx.sender_id, 'Transfer Rejected', `Your transfer of $${tx.amount.toFixed(2)} to ${tx.beneficiary_account} was rejected. Funds refunded.`, 'TRANSFER');
+    db.saveToDisk();
+
+    const sb = getServerSupabase();
+    if (sb) {
+      safeSbQuery(() => sb.from('transactions').update({ status: 'FAILED', notes: tx.notes }).eq('id', id));
+    }
+
+    res.json({ success: true, transaction: tx });
   });
 
   // Public endpoint for clients to view verified bank deposit & wire receiving instructions

@@ -155,7 +155,7 @@ export const BillPayPage: React.FC = () => {
             </span>
           </div>
 
-          <form onSubmit={handlePay} className="space-y-4">
+          <form noValidate onSubmit={handlePay} className="space-y-4">
             <div>
               <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1">
                 Pay From Account

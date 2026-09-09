@@ -27,7 +27,9 @@ import {
   ExternalLink,
   Receipt,
   FileCheck2,
-  Calculator
+  Calculator,
+  UserCheck,
+  Plus
 } from 'lucide-react';
 import { CurrencyCode } from '../../types';
 import { REGISTERED_BANKS, RegisteredBank, OTHER_CUSTOM_BANK_ID, DispatchNotificationRecord } from '../../data/banksData';
@@ -38,8 +40,9 @@ import { supabase } from '../../lib/supabaseClient';
 import { LocalBankDetailsCard } from '../../components/transfers/LocalBankDetailsCard';
 import { WiseTransferFlow } from '../../components/transfers/WiseTransferFlow';
 import { TransferStatusTracker } from '../../components/transfers/TransferStatusTracker';
+import { AddRecipientModal } from '../../components/transfers/AddRecipientModal';
 
-const BANK_ACCOUNT_REGEX = /^[A-Za-z0-9]{6,34}$/;
+const BANK_ACCOUNT_REGEX = /^[A-Za-z0-9]{4,34}$/;
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const DEMO_TEST_ACCOUNT = '8282827272';
 
@@ -54,11 +57,14 @@ export const TransfersPage: React.FC = () => {
     region,
     setCurrentView,
     wiseTransfers,
-    fetchWiseTransfers
+    fetchWiseTransfers,
+    recipients,
+    fetchRecipients
   } = useBank();
 
   // Primary Hub Tab
   const [activeMainTab, setActiveMainTab] = useState<'WISE_RAILS' | 'TRACKER' | 'RECEIVE_DETAILS' | 'DIRECT_WIRE'>('WISE_RAILS');
+  const [isDirectWireAddRecipientOpen, setIsDirectWireAddRecipientOpen] = useState(false);
 
   // Mode: INTERNAL (Between accounts), DOMESTIC (US / UK Clearing), INTERNATIONAL (Global SWIFT FX)
   const [transferMode, setTransferMode] = useState<'INTERNAL' | 'DOMESTIC' | 'INTERNATIONAL'>('DOMESTIC');
@@ -67,6 +73,7 @@ export const TransfersPage: React.FC = () => {
   const [amountStr, setAmountStr] = useState('5000');
   const [description, setDescription] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
+  const [transferStep, setTransferStep] = useState<'IDLE' | 'PENDING' | 'PROCESSING' | 'SUCCESS' | 'FAILED'>('IDLE');
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [transferSuccess, setTransferSuccess] = useState<any>(null);
   const [showCalculator, setShowCalculator] = useState(true);
@@ -146,6 +153,34 @@ export const TransfersPage: React.FC = () => {
     setRecipientSwift('');
   };
 
+  const handleSelectSavedRecipient = (rec: any) => {
+    if (!rec) return;
+    setRecipientName(rec.name || '');
+    setIsCustomBank(true);
+    setCustomBankName(rec.bankName || 'Beneficiary Bank');
+    if (rec.sortCode || rec.routingNumber) {
+      setRecipientRouting(rec.sortCode || rec.routingNumber || '');
+    }
+    if (rec.swiftBic) {
+      setRecipientSwift(rec.swiftBic);
+    }
+    const acc = rec.accountNumberOrIban || rec.accountNumberUk || rec.accountNumberUs || rec.iban || '';
+    setRecipientAccount(acc);
+    if (rec.country) {
+      setRecipientCountry(rec.country);
+    }
+    if (rec.email) {
+      setRecipientEmail(rec.email);
+    }
+    if (rec.phone) {
+      setRecipientPhone(rec.phone);
+    }
+    if (rec.currency) {
+      setDestCurrency(rec.currency);
+    }
+    showToast('INFO', 'Beneficiary Loaded', `Details loaded for ${rec.name}`);
+  };
+
   // Input mask to enforce alphanumeric and allow standard account numbers, roll numbers, and IBANs
   const handleBankAccountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const clean = e.target.value.replace(/[^A-Za-z0-9- ]/g, '').slice(0, 34);
@@ -190,14 +225,14 @@ export const TransfersPage: React.FC = () => {
         };
       }
 
-      // 3. Bank Account field: must be 6-34 alphanumeric characters
+      // 3. Bank Account field: must be 4-34 alphanumeric characters
       const cleanAccount = String(recipientAccount || '').replace(/[\s-]/g, '').trim();
       const isTestAcc = cleanAccount === DEMO_TEST_ACCOUNT;
       if (!cleanAccount || (!BANK_ACCOUNT_REGEX.test(cleanAccount) && !isTestAcc)) {
         return {
           isValid: false,
           errorField: 'bankAccount',
-          errorMessage: 'Bank Account or IBAN must be between 6 and 34 characters.'
+          errorMessage: 'Bank Account or IBAN must be between 4 and 34 characters.'
         };
       }
 
@@ -228,56 +263,36 @@ export const TransfersPage: React.FC = () => {
   const handleExecuteTransfer = async () => {
     const validation = validateTransferForm();
     if (!validation.isValid) {
-      setShowConfirmModal(false);
       showToast('ERROR', 'Validation Error', validation.errorMessage || 'Please check transfer details.', 3000);
       return;
     }
 
     setIsProcessing(true);
+    // UI Status Flow: PENDING -> PROCESSING -> SUCCESS / FAILED
+    setTransferStep('PENDING');
+    showToast('INFO', 'Transfer Pending', 'Initiating transfer and validating balance...', 2500);
+
     try {
       const activeBank = REGISTERED_BANKS.find(b => b.id === selectedBankId);
       const bankTitle = isCustomBank ? customBankName : (activeBank?.name || customBankName || 'External Commercial Bank');
-      const rail = transferMode === 'INTERNAL'
-        ? 'First Atlantic Authoritative Ledger'
-        : activeBank?.clearingRail || (transferMode === 'DOMESTIC' ? 'Fedwire / Faster Payments Direct' : 'SWIFT GPI Cross-Border');
-
-      const txRef = `FAB-WIRE-${Date.now().toString().slice(-8)}`;
       const transferAmount = parseFloat(amountStr) || (amountMinor / 100);
-      const transferFee = (wireFeeMinor || 0) / 100;
-      const txUuid = typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `00000000-0000-4000-8000-${Date.now().toString(16).padStart(12, '0')}`;
-      const fromAccStr = String(sourceAccount?.accountNumberFull || sourceAccount?.accountNumber || sourceAccountId);
       const beneficiaryStr = transferMode === 'INTERNAL' ? (destAccount?.name || 'Internal Transfer') : recipientName;
-      const toBankStr = transferMode === 'INTERNAL' ? 'First Atlantic Bank' : bankTitle;
 
-      // BUG 3 FIX: Create row in Supabase 'transactions' table with status='pending'
-      const supabaseTxRow = {
-        id: txUuid,
-        user_id: currentUser?.id,
-        from_account: fromAccStr,
-        to_bank: toBankStr,
-        beneficiary_name: beneficiaryStr,
-        amount: transferAmount,
-        fee: transferFee,
-        status: 'pending',
-        created_at: new Date().toISOString()
-      };
+      // Status advance to PROCESSING
+      await new Promise(r => setTimeout(r, 600));
+      setTransferStep('PROCESSING');
 
-      try {
-        await supabase.from('transactions').insert(supabaseTxRow);
-      } catch (sbErr) {
-        console.warn('Notice inserting transfer into Supabase transactions table:', sbErr);
-      }
-
+      let res: any;
       // Execute transfer on authoritative ledger
       if (transferMode === 'INTERNAL') {
-        await executeTransfer(
+        res = await executeTransfer(
           sourceAccountId,
           destAccountId,
           amountMinor,
           description || `Transfer to ${destAccount?.name}`
         );
       } else {
-        await executeExternalTransfer(
+        res = await executeExternalTransfer(
           sourceAccountId,
           {
             name: recipientName,
@@ -293,14 +308,27 @@ export const TransfersPage: React.FC = () => {
         );
       }
 
-      setShowConfirmModal(false);
-      // Show toast "Transfer Submitted" as explicitly requested
-      showToast('SUCCESS', 'Transfer Submitted', 'Transfer queued with status: Pending', 4000);
+      if (res && res.success) {
+        if (res.status === 'PENDING') {
+          setTransferStep('PENDING');
+          showToast('INFO', 'Transfer Pending', 'Transfer queued with status: Pending', 4000);
+        } else {
+          setTransferStep('SUCCESS');
+          showToast('SUCCESS', 'Transfer Successful', `Transfer to ${beneficiaryStr} completed successfully.`, 4000);
+        }
 
-      // Redirect to /activity page that lists all transactions with status badge
-      window.location.hash = 'activity';
-      setCurrentView('DASHBOARD_STATEMENTS');
+        setTimeout(() => {
+          setShowConfirmModal(false);
+          setTransferStep('IDLE');
+          window.location.hash = 'activity';
+          setCurrentView('DASHBOARD_STATEMENTS');
+        }, 1400);
+      } else {
+        setTransferStep('FAILED');
+        showToast('ERROR', 'Transfer Failed', res?.error || 'Unable to execute transfer.');
+      }
     } catch (err: any) {
+      setTransferStep('FAILED');
       const isNetwork = (typeof navigator !== 'undefined' && !navigator.onLine) ||
         err?.name === 'TypeError' ||
         err?.message?.includes('fetch') ||
@@ -952,6 +980,46 @@ export const TransfersPage: React.FC = () => {
 
               {/* Beneficiary Details Inputs */}
               <div className="pt-3 border-t border-white/60 dark:border-white/10 space-y-3">
+                {/* Saved Beneficiaries Quick-Select */}
+                <div className="p-3 rounded-xl bg-white/50 dark:bg-white/[0.04] border border-white/60 dark:border-white/10 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                      <UserCheck className="w-3.5 h-3.5 text-[#d97706] dark:text-[#f8c22d]" />
+                      <span>Saved Beneficiaries</span>
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setIsDirectWireAddRecipientOpen(true)}
+                      className="text-xs text-[#004281] dark:text-sky-400 font-bold hover:underline flex items-center gap-1 cursor-pointer"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      <span>+ Add New</span>
+                    </button>
+                  </div>
+                  {recipients.length > 0 ? (
+                    <div className="flex flex-wrap gap-1.5">
+                      {recipients.slice(0, 6).map(r => (
+                        <button
+                          key={r.id}
+                          type="button"
+                          onClick={() => handleSelectSavedRecipient(r)}
+                          className={`px-2.5 py-1 rounded-lg text-xs font-medium border transition-all cursor-pointer flex items-center gap-1.5 ${
+                            recipientName === r.name
+                              ? 'bg-[#004281] text-white border-[#004281]'
+                              : 'bg-white/80 dark:bg-slate-800 text-slate-700 dark:text-slate-200 border-slate-200 dark:border-slate-700 hover:border-[#004281]'
+                          }`}
+                        >
+                          <span>{r.region === 'UK' ? '🇬🇧' : r.region === 'US' ? '🇺🇸' : '🇪🇺'}</span>
+                          <span className="truncate max-w-[120px]">{r.name}</span>
+                        </button>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-[11px] text-slate-500">
+                      No saved beneficiaries yet. Tap <strong>+ Add New</strong> to register one with verified bank routing.
+                    </p>
+                  )}
+                </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
                     <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
@@ -1241,10 +1309,10 @@ export const TransfersPage: React.FC = () => {
                 <span className="text-slate-500 dark:text-slate-400 font-sans">Origin:</span>
                 <span className="font-bold text-slate-900 dark:text-white">{sourceAccount?.name}</span>
               </div>
-              <div className="flex justify-between">
-                <span className="text-slate-500 dark:text-slate-400 font-sans">Beneficiary:</span>
-                <span className="font-bold font-sans text-slate-900 dark:text-white">
-                  {transferMode === 'INTERNAL' ? destAccount?.name : recipientName}
+              <div className="flex justify-between items-center bg-amber-500/10 dark:bg-amber-400/10 p-2.5 rounded-xl border border-amber-500/20">
+                <span className="text-amber-900 dark:text-amber-200 font-sans font-semibold">Beneficiary:</span>
+                <span className="font-bold font-sans text-amber-950 dark:text-amber-100 text-sm">
+                  {transferMode === 'INTERNAL' ? (destAccount?.name || 'Internal Account') : (recipientName || 'Beneficiary')}
                 </span>
               </div>
               {transferMode !== 'INTERNAL' && (
@@ -1262,6 +1330,49 @@ export const TransfersPage: React.FC = () => {
                 </span>
               </div>
             </div>
+
+            {/* Live Interactive Transaction Status Flow Stepper */}
+            {transferStep !== 'IDLE' && (
+              <div className="p-3.5 rounded-2xl bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 space-y-2">
+                <div className="flex items-center justify-between text-xs font-bold">
+                  <span className="text-slate-500">Execution Rail Status:</span>
+                  <span className={`px-2.5 py-0.5 rounded-full font-mono text-[11px] font-bold ${
+                    transferStep === 'SUCCESS' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300' :
+                    transferStep === 'FAILED' ? 'bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-300' :
+                    transferStep === 'PROCESSING' ? 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300' :
+                    'bg-sky-100 text-sky-700 dark:bg-sky-950 dark:text-sky-300'
+                  }`}>
+                    {transferStep}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2 text-xs text-slate-700 dark:text-slate-300">
+                  {transferStep === 'PENDING' && (
+                    <>
+                      <RefreshCw className="w-4 h-4 animate-spin text-sky-500 shrink-0" />
+                      <span>Validating sender balance &amp; formatting account...</span>
+                    </>
+                  )}
+                  {transferStep === 'PROCESSING' && (
+                    <>
+                      <RefreshCw className="w-4 h-4 animate-spin text-amber-500 shrink-0" />
+                      <span>Deducting balance &amp; queuing settlement rails...</span>
+                    </>
+                  )}
+                  {transferStep === 'SUCCESS' && (
+                    <>
+                      <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
+                      <span>Transfer processed successfully. Funds settled.</span>
+                    </>
+                  )}
+                  {transferStep === 'FAILED' && (
+                    <>
+                      <AlertCircle className="w-4 h-4 text-rose-500 shrink-0" />
+                      <span>Transfer failed. Please verify balance or recipient credentials.</span>
+                    </>
+                  )}
+                </div>
+              </div>
+            )}
 
             <div className="flex gap-3 pt-2">
               <button
@@ -1292,6 +1403,15 @@ export const TransfersPage: React.FC = () => {
       )}
         </>
       )}
+      {/* Add Recipient Modal for Direct Wire tab */}
+      <AddRecipientModal
+        isOpen={isDirectWireAddRecipientOpen}
+        onClose={() => setIsDirectWireAddRecipientOpen(false)}
+        onRecipientAdded={(rec) => {
+          fetchRecipients();
+          handleSelectSavedRecipient(rec);
+        }}
+      />
     </div>
   );
 };

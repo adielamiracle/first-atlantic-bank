@@ -13,7 +13,22 @@ export async function safeFetchJson<T = any>(
   init?: RequestInit
 ): Promise<SafeFetchResult<T>> {
   try {
-    const res = await fetch(input, init);
+    const options: RequestInit = { ...(init || {}) };
+    const headers = new Headers(options.headers || {});
+    if (!headers.has('Authorization')) {
+      const storedToken = 
+        (typeof localStorage !== 'undefined' && (
+          localStorage.getItem('token') || 
+          localStorage.getItem('fab_session_token') || 
+          localStorage.getItem('admin_token')
+        )) || null;
+      if (storedToken) {
+        headers.set('Authorization', `Bearer ${storedToken}`);
+      }
+    }
+    options.headers = headers;
+
+    const res = await fetch(input, options);
     const contentType = res.headers.get('content-type') || '';
     const rawText = await res.text();
     const text = (rawText || '').trim();

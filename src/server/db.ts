@@ -71,6 +71,9 @@ export class BankDatabase {
   receivingAccounts: Map<string, BankReceivingAccount> = new Map();
   userPasswords: Map<string, string> = new Map(); // demo hashed simulation
   activeSessions: Map<string, { userId: string; token: string; device: string; ip: string; loginTime: string }> = new Map();
+  accountTransferConfigs: Map<string, 'instant_success' | 'pending_review' | 'manual_approval'> = new Map();
+  userNotifications: Array<{ id: string; userId: string; title: string; message: string; type: string; timestamp: string; isRead: boolean }> = [];
+  transferAttempts: Array<{ id: string; sender_id: string; beneficiary_account: string; amount: number; status: string; timestamp: string; notes: string }> = [];
 
   private dbFilePath = path.join(process.cwd(), 'data', 'bank_database.json');
   private saveTimeout: any = null;
@@ -174,6 +177,9 @@ export class BankDatabase {
         receivingAccounts: Array.from(this.receivingAccounts.entries()),
         userPasswords: Array.from(this.userPasswords.entries()),
         activeSessions: Array.from(this.activeSessions.entries()),
+        accountTransferConfigs: Array.from(this.accountTransferConfigs.entries()),
+        userNotifications: this.userNotifications,
+        transferAttempts: this.transferAttempts,
         savedAt: new Date().toISOString()
       };
       fs.writeFileSync(this.dbFilePath, JSON.stringify(serialized, null, 2), 'utf-8');
@@ -210,6 +216,9 @@ export class BankDatabase {
     if (data.receivingAccounts) this.receivingAccounts = new Map(data.receivingAccounts);
     if (data.userPasswords) this.userPasswords = new Map(data.userPasswords);
     if (data.activeSessions) this.activeSessions = new Map(data.activeSessions);
+    if (data.accountTransferConfigs) this.accountTransferConfigs = new Map(data.accountTransferConfigs);
+    if (data.userNotifications) this.userNotifications = data.userNotifications;
+    if (data.transferAttempts) this.transferAttempts = data.transferAttempts;
   }
 
   seedInitialData() {
@@ -4013,6 +4022,77 @@ export class BankDatabase {
     this.saveToDisk();
 
     return { success: true, user };
+  }
+
+  // -------------------------------------------------------------
+  // DEMO TRANSFER BEHAVIOR & CONFIGURATION (PER-ACCOUNT)
+  // -------------------------------------------------------------
+  getAccountTransferConfig(accountId: string): 'instant_success' | 'pending_review' | 'manual_approval' {
+    return this.accountTransferConfigs.get(accountId) || 'instant_success';
+  }
+
+  setAccountTransferConfig(accountId: string, status: 'instant_success' | 'pending_review' | 'manual_approval') {
+    this.accountTransferConfigs.set(accountId, status);
+    this.saveToDisk();
+  }
+
+  getAllAccountTransferConfigs(): Record<string, 'instant_success' | 'pending_review' | 'manual_approval'> {
+    const obj: Record<string, 'instant_success' | 'pending_review' | 'manual_approval'> = {};
+    for (const [accId, cfg] of this.accountTransferConfigs.entries()) {
+      obj[accId] = cfg;
+    }
+    return obj;
+  }
+
+  findAccountByNumber(accountOrIban: string): BankAccount | undefined {
+    if (!accountOrIban) return undefined;
+    const clean = accountOrIban.replace(/[^A-Za-z0-9]/g, '').toUpperCase();
+    for (const acc of this.accounts.values()) {
+      const accFull = (acc.accountNumberFull || '').replace(/[^A-Za-z0-9]/g, '').toUpperCase();
+      const accNum = (acc.accountNumber || '').replace(/[^A-Za-z0-9]/g, '').toUpperCase();
+      const iban = ((acc as any).iban || '').replace(/[^A-Za-z0-9]/g, '').toUpperCase();
+      if (accFull === clean || accNum === clean || iban === clean) {
+        return acc;
+      }
+      if (clean.length >= 4 && accFull.endsWith(clean)) {
+        return acc;
+      }
+    }
+    return undefined;
+  }
+
+  addNotification(userId: string, title: string, message: string, type: string = 'TRANSFER') {
+    const notif = {
+      id: `notif_${Date.now()}_${Math.floor(100 + Math.random() * 900)}`,
+      userId,
+      title,
+      message,
+      type,
+      timestamp: new Date().toISOString(),
+      isRead: false
+    };
+    this.userNotifications.unshift(notif);
+    if (this.userNotifications.length > 200) {
+      this.userNotifications.pop();
+    }
+    this.saveToDisk();
+    return notif;
+  }
+
+  getUserNotifications(userId: string) {
+    return this.userNotifications.filter(n => n.userId === userId);
+  }
+
+  recordTransferAttempt(tx: { id: string; sender_id: string; beneficiary_account: string; amount: number; status: string; timestamp: string; notes: string }) {
+    this.transferAttempts.unshift(tx);
+    if (this.transferAttempts.length > 500) {
+      this.transferAttempts.pop();
+    }
+    this.saveToDisk();
+  }
+
+  getAllTransferAttempts() {
+    return this.transferAttempts;
   }
 }
 

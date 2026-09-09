@@ -576,7 +576,7 @@ export const AccountDetailPage: React.FC = () => {
           ) : (
             /* Real Professional Account Application Form */
             <GlassPanel variant="standard" className="p-6 sm:p-10 max-w-4xl mx-auto">
-              <form onSubmit={handleApplicationSubmit} className="space-y-8">
+              <form noValidate onSubmit={handleApplicationSubmit} className="space-y-8">
                 {/* Form Banner */}
                 <div className="border-b border-white/20 dark:border-white/10 pb-6 space-y-2">
                   <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-[#8c6d37] dark:text-[#f8c22d]">

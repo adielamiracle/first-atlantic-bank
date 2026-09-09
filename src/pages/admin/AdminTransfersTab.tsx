@@ -18,11 +18,16 @@ import {
   AlertCircle,
   FileText,
   DollarSign,
-  Send
+  Send,
+  SlidersHorizontal,
+  Settings,
+  Check,
+  User
 } from 'lucide-react';
 
 export const AdminTransfersTab: React.FC = () => {
   const {
+    accounts,
     wiseTransfers,
     fetchWiseTransfers,
     approveWiseTransfer,
@@ -33,9 +38,21 @@ export const AdminTransfersTab: React.FC = () => {
     showToast
   } = useBank();
 
-  const [activeSubTab, setActiveSubTab] = useState<'TRANSFERS' | 'WEBHOOKS'>('TRANSFERS');
+  const [activeSubTab, setActiveSubTab] = useState<'TRANSFERS' | 'CONFIG' | 'ATTEMPTS_LOG' | 'WEBHOOKS'>('TRANSFERS');
   const [filter, setFilter] = useState<'ALL' | 'PENDING' | 'PROCESSING' | 'COMPLETED' | 'FAILED'>('ALL');
   const [searchQuery, setSearchQuery] = useState('');
+
+  // Transfer Behavior Config State
+  const [accountConfigs, setAccountConfigs] = useState<Record<string, 'instant_success' | 'pending_review' | 'manual_approval'>>({});
+  const [isLoadingConfigs, setIsLoadingConfigs] = useState(false);
+  const [savingAccountId, setSavingAccountId] = useState<string | null>(null);
+
+  // Transfer Attempts Log State
+  const [transactionsLog, setTransactionsLog] = useState<any[]>([]);
+  const [isLoadingLogs, setIsLoadingLogs] = useState(false);
+  const [logFilter, setLogFilter] = useState<'ALL' | 'PENDING' | 'PROCESSING' | 'SUCCESS' | 'FAILED'>('ALL');
+  const [logSearchQuery, setLogSearchQuery] = useState('');
+  const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
 
   // Modals state
   const [inspectTransfer, setInspectTransfer] = useState<TransferRecord | null>(null);
@@ -52,10 +69,131 @@ export const AdminTransfersTab: React.FC = () => {
   const [simStatus, setSimStatus] = useState<WiseTransferStatus>('outgoing_payment_sent');
   const [isSimulating, setIsSimulating] = useState(false);
 
+  const getAdminAuthHeader = () => {
+    const token = localStorage.getItem('token') || localStorage.getItem('fab_token') || localStorage.getItem('admin_token');
+    return { Authorization: token ? `Bearer ${token}` : 'Bearer adm_super_admin' };
+  };
+
+  const fetchAccountConfigs = async () => {
+    setIsLoadingConfigs(true);
+    try {
+      const res = await fetch('/api/admin/account-transfer-config', {
+        headers: getAdminAuthHeader()
+      });
+      const data = await res.json();
+      if (res.ok && data.configs) {
+        const map: Record<string, 'instant_success' | 'pending_review' | 'manual_approval'> = {};
+        data.configs.forEach((c: any) => {
+          map[c.account_id] = c.default_status;
+        });
+        setAccountConfigs(map);
+      }
+    } catch (err: any) {
+      console.warn('Error fetching account configs:', err);
+    } finally {
+      setIsLoadingConfigs(false);
+    }
+  };
+
+  const saveAccountConfig = async (accountId: string, defaultStatus: 'instant_success' | 'pending_review' | 'manual_approval') => {
+    setSavingAccountId(accountId);
+    try {
+      const res = await fetch('/api/admin/account-transfer-config', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...getAdminAuthHeader() },
+        body: JSON.stringify({ accountId, defaultStatus })
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setAccountConfigs(prev => ({ ...prev, [accountId]: defaultStatus }));
+        showToast('SUCCESS', 'Policy Updated', `Transfer behavior for account set to "${defaultStatus}".`);
+      } else {
+        showToast('ERROR', 'Update Failed', data.error || 'Failed to update policy.');
+      }
+    } catch (err: any) {
+      showToast('ERROR', 'Update Failed', err.message);
+    } finally {
+      setSavingAccountId(null);
+    }
+  };
+
+  const fetchTransactionsLog = async () => {
+    setIsLoadingLogs(true);
+    try {
+      const res = await fetch('/api/admin/transactions-log', {
+        headers: getAdminAuthHeader()
+      });
+      const data = await res.json();
+      if (res.ok && data.transactions) {
+        setTransactionsLog(data.transactions);
+      }
+    } catch (err: any) {
+      console.warn('Error fetching transactions log:', err);
+    } finally {
+      setIsLoadingLogs(false);
+    }
+  };
+
+  const handleApproveAttempt = async (txId: string) => {
+    setActionLoadingId(txId);
+    try {
+      const res = await fetch(`/api/admin/transfers/${txId}/approve`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...getAdminAuthHeader() },
+        body: JSON.stringify({ notes: 'Admin approved transfer clearance.' })
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        showToast('SUCCESS', 'Transfer Approved', 'Transfer marked as SUCCESS and funds credited to beneficiary.');
+        await fetchTransactionsLog();
+      } else {
+        showToast('ERROR', 'Approval Failed', data.error || 'Unable to approve transfer.');
+      }
+    } catch (err: any) {
+      showToast('ERROR', 'Approval Failed', err.message);
+    } finally {
+      setActionLoadingId(null);
+    }
+  };
+
+  const handleRejectAttempt = async (txId: string) => {
+    const reason = prompt('Enter rejection justification reason:', 'Beneficiary details invalid or compliance block.');
+    if (!reason) return;
+    setActionLoadingId(txId);
+    try {
+      const res = await fetch(`/api/admin/transfers/${txId}/reject`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...getAdminAuthHeader() },
+        body: JSON.stringify({ reason })
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        showToast('SUCCESS', 'Transfer Rejected', 'Transfer marked as FAILED and funds refunded to sender.');
+        await fetchTransactionsLog();
+      } else {
+        showToast('ERROR', 'Rejection Failed', data.error || 'Unable to reject transfer.');
+      }
+    } catch (err: any) {
+      showToast('ERROR', 'Rejection Failed', err.message);
+    } finally {
+      setActionLoadingId(null);
+    }
+  };
+
   useEffect(() => {
     fetchWiseTransfers(true);
     fetchWebhookLogs();
+    fetchAccountConfigs();
+    fetchTransactionsLog();
   }, []);
+
+  useEffect(() => {
+    if (activeSubTab === 'CONFIG') {
+      fetchAccountConfigs();
+    } else if (activeSubTab === 'ATTEMPTS_LOG') {
+      fetchTransactionsLog();
+    }
+  }, [activeSubTab]);
 
   useEffect(() => {
     if (wiseTransfers.length > 0 && !simTransferId) {
@@ -156,11 +294,11 @@ export const AdminTransfersTab: React.FC = () => {
         </div>
 
         {/* Sub-tab navigation */}
-        <div className="flex items-center gap-2 bg-slate-100 dark:bg-slate-800/80 p-1 rounded-xl">
+        <div className="flex flex-wrap items-center gap-2 bg-slate-100 dark:bg-slate-800/80 p-1 rounded-xl">
           <button
             type="button"
             onClick={() => setActiveSubTab('TRANSFERS')}
-            className={`py-1.5 px-3.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+            className={`py-1.5 px-3 rounded-lg text-xs font-bold transition-all cursor-pointer ${
               activeSubTab === 'TRANSFERS'
                 ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs'
                 : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
@@ -170,8 +308,32 @@ export const AdminTransfersTab: React.FC = () => {
           </button>
           <button
             type="button"
+            onClick={() => setActiveSubTab('CONFIG')}
+            className={`py-1.5 px-3 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+              activeSubTab === 'CONFIG'
+                ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs'
+                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+            }`}
+          >
+            <SlidersHorizontal className="w-3.5 h-3.5 text-blue-500" />
+            <span>Transfer Behavior Config</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveSubTab('ATTEMPTS_LOG')}
+            className={`py-1.5 px-3 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+              activeSubTab === 'ATTEMPTS_LOG'
+                ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs'
+                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+            }`}
+          >
+            <FileText className="w-3.5 h-3.5 text-amber-500" />
+            <span>Transfer Attempts Log ({transactionsLog.length})</span>
+          </button>
+          <button
+            type="button"
             onClick={() => setActiveSubTab('WEBHOOKS')}
-            className={`py-1.5 px-3.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+            className={`py-1.5 px-3 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
               activeSubTab === 'WEBHOOKS'
                 ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs'
                 : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
@@ -410,6 +572,286 @@ export const AdminTransfersTab: React.FC = () => {
                       </tr>
                     ))
                   )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* CONFIG SUB-TAB: Per-Account Transfer Behavior */}
+      {activeSubTab === 'CONFIG' && (
+        <div className="space-y-4">
+          <div className="bg-white dark:bg-[#0f172a] rounded-2xl p-5 sm:p-6 border border-slate-200 dark:border-slate-800 shadow-xs space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100 dark:border-slate-800">
+              <div>
+                <h3 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                  <SlidersHorizontal className="w-4 h-4 text-blue-500" />
+                  <span>Account Transfer Response Policies</span>
+                </h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                  Configure simulation behavior per account: Instant Settlement, 10-second Pending Review, or Manual Compliance Approval.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={fetchAccountConfigs}
+                disabled={isLoadingConfigs}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer"
+              >
+                <RefreshCw className={`w-3.5 h-3.5 ${isLoadingConfigs ? 'animate-spin' : ''}`} />
+                <span>Refresh Configs</span>
+              </button>
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse text-xs">
+                <thead>
+                  <tr className="border-b border-slate-200 dark:border-slate-800 text-[11px] uppercase tracking-wider text-slate-400">
+                    <th className="py-3 px-3">Account Number</th>
+                    <th className="py-3 px-3">Account Title / Owner</th>
+                    <th className="py-3 px-3">Current Balance</th>
+                    <th className="py-3 px-3">Transfer Response Behavior</th>
+                    <th className="py-3 px-3 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 dark:divide-slate-800 font-mono">
+                  {accounts.length === 0 ? (
+                    <tr>
+                      <td colSpan={5} className="py-8 text-center text-slate-400 font-sans">
+                        No customer accounts loaded.
+                      </td>
+                    </tr>
+                  ) : (
+                    accounts.map(acc => {
+                      const currentPolicy = accountConfigs[acc.id] || 'instant_success';
+                      const isSaving = savingAccountId === acc.id;
+
+                      return (
+                        <tr key={acc.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30">
+                          <td className="py-3.5 px-3 font-bold text-slate-900 dark:text-white">
+                            {acc.accountNumberFull || acc.accountNumber}
+                            <span className="block text-[10px] text-slate-400 font-sans">{acc.type} • {acc.currency}</span>
+                          </td>
+                          <td className="py-3.5 px-3 font-sans text-slate-700 dark:text-slate-300">
+                            <span className="font-semibold">{acc.name}</span>
+                            <span className="block text-[10px] text-slate-400 font-mono">ID: {acc.id}</span>
+                          </td>
+                          <td className="py-3.5 px-3 font-bold text-emerald-600 dark:text-emerald-400">
+                            {formatCurrency(acc.balanceMinor, acc.currency)}
+                          </td>
+                          <td className="py-3.5 px-3 font-sans">
+                            <select
+                              value={currentPolicy}
+                              onChange={e => {
+                                const val = e.target.value as any;
+                                setAccountConfigs(prev => ({ ...prev, [acc.id]: val }));
+                              }}
+                              className="px-2.5 py-1.5 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 font-medium cursor-pointer"
+                            >
+                              <option value="instant_success">Instant Success (Immediate Deduction &amp; Settle)</option>
+                              <option value="pending_review">Pending Review (Holds PENDING for 10s then auto SUCCESS)</option>
+                              <option value="manual_approval">Manual Approval (Holds PENDING until Admin approves)</option>
+                            </select>
+                          </td>
+                          <td className="py-3.5 px-3 text-right">
+                            <button
+                              type="button"
+                              onClick={() => saveAccountConfig(acc.id, accountConfigs[acc.id] || 'instant_success')}
+                              disabled={isSaving}
+                              className="px-3 py-1.5 rounded-xl bg-[#004281] hover:bg-[#003366] text-white text-xs font-bold transition-all shadow-xs cursor-pointer disabled:opacity-50 inline-flex items-center gap-1.5"
+                            >
+                              {isSaving ? <RefreshCw className="w-3 h-3 animate-spin" /> : <Check className="w-3 h-3" />}
+                              <span>Save Policy</span>
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
+
+            <div className="p-3 rounded-xl bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-900 text-xs text-blue-800 dark:text-blue-300 flex items-center gap-2">
+              <ShieldCheck className="w-4 h-4 shrink-0 text-blue-600 dark:text-blue-400" />
+              <span>
+                All policy updates are persisted immediately to the Supabase / in-memory <strong>account_transfer_config</strong> table and take effect on the next client transfer.
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ATTEMPTS_LOG SUB-TAB: Audit Log of All Transfer Attempts */}
+      {activeSubTab === 'ATTEMPTS_LOG' && (
+        <div className="space-y-4">
+          <div className="bg-white dark:bg-[#0f172a] rounded-2xl p-5 sm:p-6 border border-slate-200 dark:border-slate-800 shadow-xs space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100 dark:border-slate-800">
+              <div>
+                <h3 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                  <FileText className="w-4 h-4 text-amber-500" />
+                  <span>Authoritative Transfer Attempts &amp; Ledger Log</span>
+                </h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                  Real-time record of all transfers submitted across the demo bank with one-click admin clearance actions.
+                </p>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={fetchTransactionsLog}
+                  disabled={isLoadingLogs}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer"
+                >
+                  <RefreshCw className={`w-3.5 h-3.5 ${isLoadingLogs ? 'animate-spin' : ''}`} />
+                  <span>Refresh Logs</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Filter and Search */}
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+              <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0">
+                {[
+                  { id: 'ALL', label: 'All Attempts' },
+                  { id: 'PENDING', label: 'Pending' },
+                  { id: 'PROCESSING', label: 'Processing' },
+                  { id: 'SUCCESS', label: 'Success' },
+                  { id: 'FAILED', label: 'Failed' }
+                ].map(item => (
+                  <button
+                    key={item.id}
+                    onClick={() => setLogFilter(item.id as any)}
+                    className={`py-1.5 px-3 rounded-xl text-xs font-bold whitespace-nowrap cursor-pointer transition-all ${
+                      logFilter === item.id
+                        ? 'bg-[#004281] text-white shadow-xs'
+                        : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-750'
+                    }`}
+                  >
+                    {item.label}
+                  </button>
+                ))}
+              </div>
+
+              <div className="relative flex-1 sm:w-64">
+                <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-2.5" />
+                <input
+                  type="text"
+                  value={logSearchQuery}
+                  onChange={e => setLogSearchQuery(e.target.value)}
+                  placeholder="Search sender, beneficiary, ID..."
+                  className="w-full pl-8 pr-3 py-1.5 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-[#004281]"
+                />
+              </div>
+            </div>
+
+            {/* Logs Table */}
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse text-xs">
+                <thead>
+                  <tr className="border-b border-slate-200 dark:border-slate-800 text-[11px] uppercase tracking-wider text-slate-400">
+                    <th className="py-3 px-3">Attempt ID</th>
+                    <th className="py-3 px-3">Sender</th>
+                    <th className="py-3 px-3">Beneficiary Account / Name</th>
+                    <th className="py-3 px-3">Amount</th>
+                    <th className="py-3 px-3">Status</th>
+                    <th className="py-3 px-3">Timestamp</th>
+                    <th className="py-3 px-3">Notes</th>
+                    <th className="py-3 px-3 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 dark:divide-slate-800 font-mono">
+                  {(() => {
+                    const filtered = transactionsLog.filter(tx => {
+                      const matchesStatus = logFilter === 'ALL' || tx.status === logFilter;
+                      const q = logSearchQuery.toLowerCase();
+                      const matchesSearch =
+                        !q ||
+                        (tx.id && tx.id.toLowerCase().includes(q)) ||
+                        (tx.sender_id && tx.sender_id.toLowerCase().includes(q)) ||
+                        (tx.sender_name && tx.sender_name.toLowerCase().includes(q)) ||
+                        (tx.beneficiary_account && tx.beneficiary_account.toLowerCase().includes(q)) ||
+                        (tx.notes && tx.notes.toLowerCase().includes(q));
+                      return matchesStatus && matchesSearch;
+                    });
+
+                    if (filtered.length === 0) {
+                      return (
+                        <tr>
+                          <td colSpan={8} className="py-8 text-center text-slate-400 font-sans">
+                            No transfer attempts recorded matching your filter.
+                          </td>
+                        </tr>
+                      );
+                    }
+
+                    return filtered.map(tx => {
+                      const isPending = tx.status === 'PENDING';
+                      const isActionBusy = actionLoadingId === tx.id;
+
+                      return (
+                        <tr key={tx.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30">
+                          <td className="py-3 px-3 font-semibold text-slate-900 dark:text-white">
+                            <span className="truncate block max-w-[120px]" title={tx.id}>{tx.id}</span>
+                          </td>
+                          <td className="py-3 px-3 font-sans">
+                            <span className="font-semibold text-slate-900 dark:text-white">{tx.sender_name || 'Client'}</span>
+                            <span className="block text-[10px] text-slate-400 font-mono truncate max-w-[120px]">{tx.sender_id}</span>
+                          </td>
+                          <td className="py-3 px-3 font-sans">
+                            <span className="font-semibold text-slate-900 dark:text-white">{tx.beneficiary_account}</span>
+                          </td>
+                          <td className="py-3 px-3 font-bold text-slate-900 dark:text-white font-mono">
+                            ${typeof tx.amount === 'number' ? tx.amount.toFixed(2) : tx.amount} {tx.currency || 'USD'}
+                          </td>
+                          <td className="py-3 px-3">
+                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                              tx.status === 'SUCCESS' ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300' :
+                              tx.status === 'FAILED' ? 'bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300' :
+                              tx.status === 'PROCESSING' ? 'bg-sky-100 text-sky-800 dark:bg-sky-950 dark:text-sky-300' :
+                              'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300'
+                            }`}>
+                              {tx.status}
+                            </span>
+                          </td>
+                          <td className="py-3 px-3 text-slate-400 text-[11px] whitespace-nowrap">
+                            {new Date(tx.timestamp || tx.created_at || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+                          </td>
+                          <td className="py-3 px-3 font-sans text-slate-500 max-w-[150px] truncate text-[11px]" title={tx.notes}>
+                            {tx.notes || '—'}
+                          </td>
+                          <td className="py-3 px-3 text-right">
+                            {isPending ? (
+                              <div className="flex items-center justify-end gap-1.5 font-sans">
+                                <button
+                                  type="button"
+                                  onClick={() => handleApproveAttempt(tx.id)}
+                                  disabled={isActionBusy}
+                                  className="px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-bold transition-all shadow-xs cursor-pointer disabled:opacity-50 inline-flex items-center gap-1"
+                                >
+                                  {isActionBusy ? <RefreshCw className="w-3 h-3 animate-spin" /> : <Check className="w-3 h-3" />}
+                                  <span>Approve</span>
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => handleRejectAttempt(tx.id)}
+                                  disabled={isActionBusy}
+                                  className="px-2.5 py-1 rounded-lg bg-rose-600 hover:bg-rose-700 text-white text-[11px] font-bold transition-all shadow-xs cursor-pointer disabled:opacity-50 inline-flex items-center gap-1"
+                                >
+                                  <XCircle className="w-3 h-3" />
+                                  <span>Reject</span>
+                                </button>
+                              </div>
+                            ) : (
+                              <span className="text-[10px] text-slate-400 font-sans">Settled</span>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })
+                  })()}
                 </tbody>
               </table>
             </div>

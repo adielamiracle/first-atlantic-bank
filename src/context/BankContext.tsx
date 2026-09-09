@@ -282,7 +282,14 @@ export const BankProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [emailDispatchLogs, setEmailDispatchLogs] = useState<EmailDispatchLog[]>([]);
   const [unreadNotificationsCount, setUnreadNotificationsCount] = useState<number>(0);
   const [bankReceivingAccounts, setBankReceivingAccounts] = useState<BankReceivingAccount[]>([]);
-  const [recipients, setRecipients] = useState<Recipient[]>([]);
+  const [recipients, setRecipients] = useState<Recipient[]>(() => {
+    try {
+      const saved = localStorage.getItem('fab_saved_recipients');
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
   const [wiseTransfers, setWiseTransfers] = useState<TransferRecord[]>([]);
   const [webhookLogs, setWebhookLogs] = useState<TransferWebhookEvent[]>([]);
 
@@ -1079,6 +1086,8 @@ export const BankProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setCurrentView('DASHBOARD_OVERVIEW');
     try {
       localStorage.setItem('fab_session_token', newToken);
+      localStorage.setItem('token', newToken);
+      localStorage.setItem('fab_token', newToken);
       localStorage.setItem('fab_current_user', JSON.stringify(user));
     } catch {}
     showToast('SUCCESS', 'Secure Session Established', `Welcome back, ${user.firstName}. You are authenticated with First Atlantic Bank.`);
@@ -1096,6 +1105,9 @@ export const BankProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setTotalNetWorthUsdMinor(0);
     try {
       localStorage.removeItem('fab_session_token');
+      localStorage.removeItem('token');
+      localStorage.removeItem('fab_token');
+      localStorage.removeItem('admin_token');
       localStorage.removeItem('fab_current_user');
       localStorage.removeItem('fab_admin_active');
     } catch {}
@@ -1194,16 +1206,20 @@ export const BankProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         body: JSON.stringify({ sourceAccountId, destAccountId, amountMinor, description })
       });
       const data = await res.json();
-      if (!res.ok) {
+      if (!res.ok || !data.success) {
         showToast('ERROR', 'Transfer Failed', data.error || 'Unable to process transfer.');
-        return { success: false, error: data.error };
+        return { success: false, status: 'FAILED', error: data.error };
       }
-      showToast('SUCCESS', 'Transfer Settled', 'Funds moved instantly between your First Atlantic accounts.');
+      if (data.status === 'PENDING') {
+        showToast('INFO', 'Transfer Pending', data.message || 'Transfer queued with status: Pending.', 4000);
+      } else {
+        showToast('SUCCESS', 'Transfer Successful', data.message || 'Funds moved instantly between your First Atlantic accounts.', 4000);
+      }
       await refreshData();
-      return { success: true };
+      return { success: true, status: data.status || 'SUCCESS', transaction: data.transaction };
     } catch (err: any) {
-      showToast('ERROR', 'Network Exception', err.message);
-      return { success: false, error: err.message };
+      showToast('ERROR', 'Transfer Failed', err.message);
+      return { success: false, status: 'FAILED', error: err.message };
     }
   };
 
@@ -1221,22 +1237,26 @@ export const BankProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         body: JSON.stringify({ sourceAccountId, recipient, amountMinor, transferType, memo })
       });
       const data = await res.json();
-      if (!res.ok) {
+      if (!res.ok || !data.success) {
         const errorMsg = data.error || data.message || 'Outbound payment declined.';
-        showToast('ERROR', 'Transfer Declined', errorMsg, 4000);
-        return { success: false, error: errorMsg };
+        showToast('ERROR', 'Transfer Failed', errorMsg, 4000);
+        return { success: false, status: 'FAILED', error: errorMsg };
       }
-      showToast('SUCCESS', 'Payment Transmitted', `Outbound ${transferType.replace('_', ' ')} dispatched successfully.`, 3000);
+      if (data.status === 'PENDING') {
+        showToast('INFO', 'Transfer Pending', data.message || 'Transfer queued with status: Pending.', 4000);
+      } else {
+        showToast('SUCCESS', 'Transfer Successful', data.message || `Outbound ${transferType.replace('_', ' ')} completed successfully.`, 4000);
+      }
       await refreshData();
-      return { success: true, feeMinor: data.feeMinor };
+      return { success: true, status: data.status || 'SUCCESS', transaction: data.transaction, feeMinor: data.feeMinor };
     } catch (err: any) {
       const isNetwork = (typeof navigator !== 'undefined' && !navigator.onLine) ||
         err?.name === 'TypeError' ||
         err?.message?.includes('fetch') ||
         err?.message?.includes('Network');
       const errorMsg = isNetwork ? 'Network error, please check internet' : (err.message || 'Unable to process transfer request.');
-      showToast('ERROR', 'Network Exception', errorMsg, 4000);
-      return { success: false, error: errorMsg };
+      showToast('ERROR', 'Transfer Failed', errorMsg, 4000);
+      return { success: false, status: 'FAILED', error: errorMsg };
     }
   };
 
@@ -1983,7 +2003,11 @@ export const BankProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       if (!res.ok || !resData || !resData.success) {
         // Fallback local recipient so user flow is never disrupted on mobile
         showToast('SUCCESS', 'Recipient Added', `${fallbackRec.name} added to your beneficiaries.`);
-        setRecipients(prev => [fallbackRec, ...prev.filter(r => r.id !== fallbackRec.id)]);
+        setRecipients(prev => {
+          const updated = [fallbackRec, ...prev.filter(r => r.id !== fallbackRec.id)];
+          try { localStorage.setItem('fab_saved_recipients', JSON.stringify(updated)); } catch {}
+          return updated;
+        });
         return { success: true, recipient: fallbackRec };
       }
 
@@ -1994,19 +2018,31 @@ export const BankProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       };
 
       showToast('SUCCESS', 'Recipient Saved', `${finalRec.name} added to your verified transfer beneficiaries.`);
-      setRecipients(prev => [finalRec, ...prev.filter(r => r.id !== finalRec.id)]);
+      setRecipients(prev => {
+        const updated = [finalRec, ...prev.filter(r => r.id !== finalRec.id)];
+        try { localStorage.setItem('fab_saved_recipients', JSON.stringify(updated)); } catch {}
+        return updated;
+      });
       return { success: true, recipient: finalRec };
     } catch (err: any) {
       // Offline / network fallback
       showToast('SUCCESS', 'Recipient Saved', `${fallbackRec.name} added to your transfer beneficiaries.`);
-      setRecipients(prev => [fallbackRec, ...prev.filter(r => r.id !== fallbackRec.id)]);
+      setRecipients(prev => {
+        const updated = [fallbackRec, ...prev.filter(r => r.id !== fallbackRec.id)];
+        try { localStorage.setItem('fab_saved_recipients', JSON.stringify(updated)); } catch {}
+        return updated;
+      });
       return { success: true, recipient: fallbackRec };
     }
   };
 
   const deleteRecipient = async (id: string) => {
     try {
-      setRecipients(prev => prev.filter(r => r.id !== id));
+      setRecipients(prev => {
+        const updated = prev.filter(r => r.id !== id);
+        try { localStorage.setItem('fab_saved_recipients', JSON.stringify(updated)); } catch {}
+        return updated;
+      });
       const res = await fetch(`/api/transfers/recipients/${id}`, {
         method: 'DELETE',
         headers: { ...getAuthHeader() }

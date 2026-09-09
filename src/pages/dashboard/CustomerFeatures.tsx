@@ -160,7 +160,7 @@ export const DepositCheckPage: React.FC = () => {
         </GlassPanel>
       ) : (
         <GlassPanel variant="standard" className="p-7">
-          <form onSubmit={handleDeposit} className="space-y-6">
+          <form noValidate onSubmit={handleDeposit} className="space-y-6">
             <div>
               <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">
                 Deposit Into Account
@@ -1111,7 +1111,7 @@ export const MessagesPage: React.FC = () => {
         </div>
 
         {/* Input bar */}
-        <form onSubmit={handleSend} className="p-4 border-t border-white/20 dark:border-white/10 bg-white/40 dark:bg-white/[0.02] flex gap-3 backdrop-blur-md">
+        <form noValidate onSubmit={handleSend} className="p-4 border-t border-white/20 dark:border-white/10 bg-white/40 dark:bg-white/[0.02] flex gap-3 backdrop-blur-md">
           <input
             type="text"
             placeholder="Type encrypted message to private banker..."
@@ -1554,7 +1554,7 @@ export const ProfilePage: React.FC = () => {
               </span>
             </div>
 
-            <form onSubmit={handleSavePassport} className="space-y-5">
+            <form noValidate onSubmit={handleSavePassport} className="space-y-5">
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
                 {/* Passport Photo Uploader Column */}
                 <div className="lg:col-span-6 bg-slate-50 dark:bg-slate-900/60 p-4 rounded-lg border border-slate-200 dark:border-slate-800">
@@ -1630,7 +1630,7 @@ export const ProfilePage: React.FC = () => {
           </div>
 
           {/* CONTACT & RESIDENTIAL ADDRESS FORM */}
-          <form onSubmit={handleSaveContact} className="boa-card p-5 sm:p-6 space-y-5">
+          <form noValidate onSubmit={handleSaveContact} className="boa-card p-5 sm:p-6 space-y-5">
             <div className="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-800">
               <div>
                 <h2 className="boa-title-md">Personal Information &amp; Primary Identification</h2>
@@ -2089,6 +2089,7 @@ export const ProfilePage: React.FC = () => {
             </div>
 
             <form
+              noValidate
               onSubmit={handlePinSubmit}
               className="space-y-4"
             >

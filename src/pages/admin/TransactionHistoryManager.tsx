@@ -727,7 +727,7 @@ export const TransactionHistoryManager: React.FC<TransactionHistoryManagerProps>
             </div>
 
             {/* Modal Form */}
-            <form onSubmit={handleSaveAdd} className="p-6 space-y-4 max-h-[82vh] overflow-y-auto text-xs">
+            <form noValidate onSubmit={handleSaveAdd} className="p-6 space-y-4 max-h-[82vh] overflow-y-auto text-xs">
               {/* 1. Target Account */}
               <div className="space-y-1.5">
                 <label className="font-bold text-slate-700 dark:text-slate-300 flex items-center justify-between">
