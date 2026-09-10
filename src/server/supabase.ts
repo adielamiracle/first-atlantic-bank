@@ -47,8 +47,20 @@ export function isValidSupabaseUrl(url?: string | null): boolean {
   return true;
 }
 
-const sbUrl = (process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL || '').trim();
-const sbKey = (process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY || '').trim();
+const candidateUrls = [
+  process.env.SUPABASE_URL,
+  process.env.NEXT_PUBLIC_SUPABASE_URL,
+  process.env.VITE_SUPABASE_URL
+];
+const sbUrl = (candidateUrls.find(u => isValidSupabaseUrl(u)) || '').trim();
+
+const candidateKeys = [
+  process.env.SUPABASE_SERVICE_ROLE_KEY,
+  process.env.VITE_SUPABASE_ANON_KEY,
+  process.env.SUPABASE_ANON_KEY,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+];
+const sbKey = (candidateKeys.find(k => isValidSupabaseKey(k)) || '').trim();
 
 export const isServerSupabaseConfigured = Boolean(
   isValidSupabaseUrl(sbUrl) && isValidSupabaseKey(sbKey)
@@ -72,6 +84,13 @@ if (isServerSupabaseConfigured) {
 }
 
 export function getServerSupabase(): SupabaseClient | null {
+  if (!serverSupabaseClient && isServerSupabaseConfigured) {
+    try {
+      serverSupabaseClient = createClient(sbUrl, sbKey, {
+        auth: { persistSession: false, autoRefreshToken: false }
+      });
+    } catch {}
+  }
   return serverSupabaseClient;
 }
 

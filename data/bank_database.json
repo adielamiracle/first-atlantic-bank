@@ -549,7 +549,7 @@
           "pushAlerts": true,
           "largeTransactionThresholdMinor": 500000
         },
-        "lastLogin": "2026-09-08T12:28:26.051Z"
+        "lastLogin": "2026-09-10T09:06:06.699Z"
       }
     ],
     [
@@ -750,6 +750,30 @@
         },
         "lastLogin": "2026-09-06T14:17:28.277Z"
       }
+    ],
+    [
+      "18f086ef-3c11-4a42-9b44-8657ffd564f3",
+      {
+        "id": "18f086ef-3c11-4a42-9b44-8657ffd564f3",
+        "email": "winterj548@gmail.com",
+        "dialCode": "+1",
+        "dateOfBirth": "1988-06-15",
+        "nationality": "American",
+        "loginPin": "1234",
+        "ssnMasked": "•••-••-8899",
+        "region": "US",
+        "approval_status": "APPROVED",
+        "address": {},
+        "kycTier": "TIER_2_VERIFIED_PREMIER",
+        "securityScore": 95,
+        "notifications": {
+          "emailAlerts": true,
+          "smsAlerts": true,
+          "pushAlerts": true,
+          "largeTransactionThresholdMinor": 500000
+        },
+        "lastLogin": "2026-09-10T09:07:16.009Z"
+      }
     ]
   ],
   "accounts": [
@@ -765,8 +789,8 @@
         "name": "Premier Private Checking",
         "type": "CHECKING_PREMIER",
         "currency": "USD",
-        "balanceMinor": 14841840,
-        "availableBalanceMinor": 14591840,
+        "balanceMinor": 5403000,
+        "availableBalanceMinor": 5403000,
         "pendingHoldMinor": 250000,
         "interestRateAPY": 1.25,
         "status": "ACTIVE",
@@ -1256,6 +1280,29 @@
         "customerName": "Testuser999 estuser999",
         "customerEmail": "testuser999@client.firstatlanticbank.com"
       }
+    ],
+    [
+      "9ad44416-3a40-4855-b844-d797b919e35e",
+      {
+        "id": "9ad44416-3a40-4855-b844-d797b919e35e",
+        "userId": "18f086ef-3c11-4a42-9b44-8657ffd564f3",
+        "accountNumber": "1092837461",
+        "accountNumberFull": "1092837461",
+        "routingNumber": "021000089",
+        "sortCode": "40-12-88",
+        "swiftBic": "FATLUS33NYC",
+        "type": "CHECKING_PREMIER",
+        "currency": "USD",
+        "balanceMinor": 0,
+        "availableBalanceMinor": 0,
+        "pendingHoldMinor": 0,
+        "interestRateAPY": 0,
+        "status": "Active",
+        "region": "US",
+        "openedDate": "2026-09-10",
+        "dailyTransferLimitMinor": 50000000,
+        "statementCycleDay": 28
+      }
     ]
   ],
   "cards": [
@@ -1658,6 +1705,69 @@
     ]
   ],
   "ledger": [
+    {
+      "id": "led_tx_1789030974524_8171",
+      "transactionId": "tx_1789030974524_8171",
+      "accountId": "acc_sterling_chk_01",
+      "direction": "DEBIT",
+      "amountMinor": 1500,
+      "currency": "USD",
+      "balanceAfterMinor": 5403000,
+      "description": "Transfer to Sarah Jenkins (US9920194827)",
+      "category": "Transfers",
+      "counterparty": "Sarah Jenkins",
+      "status": "SETTLED",
+      "channel": "WIRE",
+      "referenceNumber": "tx_1789030974524_8171",
+      "createdTimestamp": "2026-09-10T09:02:54.196Z",
+      "effectiveTimestamp": "2026-09-10T09:02:54.196Z",
+      "metadata": {
+        "beneficiaryAccount": "US9920194827",
+        "beneficiaryName": "Sarah Jenkins"
+      }
+    },
+    {
+      "id": "led_tx_1789030785343_2233",
+      "transactionId": "tx_1789030785343_2233",
+      "accountId": "acc_sterling_chk_01",
+      "direction": "DEBIT",
+      "amountMinor": 2500,
+      "currency": "USD",
+      "balanceAfterMinor": 5404500,
+      "description": "Transfer to Sarah Jenkins (US9920194827)",
+      "category": "Transfers",
+      "counterparty": "Sarah Jenkins",
+      "status": "SETTLED",
+      "channel": "WIRE",
+      "referenceNumber": "tx_1789030785343_2233",
+      "createdTimestamp": "2026-09-10T08:59:45.073Z",
+      "effectiveTimestamp": "2026-09-10T08:59:45.073Z",
+      "metadata": {
+        "beneficiaryAccount": "US9920194827",
+        "beneficiaryName": "Sarah Jenkins"
+      }
+    },
+    {
+      "id": "led_tx_1789030588054_6292",
+      "transactionId": "tx_1789030588054_6292",
+      "accountId": "acc_sterling_chk_01",
+      "direction": "DEBIT",
+      "amountMinor": 5000,
+      "currency": "USD",
+      "balanceAfterMinor": 5407000,
+      "description": "Transfer to Alice Morgan (US8492019482)",
+      "category": "Transfers",
+      "counterparty": "Alice Morgan",
+      "status": "SETTLED",
+      "channel": "WIRE",
+      "referenceNumber": "tx_1789030588054_6292",
+      "createdTimestamp": "2026-09-10T08:56:27.948Z",
+      "effectiveTimestamp": "2026-09-10T08:56:27.948Z",
+      "metadata": {
+        "beneficiaryAccount": "US8492019482",
+        "beneficiaryName": "Alice Morgan"
+      }
+    },
     {
       "id": "led_1788872203364_351",
       "transactionId": "tx_adm_1788872203364_327",
@@ -2101,6 +2211,20 @@
     }
   ],
   "auditLogs": [
+    {
+      "actorId": "usr_erin_megan_83",
+      "actorEmail": "erinmeg45@gmail.com",
+      "actorRole": "CUSTOMER",
+      "action": "CUSTOMER_SESSION_AUTHORIZED",
+      "targetType": "USER",
+      "targetId": "usr_erin_megan_83",
+      "ipAddress": "108.45.192.8",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36 OPR/135.0.0.0",
+      "details": "Successful Sovereign Identity & 4-Digit Security PIN validation.",
+      "id": "aud_1789031166699_16",
+      "timestamp": "2026-09-10T09:06:06.699Z",
+      "signatureHash": "0000000000000000000000000000000000000000000000000000000061f8fe13"
+    },
     {
       "actorId": "adm_master_01",
       "actorEmail": "admin@firstatlanticbank.com",
@@ -5127,8 +5251,89 @@
     [
       "testuser999@client.firstatlanticbank.com",
       "mypassword"
+    ],
+    [
+      "18f086ef-3c11-4a42-9b44-8657ffd564f3",
+      "AtlanticSecure2026!"
     ]
   ],
   "activeSessions": [],
-  "savedAt": "2026-09-08T13:14:17.749Z"
+  "accountTransferConfigs": [],
+  "userNotifications": [
+    {
+      "id": "notif_1789030974721_286",
+      "userId": "usr_sterling_01",
+      "title": "Transfer Sent",
+      "message": "You sent $15.00 to Sarah Jenkins (US9920194827).",
+      "type": "TRANSFER",
+      "timestamp": "2026-09-10T09:02:54.721Z",
+      "isRead": false
+    },
+    {
+      "id": "notif_1789030785475_189",
+      "userId": "usr_sterling_01",
+      "title": "Transfer Sent",
+      "message": "You sent $25.00 to Sarah Jenkins (US9920194827).",
+      "type": "TRANSFER",
+      "timestamp": "2026-09-10T08:59:45.475Z",
+      "isRead": false
+    },
+    {
+      "id": "notif_1789030588185_226",
+      "userId": "usr_sterling_01",
+      "title": "Transfer Sent",
+      "message": "You sent $50.00 to Alice Morgan (US8492019482).",
+      "type": "TRANSFER",
+      "timestamp": "2026-09-10T08:56:28.185Z",
+      "isRead": false
+    },
+    {
+      "id": "notif_1789030440511_255",
+      "userId": "usr_sterling_01",
+      "title": "Transfer Sent",
+      "message": "You sent $10.00 to Jonathan Vance (991048201948).",
+      "type": "TRANSFER",
+      "timestamp": "2026-09-10T08:54:00.511Z",
+      "isRead": false
+    }
+  ],
+  "transferAttempts": [
+    {
+      "id": "tx_1789030974524_8171",
+      "sender_id": "usr_sterling_01",
+      "beneficiary_account": "US9920194827",
+      "amount": 15,
+      "status": "SUCCESS",
+      "timestamp": "2026-09-10T09:02:54.196Z",
+      "notes": "External Account - Invoice settlement"
+    },
+    {
+      "id": "tx_1789030785343_2233",
+      "sender_id": "usr_sterling_01",
+      "beneficiary_account": "US9920194827",
+      "amount": 25,
+      "status": "SUCCESS",
+      "timestamp": "2026-09-10T08:59:45.073Z",
+      "notes": "External Account - Consulting Invoice"
+    },
+    {
+      "id": "tx_1789030588054_6292",
+      "sender_id": "usr_sterling_01",
+      "beneficiary_account": "US8492019482",
+      "amount": 50,
+      "status": "SUCCESS",
+      "timestamp": "2026-09-10T08:56:27.948Z",
+      "notes": "External Account - Payment test"
+    },
+    {
+      "id": "tx_1789030440392_7728",
+      "sender_id": "usr_sterling_01",
+      "beneficiary_account": "991048201948",
+      "amount": 10,
+      "status": "SUCCESS",
+      "timestamp": "2026-09-10T08:54:00.392Z",
+      "notes": "External Account - Test transfer"
+    }
+  ],
+  "savedAt": "2026-09-10T09:07:16.250Z"
 }

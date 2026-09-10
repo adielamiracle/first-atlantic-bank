@@ -13,8 +13,18 @@ const getEnvVar = (name: string): string => {
   return '';
 };
 
-const rawUrl = getEnvVar('VITE_SUPABASE_URL') || getEnvVar('NEXT_PUBLIC_SUPABASE_URL') || getEnvVar('SUPABASE_URL');
-const rawKey = getEnvVar('VITE_SUPABASE_ANON_KEY') || getEnvVar('NEXT_PUBLIC_SUPABASE_ANON_KEY') || getEnvVar('SUPABASE_ANON_KEY');
+const candidateUrls = [
+  getEnvVar('VITE_SUPABASE_URL'),
+  getEnvVar('NEXT_PUBLIC_SUPABASE_URL'),
+  getEnvVar('SUPABASE_URL')
+];
+
+const candidateKeys = [
+  getEnvVar('VITE_SUPABASE_ANON_KEY'),
+  getEnvVar('SUPABASE_SERVICE_ROLE_KEY'),
+  getEnvVar('SUPABASE_ANON_KEY'),
+  getEnvVar('NEXT_PUBLIC_SUPABASE_ANON_KEY')
+];
 
 export function isValidSupabaseKey(key: string): boolean {
   if (!key || typeof key !== 'string') return false;
@@ -53,6 +63,9 @@ export function isValidSupabaseUrl(url: string): boolean {
   }
   return true;
 }
+
+const rawUrl = (candidateUrls.find(u => isValidSupabaseUrl(u)) || '').trim();
+const rawKey = (candidateKeys.find(k => isValidSupabaseKey(k)) || '').trim();
 
 // Detect if real, valid Supabase configuration is provided
 export const isSupabaseConfigured = Boolean(

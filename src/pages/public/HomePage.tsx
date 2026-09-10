@@ -9,8 +9,6 @@ import {
   CheckCircle2,
   Sparkles,
   Shield,
-  TrendingUp,
-  Award,
   BookOpen,
   Calendar,
   Compass,
@@ -94,10 +92,6 @@ export const HomePage: React.FC = () => {
     return () => clearInterval(timer);
   }, [heroSlides.length]);
 
-  // State for interactive future growth calculator
-  const [initialDeposit, setInitialDeposit] = useState<number>(250000);
-  const [horizonYears, setHorizonYears] = useState<number>(5);
-  const [monthlyContribution, setMonthlyContribution] = useState<number>(5000);
   const [activeStoryIndex, setActiveStoryIndex] = useState<number>(0);
 
   // Security Partner Dynamic Verification State
@@ -210,21 +204,6 @@ export const HomePage: React.FC = () => {
       });
     }, 1200);
   };
-
-  // Future compound growth calculation (5.15% APY compound)
-  const apyRate = 0.0515;
-  const calculateFutureValue = (principal: number, years: number, monthly: number) => {
-    let total = principal;
-    const monthlyRate = apyRate / 12;
-    for (let m = 0; m < years * 12; m++) {
-      total = total * (1 + monthlyRate) + monthly;
-    }
-    return Math.round(total);
-  };
-
-  const futureVal = calculateFutureValue(initialDeposit, horizonYears, monthlyContribution);
-  const totalContributed = initialDeposit + monthlyContribution * horizonYears * 12;
-  const interestEarned = futureVal - totalContributed;
 
   const inspiringStories = [
     {
@@ -777,143 +756,6 @@ export const HomePage: React.FC = () => {
               </div>
             );
           })}
-        </div>
-
-        {/* 5. INTERACTIVE FUTURE GROWTH & COMPOUNDING CALCULATOR */}
-        <div className="mt-8 sm:mt-12 bg-white dark:bg-[#0a192f] rounded-2xl sm:rounded-3xl p-4 sm:p-8 lg:p-10 border border-slate-200 dark:border-[#1e3656] shadow-lg">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8 items-center">
-            {/* Calculator Controls */}
-            <div className="lg:col-span-6 space-y-4 sm:space-y-6">
-              <div className="space-y-1.5 sm:space-y-2">
-                <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#c5a880]/15 text-[#8c6d37] dark:text-[#f7e6b5] text-[10px] sm:text-xs font-mono font-bold uppercase">
-                  <TrendingUp className="w-3.5 h-3.5" />
-                  <span>Apex Compound Simulator (5.15% APY)</span>
-                </div>
-                <h3 className="text-lg sm:text-2xl font-bold font-serif text-slate-900 dark:text-white">
-                  Simulate Your Sovereign Capital Horizon
-                </h3>
-                <p className="text-xs text-slate-500 dark:text-slate-400">
-                  Estimate the compounding trajectory of your private wealth reserve over your chosen horizon.
-                </p>
-              </div>
-
-              {/* Slider 1: Initial Deposit */}
-              <div className="space-y-1.5 sm:space-y-2">
-                <div className="flex justify-between text-xs font-mono">
-                  <span className="text-slate-500 dark:text-slate-400">Initial Reserve Deposit</span>
-                  <span className="font-bold text-slate-900 dark:text-white">${initialDeposit.toLocaleString()} USD</span>
-                </div>
-                <input
-                  type="range"
-                  min="25000"
-                  max="2500000"
-                  step="25000"
-                  value={initialDeposit}
-                  onChange={(e) => setInitialDeposit(Number(e.target.value))}
-                  className="w-full h-2 bg-slate-200 dark:bg-slate-800 rounded-lg appearance-none cursor-pointer accent-[#c5a880]"
-                />
-                <div className="flex justify-between text-[10px] text-slate-400 font-mono">
-                  <span>$25,000</span>
-                  <span>$1,000,000</span>
-                  <span>$2,500,000+</span>
-                </div>
-              </div>
-
-              {/* Slider 2: Horizon Years */}
-              <div className="space-y-1.5 sm:space-y-2">
-                <div className="flex justify-between text-xs font-mono">
-                  <span className="text-slate-500 dark:text-slate-400">Time Horizon</span>
-                  <span className="font-bold text-slate-900 dark:text-white">{horizonYears} Years ({horizonYears * 12} Mos)</span>
-                </div>
-                <input
-                  type="range"
-                  min="1"
-                  max="20"
-                  step="1"
-                  value={horizonYears}
-                  onChange={(e) => setHorizonYears(Number(e.target.value))}
-                  className="w-full h-2 bg-slate-200 dark:bg-slate-800 rounded-lg appearance-none cursor-pointer accent-[#c5a880]"
-                />
-                <div className="flex justify-between text-[10px] text-slate-400 font-mono">
-                  <span>1 Year</span>
-                  <span>10 Years</span>
-                  <span>20 Years</span>
-                </div>
-              </div>
-
-              {/* Slider 3: Monthly Allocation */}
-              <div className="space-y-1.5 sm:space-y-2">
-                <div className="flex justify-between text-xs font-mono">
-                  <span className="text-slate-500 dark:text-slate-400">Monthly Liquidity Inflow</span>
-                  <span className="font-bold text-slate-900 dark:text-white">${monthlyContribution.toLocaleString()} /mo</span>
-                </div>
-                <input
-                  type="range"
-                  min="0"
-                  max="25000"
-                  step="1000"
-                  value={monthlyContribution}
-                  onChange={(e) => setMonthlyContribution(Number(e.target.value))}
-                  className="w-full h-2 bg-slate-200 dark:bg-slate-800 rounded-lg appearance-none cursor-pointer accent-[#c5a880]"
-                />
-                <div className="flex justify-between text-[10px] text-slate-400 font-mono">
-                  <span>$0</span>
-                  <span>$10,000</span>
-                  <span>$25,000</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Projection Display Card */}
-            <div className="lg:col-span-6 bg-[#071322] text-white rounded-xl sm:rounded-2xl p-5 sm:p-8 border border-[#c5a880]/40 space-y-4 sm:space-y-6 shadow-xl relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-48 h-48 bg-[#c5a880]/10 rounded-full blur-3xl pointer-events-none" />
-
-              <div className="space-y-1">
-                <span className="text-[11px] sm:text-xs font-mono uppercase text-[#e5ca95] tracking-wider">
-                  Estimated Sovereign Valuation ({horizonYears} Years)
-                </span>
-                <div className="text-2xl sm:text-4xl font-bold font-mono text-white">
-                  ${futureVal.toLocaleString()} <span className="text-xs font-normal text-slate-400">USD</span>
-                </div>
-                <span className="text-xs text-emerald-400 font-mono block">
-                  +${interestEarned.toLocaleString()} in cumulative compound earnings
-                </span>
-              </div>
-
-              <div className="grid grid-cols-2 gap-2 sm:gap-3 pt-3 sm:pt-4 border-t border-slate-800 text-xs font-mono">
-                <div className="p-2.5 sm:p-3 rounded-lg sm:rounded-xl bg-slate-900/80 border border-slate-800">
-                  <span className="text-slate-400 block text-[9px] sm:text-[10px] uppercase">Total Injected</span>
-                  <span className="font-bold text-white text-xs sm:text-sm">${totalContributed.toLocaleString()}</span>
-                </div>
-                <div className="p-2.5 sm:p-3 rounded-lg sm:rounded-xl bg-slate-900/80 border border-slate-800">
-                  <span className="text-slate-400 block text-[9px] sm:text-[10px] uppercase">Yield Generated</span>
-                  <span className="font-bold text-[#e5ca95] text-xs sm:text-sm">+${interestEarned.toLocaleString()}</span>
-                </div>
-              </div>
-
-              <div className="p-3 sm:p-3.5 rounded-lg sm:rounded-xl bg-[#0e2746]/80 border border-[#c5a880]/30 text-xs text-slate-300 space-y-1">
-                <div className="flex items-center gap-1.5 sm:gap-2 text-[#f7e6b5] font-bold">
-                  <Award className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                  <span>Sovereign Fiduciary Allocation</span>
-                </div>
-                <p className="text-[10px] sm:text-[11px] leading-relaxed">
-                  Your funds compound daily and are protected by multi-jurisdictional statutory deposit guarantees across Frankfurt, Zurich, London, and New York.
-                </p>
-              </div>
-
-              <button
-                id="simulator-open-account-btn"
-                onClick={() => {
-                  setCurrentView('AUTH_ENROLL');
-                  window.scrollTo({ top: 0, behavior: 'smooth' });
-                }}
-                className="w-full py-3 sm:py-3.5 rounded-xl bg-gradient-to-r from-[#c5a880] to-[#b39366] text-slate-950 font-bold text-xs uppercase tracking-wider hover:brightness-105 transition-all flex items-center justify-center gap-2 cursor-pointer shadow-lg"
-              >
-                <span>Open Apex High-Yield Account</span>
-                <ArrowRight className="w-4 h-4" />
-              </button>
-            </div>
-          </div>
         </div>
       </section>
 

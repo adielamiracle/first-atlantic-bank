@@ -1,4 +1,5 @@
 import React from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import {
   Home,
   Building,
@@ -26,6 +27,8 @@ interface SidebarProps {
 }
 
 export const CustomerSidebar: React.FC<SidebarProps> = ({ onClose, isMobile = false }) => {
+  const navigate = useNavigate();
+  const location = useLocation();
   const { 
     currentView, 
     setCurrentView, 
@@ -40,6 +43,11 @@ export const CustomerSidebar: React.FC<SidebarProps> = ({ onClose, isMobile = fa
   const handleNavClick = (view?: AppView) => {
     if (view) {
       setCurrentView(view);
+      if (view === 'DASHBOARD_TRANSFERS') {
+        navigate('/transfer/amount');
+      } else if (location.pathname.startsWith('/transfer')) {
+        navigate('/');
+      }
     }
     if (onClose) {
       onClose();
@@ -128,7 +136,11 @@ export const CustomerSidebar: React.FC<SidebarProps> = ({ onClose, isMobile = fa
         <div className="space-y-1 pt-1">
           {primaryMenuItems.map((item) => {
             const Icon = item.icon;
-            const isActive = currentView === item.view;
+            const isTransferItem = item.view === 'DASHBOARD_TRANSFERS';
+            const isTransferPath = location.pathname.startsWith('/transfer');
+            const isActive = isTransferItem
+              ? (currentView === 'DASHBOARD_TRANSFERS' || isTransferPath)
+              : (!isTransferPath && currentView === item.view);
             return (
               <button
                 key={item.label}

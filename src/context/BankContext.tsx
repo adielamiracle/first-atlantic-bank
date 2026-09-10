@@ -1030,11 +1030,16 @@ export const BankProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       setIsLoading(true);
       const headers = getAuthHeader(activeToken || undefined, activeUserId || undefined);
       
-      const [accResult, cardResult, rateResult] = await Promise.all([
+      const [userMeResult, accResult, cardResult, rateResult] = await Promise.all([
+        safeFetchJson<any>('/api/user/me', { headers }),
         safeFetchJson<any>('/api/accounts', { headers }),
         safeFetchJson<any>('/api/cards', { headers }),
         safeFetchJson<any>('/api/rates/exchange')
       ]);
+
+      if (userMeResult.ok && userMeResult.data?.user) {
+        setCurrentUser(prev => prev ? ({ ...prev, ...userMeResult.data.user }) : userMeResult.data.user);
+      }
 
       if (accResult.data?.accounts && Array.isArray(accResult.data.accounts)) {
         if (currentRole !== 'ADMIN') {

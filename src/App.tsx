@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { BankProvider, useBank } from './context/BankContext';
 import { ToastContainer } from './components/common/ToastContainer';
@@ -49,7 +50,16 @@ import { GlassmorphicShowcase } from './components/glass/GlassmorphicShowcase';
 import { UserRoute, AdminRoute } from './components/common/RouteGuards';
 
 const MainAppRouter: React.FC = () => {
+  const location = useLocation();
   const { currentView, setCurrentView, isAuthenticated, currentRole } = useBank();
+
+  useEffect(() => {
+    if (location.pathname.startsWith('/transfer')) {
+      if (currentView !== 'DASHBOARD_TRANSFERS') {
+        setCurrentView('DASHBOARD_TRANSFERS');
+      }
+    }
+  }, [location.pathname, currentView, setCurrentView]);
 
   // Handle explicit hash and path navigation with strict role checks
   useEffect(() => {
@@ -76,6 +86,16 @@ const MainAppRouter: React.FC = () => {
         pathname === '/forgot-password'
       ) {
         setCurrentView('AUTH_FORGOT_PASSWORD');
+        return;
+      }
+
+      // Transfer routes (/transfer, /transfer/amount, etc.)
+      if (
+        pathname.startsWith('/transfer') ||
+        hash.startsWith('#/transfer') ||
+        hash.startsWith('#transfer')
+      ) {
+        setCurrentView('DASHBOARD_TRANSFERS');
         return;
       }
 

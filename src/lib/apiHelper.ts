@@ -170,7 +170,7 @@ export const DEMO_CLIENT_USER: UserProfile = {
   lastLogin: new Date().toISOString()
 };
 
-// Default Fallback Accounts for Demo Client
+// Clean default accounts - Real balances are loaded live from Supabase
 export const DEMO_CLIENT_ACCOUNTS: BankAccount[] = [
   {
     id: 'acc_sterling_chk_01',
@@ -182,8 +182,8 @@ export const DEMO_CLIENT_ACCOUNTS: BankAccount[] = [
     name: 'Premier Private Wealth Checking',
     type: 'CHECKING_PREMIER',
     currency: 'USD',
-    balanceMinor: 342050000, // $3,420,500.00
-    availableBalanceMinor: 342050000,
+    balanceMinor: 0,
+    availableBalanceMinor: 0,
     pendingHoldMinor: 0,
     interestRateAPY: 1.85,
     status: 'ACTIVE',
@@ -202,8 +202,8 @@ export const DEMO_CLIENT_ACCOUNTS: BankAccount[] = [
     name: 'Sovereign High-Yield Vault',
     type: 'SAVINGS_HIGH_YIELD',
     currency: 'USD',
-    balanceMinor: 500000000, // $5,000,000.00
-    availableBalanceMinor: 500000000,
+    balanceMinor: 0,
+    availableBalanceMinor: 0,
     pendingHoldMinor: 0,
     interestRateAPY: 4.85,
     status: 'ACTIVE',

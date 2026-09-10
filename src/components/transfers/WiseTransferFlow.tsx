@@ -308,15 +308,35 @@ export const WiseTransferFlow: React.FC<Props> = ({ onTransferDispatched }) => {
             />
           </div>
 
-          {/* Submit Button */}
+          {/* Submit Button - Always clickable with internal validation */}
           <button
             type="button"
-            onClick={() => setShowConfirmModal(true)}
-            disabled={!selectedRecipient || !amountStr || parseFloat(amountStr) <= 0 || isSubmitting}
-            className="w-full py-3.5 px-4 rounded-xl bg-[#004281] hover:bg-[#003366] text-white font-bold text-sm shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 min-h-[48px]"
+            onClick={() => {
+              if (isSubmitting) return;
+              if (!selectedRecipient) {
+                showToast('ERROR', 'Validation Error', 'Select beneficiary');
+                return;
+              }
+              const num = parseFloat(amountStr);
+              if (!amountStr || isNaN(num) || num <= 0) {
+                showToast('ERROR', 'Validation Error', 'Enter transfer amount');
+                return;
+              }
+              setShowConfirmModal(true);
+            }}
+            className="w-full py-3.5 px-4 rounded-xl bg-[#004281] hover:bg-[#003366] text-white font-bold text-sm shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer min-h-[48px]"
           >
-            <Send className="w-4 h-4" />
-            <span>Review &amp; Send Transfer</span>
+            {isSubmitting ? (
+              <>
+                <RefreshCw className="w-4 h-4 animate-spin text-white" />
+                <span>Processing Transfer...</span>
+              </>
+            ) : (
+              <>
+                <Send className="w-4 h-4" />
+                <span>Review &amp; Send Transfer</span>
+              </>
+            )}
           </button>
         </div>
 

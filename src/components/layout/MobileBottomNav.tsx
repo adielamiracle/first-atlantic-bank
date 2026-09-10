@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import {
   Home,
   Landmark,
@@ -17,6 +18,8 @@ import {
 import { useBank, AppView } from '../../context/BankContext';
 
 export const MobileBottomNav: React.FC = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
   const { currentView, setCurrentView } = useBank();
   const [moreSheetOpen, setMoreSheetOpen] = useState(false);
 
@@ -38,18 +41,24 @@ export const MobileBottomNav: React.FC = () => {
     { label: 'Profile & Settings', view: 'DASHBOARD_PROFILE', icon: User }
   ];
 
+  const isTransferActive = currentView === 'DASHBOARD_TRANSFERS' || location.pathname.startsWith('/transfer');
+
   return (
     <>
       <nav className="fixed bottom-0 left-0 right-0 z-30 bg-white dark:bg-[#121212] border-t border-slate-200/80 dark:border-slate-800 px-3 py-2 transition-colors shadow-lg">
         <div className="max-w-md mx-auto flex items-center justify-between">
           {navTabs.map((tab) => {
             const Icon = tab.icon;
+            const isPayTab = tab.id === 'pay';
             const isActive = tab.isMore 
               ? moreSheetOpen 
-              : tab.view === currentView || (tab.id === 'home' && currentView === 'DASHBOARD_OVERVIEW');
+              : isPayTab
+                ? isTransferActive
+                : !isTransferActive && (tab.view === currentView || (tab.id === 'home' && currentView === 'DASHBOARD_OVERVIEW'));
             
             return (
               <button
+                id={`bottom-nav-${tab.id}-btn`}
                 key={tab.id}
                 onClick={() => {
                   if (tab.isMore) {
@@ -57,6 +66,11 @@ export const MobileBottomNav: React.FC = () => {
                   } else if (tab.view) {
                     setCurrentView(tab.view);
                     setMoreSheetOpen(false);
+                    if (tab.view === 'DASHBOARD_TRANSFERS') {
+                      navigate('/transfer/amount');
+                    } else if (location.pathname.startsWith('/transfer')) {
+                      navigate('/');
+                    }
                   }
                 }}
                 className="flex-1 flex flex-col items-center justify-center py-1 group cursor-pointer transition-colors"
