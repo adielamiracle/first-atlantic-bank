@@ -53,14 +53,6 @@ const MainAppRouter: React.FC = () => {
   const location = useLocation();
   const { currentView, setCurrentView, isAuthenticated, currentRole } = useBank();
 
-  useEffect(() => {
-    if (location.pathname.startsWith('/transfer')) {
-      if (currentView !== 'DASHBOARD_TRANSFERS') {
-        setCurrentView('DASHBOARD_TRANSFERS');
-      }
-    }
-  }, [location.pathname, currentView, setCurrentView]);
-
   // Handle explicit hash and path navigation with strict role checks
   useEffect(() => {
     const handleHashAndPath = () => {

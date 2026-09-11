@@ -74,6 +74,50 @@ export class BankDatabase {
   accountTransferConfigs: Map<string, 'instant_success' | 'pending_review' | 'manual_approval'> = new Map();
   userNotifications: Array<{ id: string; userId: string; title: string; message: string; type: string; timestamp: string; isRead: boolean }> = [];
   transferAttempts: Array<{ id: string; sender_id: string; beneficiary_account: string; amount: number; status: string; timestamp: string; notes: string }> = [];
+  beneficiaries: Array<{ id: string; user_id?: string; name: string; account: string; bank: string; avatar_url?: string; created_at: string }> = [
+    {
+      id: 'ben_1',
+      name: 'Johnny Mike',
+      account: '4829104829',
+      bank: 'Chase Bank',
+      avatar_url: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
+      created_at: new Date().toISOString()
+    },
+    {
+      id: 'ben_2',
+      name: 'Sarah Connor',
+      account: '1092837461',
+      bank: 'Bank of America',
+      avatar_url: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&auto=format&fit=crop&q=80',
+      created_at: new Date().toISOString()
+    },
+    {
+      id: 'ben_3',
+      name: 'David Miller',
+      account: '83920194',
+      bank: 'Barclays Bank UK',
+      avatar_url: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80',
+      created_at: new Date().toISOString()
+    }
+  ];
+
+  getBeneficiaries(userId?: string) {
+    if (userId) {
+      return this.beneficiaries.filter(b => !b.user_id || b.user_id === userId);
+    }
+    return this.beneficiaries;
+  }
+
+  saveBeneficiary(b: any) {
+    const existingIdx = this.beneficiaries.findIndex(item => item.id === b.id || (item.account === b.account && item.user_id === b.user_id));
+    if (existingIdx >= 0) {
+      this.beneficiaries[existingIdx] = { ...this.beneficiaries[existingIdx], ...b };
+    } else {
+      this.beneficiaries.unshift(b);
+    }
+    this.saveToDisk();
+    return b;
+  }
 
   private dbFilePath = path.join(process.cwd(), 'data', 'bank_database.json');
   private saveTimeout: any = null;
@@ -180,6 +224,7 @@ export class BankDatabase {
         accountTransferConfigs: Array.from(this.accountTransferConfigs.entries()),
         userNotifications: this.userNotifications,
         transferAttempts: this.transferAttempts,
+        beneficiaries: this.beneficiaries,
         savedAt: new Date().toISOString()
       };
       fs.writeFileSync(this.dbFilePath, JSON.stringify(serialized, null, 2), 'utf-8');
@@ -219,6 +264,7 @@ export class BankDatabase {
     if (data.accountTransferConfigs) this.accountTransferConfigs = new Map(data.accountTransferConfigs);
     if (data.userNotifications) this.userNotifications = data.userNotifications;
     if (data.transferAttempts) this.transferAttempts = data.transferAttempts;
+    if (data.beneficiaries && Array.isArray(data.beneficiaries)) this.beneficiaries = data.beneficiaries;
   }
 
   seedInitialData() {

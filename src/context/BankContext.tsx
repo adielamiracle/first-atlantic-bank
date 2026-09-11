@@ -2237,7 +2237,7 @@ export const BankProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   useEffect(() => {
-    if (currentUser || currentRole === 'ADMIN') {
+    if (currentUser?.id || currentRole === 'ADMIN') {
       refreshData();
       fetchRecipients();
       fetchWiseTransfers(currentRole === 'ADMIN');
@@ -2252,7 +2252,7 @@ export const BankProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       fetchBankReceivingAccounts();
       fetchWebhookLogs();
     }
-  }, [currentUser, currentRole, selectedAccountId, adminSessionRole]);
+  }, [currentUser?.id, currentRole, selectedAccountId, adminSessionRole]);
 
   return (
     <BankContext.Provider

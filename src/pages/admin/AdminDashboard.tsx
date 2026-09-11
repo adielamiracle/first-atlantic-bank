@@ -35,7 +35,9 @@ import {
   BarChart2,
   Calendar,
   Clock,
-  ArrowLeftRight
+  ArrowLeftRight,
+  Database,
+  Globe
 } from 'lucide-react';
 import { DirectFundsManager } from './DirectFundsManager';
 import { CustomerAccountsTab } from './CustomerAccountsTab';
@@ -72,7 +74,7 @@ export const AdminDashboard: React.FC = () => {
   } = useBank();
 
   const [activeTab, setActiveTab] = useState<
-    'ACCOUNTS' | 'FUNDS' | 'USERS' | 'TRANSACTIONS' | 'WISE_TRANSFERS' | 'RECEIVING_ACCOUNTS' | 'APPLICATIONS' | 'NOTIFICATIONS' | 'AUDIT_LOGS'
+    'ACCOUNTS' | 'FUNDS' | 'USERS' | 'TRANSACTIONS' | 'WISE_TRANSFERS' | 'RECEIVING_ACCOUNTS' | 'APPLICATIONS' | 'NOTIFICATIONS' | 'AUDIT_LOGS' | 'SUPABASE_DOMAIN'
   >('ACCOUNTS');
 
   const [selectedAccountIdForFunds, setSelectedAccountIdForFunds] = useState<string | undefined>(undefined);
@@ -174,6 +176,12 @@ export const AdminDashboard: React.FC = () => {
     {
       title: 'SYSTEM & SECURITY',
       items: [
+        {
+          id: 'SUPABASE_DOMAIN',
+          label: 'Supabase DB & Domain',
+          icon: Database,
+          badge: 'Live'
+        },
         {
           id: 'NOTIFICATIONS',
           label: 'Alerts & Messages',
@@ -379,6 +387,7 @@ export const AdminDashboard: React.FC = () => {
             { id: 'FUNDS', label: 'Credit/Debit' },
             { id: 'USERS', label: 'KYC & Clients' },
             { id: 'TRANSACTIONS', label: 'Transactions' },
+            { id: 'SUPABASE_DOMAIN', label: 'Cloud DB & Domain' },
             { id: 'APPLICATIONS', label: 'Applications' },
             { id: 'RECEIVING_ACCOUNTS', label: 'Receiving Accs' },
             { id: 'AUDIT_LOGS', label: 'Audit Logs' }
@@ -674,6 +683,63 @@ export const AdminDashboard: React.FC = () => {
                       ))}
                   </div>
                 </div>
+              </div>
+            )}
+
+            {/* TAB: SUPABASE CLOUD & DOMAIN MANAGEMENT */}
+            {activeTab === 'SUPABASE_DOMAIN' && (
+              <div className="space-y-6">
+                {/* Live Domain Card */}
+                <div className="bg-white dark:bg-[#0f172a] rounded-2xl border border-slate-200/80 dark:border-slate-800 p-6 shadow-2xs space-y-4">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-12 h-12 rounded-xl bg-blue-500/10 border border-blue-500/20 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
+                        <Globe className="w-6 h-6" />
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <h2 className="text-base font-bold text-slate-900 dark:text-white">
+                            https://firstatlanticbank.vercel.app
+                          </h2>
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                            Verified Production Domain
+                          </span>
+                        </div>
+                        <p className="text-xs text-slate-500 mt-0.5">
+                          Production deployment URL for First Atlantic Bank &amp; Trust digital banking portal
+                        </p>
+                      </div>
+                    </div>
+
+                    <a
+                      href="https://firstatlanticbank.vercel.app"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#004281] hover:bg-[#003366] text-white text-xs font-semibold shadow-xs transition-colors cursor-pointer shrink-0"
+                    >
+                      <span>Open Live Site</span>
+                      <ArrowUpRight className="w-4 h-4" />
+                    </a>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
+                    <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200/60 dark:border-slate-800">
+                      <span className="text-[10px] text-slate-400 uppercase font-bold tracking-wider block">Security Protocol</span>
+                      <span className="text-xs font-mono font-bold text-emerald-600 dark:text-emerald-400 mt-0.5 block">HTTPS (TLS 1.3 Strict)</span>
+                    </div>
+                    <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200/60 dark:border-slate-800">
+                      <span className="text-[10px] text-slate-400 uppercase font-bold tracking-wider block">Edge Ingress Routing</span>
+                      <span className="text-xs font-mono font-bold text-slate-800 dark:text-slate-200 mt-0.5 block">Vercel Anycast Global Edge</span>
+                    </div>
+                    <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200/60 dark:border-slate-800">
+                      <span className="text-[10px] text-slate-400 uppercase font-bold tracking-wider block">Mobile Web Architecture</span>
+                      <span className="text-xs font-mono font-bold text-blue-600 dark:text-blue-400 mt-0.5 block">PWA &amp; Mobile-First Optimized</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Complete Supabase Cloud Sync Manager & Storage Health */}
+                <SupabaseStatusChecker autoCheck showCard />
               </div>
             )}
           </div>

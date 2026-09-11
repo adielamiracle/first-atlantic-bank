@@ -48,6 +48,23 @@ async function startServer() {
   app.use(express.json({ limit: '50mb' }));
   app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
+  // CORS and custom domain headers for https://firstatlanticbank.vercel.app
+  app.use((req, res, next) => {
+    const origin = req.headers.origin;
+    if (origin) {
+      res.setHeader('Access-Control-Allow-Origin', origin);
+    } else {
+      res.setHeader('Access-Control-Allow-Origin', '*');
+    }
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, x-user-id, x-client-version');
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
+    if (req.method === 'OPTIONS') {
+      return res.sendStatus(200);
+    }
+    next();
+  });
+
   // Ensure and statically serve uploads directory for cross-device avatar/passport persistence
   const dataUploadsDir = path.join(process.cwd(), 'data', 'uploads');
   if (!fs.existsSync(dataUploadsDir)) {
@@ -1724,17 +1741,121 @@ async function startServer() {
     res.json({ success: true, transactionId: result.transaction?.id, feeMinor: 0, ...result });
   });
 
-  // User Notifications Endpoint
-  app.get('/api/notifications', (req, res) => {
+  // User Notifications Endpoint (Supabase backed)
+  app.get('/api/notifications', async (req, res) => {
     const userId = getUserIdFromHeader(req);
+    const sb = getServerSupabase();
+    if (sb) {
+      try {
+        const { data: sbNotifs } = await sb
+          .from('notifications')
+          .select('*')
+          .eq('user_id', userId)
+          .order('created_at', { ascending: false })
+          .limit(20);
+
+        if (sbNotifs && sbNotifs.length > 0) {
+          return res.json({
+            notifications: sbNotifs.map((n: any) => ({
+              id: n.id,
+              userId: n.user_id,
+              title: n.title || 'Notification',
+              message: n.message,
+              isRead: Boolean(n.read || n.isRead),
+              read: Boolean(n.read || n.isRead),
+              type: n.type || 'SYSTEM',
+              createdTimestamp: n.created_at || new Date().toISOString()
+            }))
+          });
+        }
+      } catch (err) {
+        console.warn('Notice fetching Supabase notifications:', err);
+      }
+    }
     res.json({ notifications: db.getUserNotifications(userId) });
   });
 
-  app.post('/api/notifications/:id/read', (req, res) => {
+  app.post('/api/notifications/:id/read', async (req, res) => {
     const { id } = req.params;
+    const sb = getServerSupabase();
+    if (sb) {
+      try {
+        await sb.from('notifications').update({ read: true }).eq('id', id);
+      } catch (err) {}
+    }
     const notif = db.userNotifications.find(n => n.id === id);
     if (notif) notif.isRead = true;
     db.saveToDisk();
+    res.json({ success: true });
+  });
+
+  // --- BENEFICIARIES CRUD (Supabase backed) ---
+  app.get('/api/beneficiaries', async (req, res) => {
+    const userId = getUserIdFromHeader(req);
+    const sb = getServerSupabase();
+    if (sb) {
+      try {
+        const { data: sbBeneficiaries, error } = await sb
+          .from('beneficiaries')
+          .select('*')
+          .or(`user_id.eq.${userId},user_id.is.null`)
+          .order('created_at', { ascending: false });
+
+        if (!error && sbBeneficiaries && sbBeneficiaries.length > 0) {
+          return res.json({ success: true, beneficiaries: sbBeneficiaries });
+        }
+      } catch (err) {
+        console.warn('Notice fetching beneficiaries from Supabase:', err);
+      }
+    }
+
+    res.json({ success: true, beneficiaries: db.getBeneficiaries(userId) });
+  });
+
+  app.post('/api/beneficiaries', async (req, res) => {
+    const userId = getUserIdFromHeader(req);
+    const { name, account, bank, avatar_url } = req.body;
+    if (!name || !account) {
+      return res.status(400).json({ error: 'Name and account number are required.' });
+    }
+
+    const newBen = {
+      id: `ben_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+      user_id: userId,
+      name: String(name).trim(),
+      account: String(account).trim(),
+      bank: String(bank || 'Destination Bank').trim(),
+      avatar_url: avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=1e293b&color=fff&bold=true`,
+      created_at: new Date().toISOString()
+    };
+
+    // Save locally
+    db.saveBeneficiary(newBen);
+
+    // Sync to Supabase
+    const sb = getServerSupabase();
+    if (sb) {
+      try {
+        await sb.from('beneficiaries').upsert([newBen]);
+      } catch (err) {
+        console.warn('Notice saving beneficiary to Supabase:', err);
+      }
+    }
+
+    res.json({ success: true, beneficiary: newBen });
+  });
+
+  app.delete('/api/beneficiaries/:id', async (req, res) => {
+    const { id } = req.params;
+    db.beneficiaries = db.beneficiaries.filter(b => b.id !== id);
+    db.saveToDisk();
+
+    const sb = getServerSupabase();
+    if (sb) {
+      try {
+        await sb.from('beneficiaries').delete().eq('id', id);
+      } catch (err) {}
+    }
     res.json({ success: true });
   });
 

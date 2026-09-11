@@ -352,6 +352,102 @@ export async function syncApplicationToSupabase(app: any) {
 }
 
 /**
+ * Sync Beneficiary to Supabase
+ */
+export async function syncBeneficiaryToSupabase(beneficiary: any) {
+  if (!beneficiary || !serverSupabaseClient) return;
+  return syncRecordToSupabase('beneficiaries', {
+    id: beneficiary.id,
+    user_id: beneficiary.user_id || beneficiary.userId || null,
+    name: beneficiary.name,
+    account: beneficiary.account || beneficiary.account_number,
+    bank: beneficiary.bank || beneficiary.bank_name || 'Destination Bank',
+    avatar_url: beneficiary.avatar_url || beneficiary.avatarUrl || null,
+    created_at: beneficiary.created_at || new Date().toISOString(),
+    metadata: beneficiary
+  });
+}
+
+/**
+ * Sync Notification to Supabase
+ */
+export async function syncNotificationToSupabase(notif: any) {
+  if (!notif || !serverSupabaseClient) return;
+  return syncRecordToSupabase('notifications', {
+    id: notif.id,
+    user_id: notif.userId || notif.user_id,
+    title: notif.title || 'Bank Alert',
+    message: notif.message,
+    type: notif.type || 'SYSTEM',
+    is_read: Boolean(notif.isRead || notif.read),
+    created_at: notif.createdTimestamp || notif.created_at || new Date().toISOString(),
+    metadata: notif
+  });
+}
+
+/**
+ * Sync Activation Request to Supabase
+ */
+export async function syncActivationRequestToSupabase(req: any) {
+  if (!req || !serverSupabaseClient) return;
+  return syncRecordToSupabase('activation_requests', {
+    id: req.id,
+    user_id: req.userId || req.user_id,
+    account_id: req.accountId || req.account_id,
+    requested_at: req.requestedAt || req.requested_at || new Date().toISOString(),
+    status: req.status || 'PENDING',
+    notes: req.notes || '',
+    data: req
+  });
+}
+
+/**
+ * Sync Treasury Receiving Account to Supabase
+ */
+export async function syncReceivingAccountToSupabase(acc: any) {
+  if (!acc || !serverSupabaseClient) return;
+  return syncRecordToSupabase('receiving_accounts', {
+    id: acc.id,
+    bank_name: acc.bankName || acc.bank_name,
+    account_name: acc.accountName || acc.account_name,
+    account_number: acc.accountNumber || acc.account_number,
+    routing_number: acc.routingNumber || acc.routing_number || '',
+    swift_bic: acc.swiftBic || acc.swift_bic || '',
+    iban: acc.iban || '',
+    currency: acc.currency || 'USD',
+    region: acc.region || 'US',
+    status: acc.status || 'ACTIVE',
+    instructions: acc.instructions || '',
+    created_at: acc.createdAt || acc.created_at || new Date().toISOString(),
+    data: acc
+  });
+}
+
+/**
+ * Sync Wise Transfer to Supabase
+ */
+export async function syncWiseTransferToSupabase(transfer: any) {
+  if (!transfer || !serverSupabaseClient) return;
+  return syncRecordToSupabase('wise_transfers', {
+    id: transfer.id,
+    user_id: transfer.userId || transfer.user_id,
+    user_name: transfer.userName || transfer.user_name || '',
+    source_account_id: transfer.sourceAccountId || transfer.source_account_id,
+    amount_minor: transfer.amountMinor || transfer.amount_minor || 0,
+    source_currency: transfer.sourceCurrency || 'USD',
+    dest_currency: transfer.destCurrency || 'USD',
+    recipient: transfer.recipient || {},
+    status: transfer.status || 'COMPLETED',
+    wise_status: transfer.wiseStatus || 'outgoing_payment_sent',
+    reference: transfer.reference || '',
+    memo: transfer.memo || '',
+    created_at: transfer.createdTimestamp || new Date().toISOString(),
+    updated_at: transfer.updatedTimestamp || new Date().toISOString(),
+    data: transfer
+  });
+}
+
+/**
  * Helper to sync full user and application dossier to Supabase if connected
  */
 export async function syncNewRegistrationToSupabase(user: any, application: any, accounts: any[] = []) {
@@ -382,10 +478,15 @@ export async function syncAllDataToSupabase(db: any): Promise<{ success: boolean
     accounts: 0,
     cards: 0,
     transactions: 0,
+    beneficiaries: 0,
+    notifications: 0,
     applications: 0,
+    activationRequests: 0,
+    receivingAccounts: 0,
     auditLogs: 0,
     supportCases: 0,
-    adjustments: 0
+    adjustments: 0,
+    files: 0
   };
 
   try {
@@ -413,18 +514,73 @@ export async function syncAllDataToSupabase(db: any): Promise<{ success: boolean
       if (ok) counts.transactions++;
     }
 
-    // 5. Applications
+    // 4b. Transfer attempts (if not in ledger)
+    if (Array.isArray(db.transferAttempts)) {
+      for (const tx of db.transferAttempts) {
+        const ok = await syncRecordToSupabase('transactions', {
+          id: tx.id,
+          sender_id: tx.sender_id || tx.userId,
+          beneficiary_account: tx.beneficiary_account,
+          amount: tx.amount,
+          status: tx.status,
+          timestamp: tx.timestamp,
+          notes: tx.notes,
+          user_id: tx.sender_id,
+          beneficiary_name: tx.beneficiary_name || tx.recipient,
+          from_account: tx.from || tx.from_account
+        });
+        if (ok) counts.transactions++;
+      }
+    }
+
+    // 5. Beneficiaries
+    if (typeof db.getBeneficiaries === 'function') {
+      for (const ben of db.getBeneficiaries()) {
+        const ok = await syncBeneficiaryToSupabase(ben);
+        if (ok) counts.beneficiaries++;
+      }
+    } else if (Array.isArray(db.beneficiaries)) {
+      for (const ben of db.beneficiaries) {
+        const ok = await syncBeneficiaryToSupabase(ben);
+        if (ok) counts.beneficiaries++;
+      }
+    }
+
+    // 6. Notifications
+    const allNotifs = Array.isArray(db.userNotifications) ? db.userNotifications : [];
+    for (const notif of allNotifs) {
+      const ok = await syncNotificationToSupabase(notif);
+      if (ok) counts.notifications++;
+    }
+
+    // 7. Applications
     for (const app of db.applications.values()) {
       const ok = await syncApplicationToSupabase(app);
       if (ok) counts.applications++;
     }
 
-    // 6. Audit Logs
+    // 8. Activation requests
+    if (Array.isArray(db.activationRequests)) {
+      for (const req of db.activationRequests) {
+        const ok = await syncActivationRequestToSupabase(req);
+        if (ok) counts.activationRequests++;
+      }
+    }
+
+    // 9. Treasury receiving accounts
+    if (typeof db.getReceivingAccounts === 'function') {
+      for (const rAcc of db.getReceivingAccounts()) {
+        const ok = await syncReceivingAccountToSupabase(rAcc);
+        if (ok) counts.receivingAccounts++;
+      }
+    }
+
+    // 10. Audit Logs
     for (const log of db.auditLogs) {
       const ok = await syncRecordToSupabase('audit_logs', {
         id: log.id,
         actor_id: log.actorId,
-        actor_name: log.actorName,
+        actor_name: log.actorName || log.actorUsername,
         action: log.action,
         target_type: log.targetType,
         target_id: log.targetId,
@@ -434,7 +590,7 @@ export async function syncAllDataToSupabase(db: any): Promise<{ success: boolean
       if (ok) counts.auditLogs++;
     }
 
-    // 7. Support Cases
+    // 11. Support Cases
     for (const sc of db.supportCases) {
       const ok = await syncRecordToSupabase('support_cases', {
         id: sc.id,
@@ -449,7 +605,7 @@ export async function syncAllDataToSupabase(db: any): Promise<{ success: boolean
       if (ok) counts.supportCases++;
     }
 
-    // 8. Financial Adjustments
+    // 12. Financial Adjustments
     for (const adj of db.adjustments) {
       const ok = await syncRecordToSupabase('financial_adjustments', {
         id: adj.id,
@@ -462,6 +618,31 @@ export async function syncAllDataToSupabase(db: any): Promise<{ success: boolean
         data: adj
       });
       if (ok) counts.adjustments++;
+    }
+
+    // 13. Files in local upload dirs
+    try {
+      const uploadsDirs = [
+        path.join(process.cwd(), 'data', 'uploads'),
+        path.join(process.cwd(), 'public', 'uploads')
+      ];
+      for (const dir of uploadsDirs) {
+        if (fs.existsSync(dir)) {
+          const files = fs.readdirSync(dir);
+          for (const file of files) {
+            const filePath = path.join(dir, file);
+            if (fs.statSync(filePath).isFile()) {
+              const fileBuf = fs.readFileSync(filePath);
+              const ext = path.extname(file).toLowerCase();
+              const cType = ext === '.png' ? 'image/png' : (ext === '.pdf' ? 'application/pdf' : 'image/jpeg');
+              await uploadFileToSupabase(fileBuf, file, cType, 'system_sync');
+              counts.files++;
+            }
+          }
+        }
+      }
+    } catch (fErr) {
+      console.debug('[File Sync Scan Notice]:', fErr);
     }
 
     return { success: true, syncedCounts: counts };

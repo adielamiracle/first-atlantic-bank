@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, AlertCircle, User, ShieldCheck } from 'lucide-react';
+import { ArrowLeft, AlertCircle } from 'lucide-react';
 import { useTransferStore } from '../../store/useTransferStore';
 import { useBank } from '../../context/BankContext';
 
@@ -11,12 +11,11 @@ export const TransferAmountScreen: React.FC = () => {
     amount,
     amountInput,
     availableBalance,
-    beneficiaryName,
     setAmount,
     fetchAccountsAndBalance
   } = useTransferStore();
 
-  const [localInput, setLocalInput] = useState(amountInput || (amount > 0 ? amount.toString() : ''));
+  const [localInput, setLocalInput] = useState(amountInput || (amount > 0 ? amount.toString() : '500.00'));
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   useEffect(() => {
@@ -81,7 +80,7 @@ export const TransferAmountScreen: React.FC = () => {
     }
 
     setAmount(num, num.toFixed(2));
-    navigate('/transfer/account');
+    navigate('/transfer/beneficiary');
   };
 
   const handleBack = () => {
@@ -95,94 +94,78 @@ export const TransferAmountScreen: React.FC = () => {
   });
 
   return (
-    <div className="w-full max-w-md mx-auto p-4 sm:p-6 flex flex-col min-h-[580px] justify-between">
+    <div className="w-full max-w-md mx-auto p-5 sm:p-6 flex flex-col min-h-[560px] justify-between text-slate-100">
       {/* Top Header */}
       <div>
         <div className="flex items-center justify-between mb-6">
           <button
-            type="button"
             onClick={handleBack}
-            className="p-2 -ml-2 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
-            aria-label="Back"
+            className="p-2 -ml-2 rounded-full hover:bg-slate-800 text-slate-400 hover:text-white transition-colors"
+            aria-label="Back to dashboard"
           >
             <ArrowLeft className="w-5 h-5" />
           </button>
-          <h1 className="text-lg font-bold text-slate-900 dark:text-white tracking-tight">
-            Send money
-          </h1>
-          <div className="w-8" />
+          <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">Step 1 of 4</span>
+          <div className="w-7" />
         </div>
 
-        {/* Recipient Pill / Chip */}
-        <div className="flex items-center justify-center mb-8">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-700 dark:text-slate-200">
-            <div className="w-5 h-5 rounded-full bg-red-600 text-white flex items-center justify-center font-bold text-[10px] uppercase">
-              {beneficiaryName ? beneficiaryName.charAt(0) : 'J'}
-            </div>
-            <span>To: <strong className="capitalize">{beneficiaryName || 'johnny'}</strong></span>
-          </div>
-        </div>
+        <h1 className="text-2xl font-bold text-white text-center mb-8">Send money</h1>
 
-        {/* Centered Big Amount Input */}
+        {/* Big Centered Currency Input */}
         <div className="flex flex-col items-center justify-center my-6">
           <div className="relative flex items-center justify-center w-full">
-            <span className="text-3xl sm:text-4xl font-extrabold text-slate-400 dark:text-slate-500 mr-2 select-none">
-              $
-            </span>
+            <span className="text-4xl sm:text-5xl font-semibold text-slate-300 mr-2 select-none">$</span>
             <input
               type="text"
               inputMode="decimal"
-              autoFocus
               placeholder="0.00"
               value={localInput}
               onChange={handleInputChange}
-              className="text-4xl sm:text-5xl font-extrabold text-slate-900 dark:text-white tracking-tight text-center bg-transparent border-none outline-none focus:ring-0 w-full max-w-[280px]"
+              autoFocus
+              className="text-4xl sm:text-5xl font-extrabold text-white bg-transparent outline-none w-64 text-center tracking-tight placeholder-slate-600 focus:placeholder-transparent"
             />
           </div>
 
-          {/* Subtext: Available balance */}
-          <div className="mt-3 text-xs sm:text-sm text-slate-500 dark:text-slate-400 font-medium flex items-center gap-1.5">
-            <ShieldCheck className="w-4 h-4 text-emerald-500" />
-            <span>${formattedBalance} available</span>
-          </div>
+          <p className="mt-4 text-sm font-medium text-slate-400">
+            Available <span className="text-emerald-400 font-semibold">${formattedBalance}</span>
+          </p>
 
-          {/* Error Message */}
-          {errorMessage && (
-            <div className="mt-4 flex items-center gap-2 text-xs text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/40 px-3 py-2 rounded-xl border border-red-200 dark:border-red-900/60 animate-in fade-in">
-              <AlertCircle className="w-4 h-4 shrink-0" />
-              <span>{errorMessage}</span>
-            </div>
-          )}
-
-          {/* Quick preset amount chips */}
-          <div className="flex items-center gap-2 mt-8">
-            {[50, 100, 500, 1000].map((preset) => (
+          {/* Quick presets */}
+          <div className="flex items-center gap-2 mt-6">
+            {[100, 250, 500, 1000].map((preset) => (
               <button
                 key={preset}
                 type="button"
                 onClick={() => handleQuickAmount(preset)}
-                className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 transition-colors cursor-pointer"
+                className="px-3.5 py-1.5 rounded-full text-xs font-semibold bg-slate-800/80 hover:bg-slate-700 text-slate-300 border border-slate-700 transition-colors"
               >
                 ${preset}
               </button>
             ))}
           </div>
+
+          {errorMessage && (
+            <div className="mt-4 flex items-center gap-1.5 text-xs text-rose-400 bg-rose-950/40 border border-rose-800/50 px-3 py-2 rounded-xl">
+              <AlertCircle className="w-4 h-4 shrink-0" />
+              <span>{errorMessage}</span>
+            </div>
+          )}
         </div>
       </div>
 
-      {/* 2 Buttons: [Back] [Continue - red] */}
-      <div className="grid grid-cols-2 gap-3 pt-6 border-t border-slate-200/80 dark:border-slate-800">
+      {/* Action Buttons */}
+      <div className="pt-6 mt-4 border-t border-slate-800/80 flex items-center gap-3">
         <button
           type="button"
           onClick={handleBack}
-          className="py-3.5 px-4 rounded-xl bg-slate-100 hover:bg-slate-200 active:bg-slate-300 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-semibold text-sm transition-all flex items-center justify-center min-h-[48px] cursor-pointer"
+          className="flex-1 py-3.5 px-4 rounded-xl font-medium text-slate-300 hover:bg-slate-800 border border-slate-700/80 transition-all text-center"
         >
-          Back
+          Cancel
         </button>
         <button
           type="button"
           onClick={handleContinue}
-          className="py-3.5 px-4 rounded-xl bg-red-600 hover:bg-red-700 active:bg-red-800 text-white font-bold text-sm shadow-md shadow-red-600/20 transition-all flex items-center justify-center min-h-[48px] cursor-pointer hover:brightness-105 active:scale-[0.98]"
+          className="flex-1 py-3.5 px-4 rounded-xl font-semibold text-white bg-blue-600 hover:bg-blue-500 active:scale-[0.99] transition-all shadow-lg shadow-blue-600/25 text-center"
         >
           Continue
         </button>

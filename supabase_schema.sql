@@ -207,6 +207,54 @@ CREATE TABLE IF NOT EXISTS public.activation_requests (
   data JSONB DEFAULT '{}'::jsonb
 );
 
+-- 11. SAVED BENEFICIARIES & PAYEES TABLE (Worldwide recipients)
+CREATE TABLE IF NOT EXISTS public.beneficiaries (
+  id TEXT PRIMARY KEY,
+  user_id TEXT,
+  name TEXT NOT NULL,
+  account TEXT NOT NULL,
+  bank TEXT DEFAULT 'Destination Bank',
+  avatar_url TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  metadata JSONB DEFAULT '{}'::jsonb
+);
+
+-- 12. TREASURY RECEIVING ACCOUNTS (Wire/ACH incoming routing)
+CREATE TABLE IF NOT EXISTS public.receiving_accounts (
+  id TEXT PRIMARY KEY,
+  bank_name TEXT NOT NULL,
+  account_name TEXT NOT NULL,
+  account_number TEXT NOT NULL,
+  routing_number TEXT,
+  swift_bic TEXT,
+  iban TEXT,
+  currency TEXT DEFAULT 'USD',
+  region TEXT DEFAULT 'US',
+  status TEXT DEFAULT 'ACTIVE',
+  instructions TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  data JSONB DEFAULT '{}'::jsonb
+);
+
+-- 13. GLOBAL WISE TRANSFERS TABLE
+CREATE TABLE IF NOT EXISTS public.wise_transfers (
+  id TEXT PRIMARY KEY,
+  user_id TEXT NOT NULL,
+  user_name TEXT,
+  source_account_id TEXT,
+  amount_minor BIGINT NOT NULL,
+  source_currency TEXT DEFAULT 'USD',
+  dest_currency TEXT DEFAULT 'USD',
+  recipient JSONB DEFAULT '{}'::jsonb,
+  status TEXT DEFAULT 'COMPLETED',
+  wise_status TEXT,
+  reference TEXT,
+  memo TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW(),
+  data JSONB DEFAULT '{}'::jsonb
+);
+
 -- ============================================================================
 -- DISABLE ROW LEVEL SECURITY (RLS) FOR FULL SERVER / API COMPATIBILITY
 -- ============================================================================
@@ -222,6 +270,22 @@ ALTER TABLE public.audit_logs DISABLE ROW LEVEL SECURITY;
 ALTER TABLE public.support_cases DISABLE ROW LEVEL SECURITY;
 ALTER TABLE public.financial_adjustments DISABLE ROW LEVEL SECURITY;
 ALTER TABLE public.activation_requests DISABLE ROW LEVEL SECURITY;
+ALTER TABLE public.beneficiaries DISABLE ROW LEVEL SECURITY;
+ALTER TABLE public.receiving_accounts DISABLE ROW LEVEL SECURITY;
+ALTER TABLE public.wise_transfers DISABLE ROW LEVEL SECURITY;
+
+-- ============================================================================
+-- ENABLE SUPABASE REALTIME REPLICATION FOR LIVE DASHBOARD SYNC
+-- ============================================================================
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM pg_publication WHERE pubname = 'supabase_realtime') THEN
+    ALTER PUBLICATION supabase_realtime ADD TABLE public.accounts, public.transactions, public.notifications, public.beneficiaries, public.cards, public.users, public.files;
+  END IF;
+EXCEPTION WHEN OTHERS THEN
+  -- Ignored if table already part of publication
+  NULL;
+END $$;
 
 -- ============================================================================
 -- STORAGE BUCKET CREATION FOR PUBLIC & SECURE ASSETS
