@@ -58,6 +58,15 @@ textarea,
   touch-action: manipulation;
 }
 
+/* Hide scrollbars for clean mobile-first carousel */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
 @media screen and (max-width: 899px) {
   input[type="text"],
   input[type="number"],

@@ -25,6 +25,9 @@ export const TransferBeneficiaryScreen: React.FC = () => {
     beneficiaryName,
     beneficiaryAccount,
     beneficiaryBank,
+    beneficiaryRouting,
+    beneficiarySwift,
+    beneficiaryCountry,
     selectedBeneficiaryId,
     setBeneficiary,
     addBeneficiary,
@@ -51,6 +54,9 @@ export const TransferBeneficiaryScreen: React.FC = () => {
   // Beneficiary Input Fields
   const [recipientName, setRecipientName] = useState(beneficiaryName || '');
   const [accountNumber, setAccountNumber] = useState(beneficiaryAccount || '');
+  const [routingNumber, setRoutingNumber] = useState(beneficiaryRouting || '021000021');
+  const [swiftCode, setSwiftCode] = useState(beneficiarySwift || 'CHASUS33');
+  const [country, setCountry] = useState(beneficiaryCountry || 'United States');
   const [selectedSavedId, setSelectedSavedId] = useState<string | null>(selectedBeneficiaryId || null);
   const [formError, setFormError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
@@ -79,6 +85,8 @@ export const TransferBeneficiaryScreen: React.FC = () => {
   // Handle selecting an embedded bank
   const handleSelectBank = (bank: BankOption) => {
     setChosenBank(bank);
+    if (bank.swiftBic) setSwiftCode(bank.swiftBic);
+    if (bank.country) setCountry(bank.country);
     setCustomBankTyped('');
     setFormError(null);
   };
@@ -99,6 +107,8 @@ export const TransferBeneficiaryScreen: React.FC = () => {
       accountPlaceholder: 'Enter recipient account or IBAN'
     };
     setChosenBank(customBank);
+    setSwiftCode('SWIFT-REGISTERED');
+    setCountry('Worldwide (International)');
     setCustomBankTyped('');
     setSearchQuery('');
     setFormError(null);
@@ -182,11 +192,14 @@ export const TransferBeneficiaryScreen: React.FC = () => {
         name: recipientName.trim(),
         account: accountNumber.trim(),
         bank: finalBankName,
+        routing: routingNumber.trim(),
+        swift: swiftCode.trim(),
+        country: country.trim(),
         avatar_url: avatarUrl,
         id: selectedSavedId || undefined
       });
 
-      navigate('/transfer/review');
+      navigate('/transfer/account');
     } catch (err: any) {
       setFormError(err.message || 'Unable to proceed with transfer details.');
     } finally {
@@ -211,7 +224,7 @@ export const TransferBeneficiaryScreen: React.FC = () => {
           >
             <ArrowLeft className="w-5 h-5" />
           </button>
-          <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">Step 2 of 4</span>
+          <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">Step 2 of 5</span>
           <div className="w-7" />
         </div>
 
@@ -487,17 +500,9 @@ export const TransferBeneficiaryScreen: React.FC = () => {
                       }`}
                     >
                       <div className="flex items-center gap-3 min-w-0">
-                        <img
-                          src={
-                            b.avatar_url ||
-                            `https://ui-avatars.com/api/?name=${encodeURIComponent(b.name)}&background=1e293b&color=fff`
-                          }
-                          alt={b.name}
-                          className="w-8 h-8 rounded-full object-cover border border-slate-700 shrink-0"
-                          onError={(e: any) => {
-                            e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(b.name)}&background=1e293b&color=fff`;
-                          }}
-                        />
+                        <div className="w-8 h-8 rounded-full bg-slate-800 border border-slate-700 text-blue-400 font-bold text-xs flex items-center justify-center shrink-0 select-none">
+                          {b.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() || 'BN'}
+                        </div>
                         <div className="min-w-0">
                           <p className="text-xs font-semibold text-white truncate">{b.name}</p>
                           <p className="text-[11px] text-slate-400 truncate">
@@ -567,6 +572,46 @@ export const TransferBeneficiaryScreen: React.FC = () => {
                 setSelectedSavedId(null);
               }}
               className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-700/80 rounded-xl text-xs sm:text-sm font-mono text-white placeholder-slate-500 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-2.5">
+            <div>
+              <label className="block text-xs font-medium text-slate-300 mb-1">
+                Routing / Sort Code
+              </label>
+              <input
+                type="text"
+                placeholder="e.g. 021000021"
+                value={routingNumber}
+                onChange={(e) => setRoutingNumber(e.target.value)}
+                className="w-full px-3 py-2 bg-slate-950 border border-slate-700/80 rounded-xl text-xs sm:text-sm font-mono text-white placeholder-slate-500 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-slate-300 mb-1">
+                SWIFT / BIC Code
+              </label>
+              <input
+                type="text"
+                placeholder="e.g. CHASUS33"
+                value={swiftCode}
+                onChange={(e) => setSwiftCode(e.target.value.toUpperCase())}
+                className="w-full px-3 py-2 bg-slate-950 border border-slate-700/80 rounded-xl text-xs sm:text-sm font-mono text-white placeholder-slate-500 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 uppercase"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-xs font-medium text-slate-300 mb-1">
+              Destination Country / Jurisdiction
+            </label>
+            <input
+              type="text"
+              placeholder="e.g. United States or United Kingdom"
+              value={country}
+              onChange={(e) => setCountry(e.target.value)}
+              className="w-full px-3.5 py-2 bg-slate-950 border border-slate-700/80 rounded-xl text-xs sm:text-sm text-white placeholder-slate-500 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
             />
           </div>
 

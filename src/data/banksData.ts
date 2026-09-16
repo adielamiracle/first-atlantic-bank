@@ -506,6 +506,65 @@ export const REGISTERED_BANKS: RegisteredBank[] = [
     codeType: 'SWIFT/BIC',
     swiftBic: 'ROYCCAT2',
     clearingRail: 'Lynx / Automated Clearing'
+  },
+  // ==================== NIGERIA & WEST AFRICA (NIBSS / NIP / SWIFT) ====================
+  {
+    id: 'ng_gtbank',
+    name: 'Guaranty Trust Bank (GTBank / GTCO)',
+    shortName: 'GTBank',
+    country: 'GLOBAL',
+    countryName: 'Nigeria',
+    routingOrSortCode: '058',
+    codeType: 'SWIFT/BIC',
+    swiftBic: 'GTBINGLA',
+    clearingRail: 'NIBSS Instant Payment (NIP) / SWIFT',
+    isPopular: true
+  },
+  {
+    id: 'ng_zenith_bank',
+    name: 'Zenith Bank PLC',
+    shortName: 'Zenith Bank',
+    country: 'GLOBAL',
+    countryName: 'Nigeria',
+    routingOrSortCode: '057',
+    codeType: 'SWIFT/BIC',
+    swiftBic: 'ZEIBNGLA',
+    clearingRail: 'NIBSS Instant Payment (NIP) / SWIFT',
+    isPopular: true
+  },
+  {
+    id: 'ng_access_bank',
+    name: 'Access Bank PLC',
+    shortName: 'Access Bank',
+    country: 'GLOBAL',
+    countryName: 'Nigeria',
+    routingOrSortCode: '044',
+    codeType: 'SWIFT/BIC',
+    swiftBic: 'ACCEPNGLA',
+    clearingRail: 'NIBSS Instant Payment (NIP) / SWIFT',
+    isPopular: true
+  },
+  {
+    id: 'ng_uba',
+    name: 'United Bank for Africa (UBA)',
+    shortName: 'UBA',
+    country: 'GLOBAL',
+    countryName: 'Nigeria',
+    routingOrSortCode: '033',
+    codeType: 'SWIFT/BIC',
+    swiftBic: 'UNAFNGLA',
+    clearingRail: 'NIBSS Instant Payment (NIP) / SWIFT'
+  },
+  {
+    id: 'ng_first_bank',
+    name: 'First Bank of Nigeria',
+    shortName: 'First Bank',
+    country: 'GLOBAL',
+    countryName: 'Nigeria',
+    routingOrSortCode: '011',
+    codeType: 'SWIFT/BIC',
+    swiftBic: 'FBNINGLA',
+    clearingRail: 'NIBSS Instant Payment (NIP) / SWIFT'
   }
 ];
 

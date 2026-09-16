@@ -24,6 +24,7 @@ import { CustomerSidebar } from './CustomerSidebar';
 
 export const CustomerHeader: React.FC = () => {
   const {
+    currentView,
     currentUser,
     region,
     setRegion,
@@ -57,6 +58,8 @@ export const CustomerHeader: React.FC = () => {
     ? `${currentUser.firstName?.charAt(0) || 'F'}${currentUser.lastName?.charAt(0) || 'A'}`
     : 'FA';
 
+  const passportPhoto = currentUser?.passportPhoto || (typeof window !== 'undefined' ? localStorage.getItem('fab_user_passport_photo') : null) || '';
+
   return (
     <>
       <GlobalSearchModal isOpen={searchModalOpen} onClose={() => setSearchModalOpen(false)} />
@@ -75,7 +78,9 @@ export const CustomerHeader: React.FC = () => {
         </div>
       )}
 
-      <header className="bg-white dark:bg-[#121212] border-b border-slate-100 dark:border-slate-800 sticky top-0 z-30 transition-colors duration-200">
+      <header className={`bg-white dark:bg-[#121212] border-b border-slate-100 dark:border-slate-800 sticky top-0 z-30 transition-colors duration-200 ${
+        currentView === 'DASHBOARD_OVERVIEW' ? 'hidden md:block' : 'block'
+      }`}>
         <div className="px-4 sm:px-6 py-3 flex items-center justify-between gap-3 max-w-7xl mx-auto w-full">
           {/* Left: Hamburger menu (mobile only) & First Atlantic Brand Logo */}
           <div className="flex items-center gap-3">
@@ -165,10 +170,18 @@ export const CustomerHeader: React.FC = () => {
             <div className="relative">
               <button
                 onClick={() => setProfileMenuOpen(!profileMenuOpen)}
-                className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-[#FFC300] text-black font-bold flex items-center justify-center text-xs sm:text-sm shadow-xs hover:opacity-95 transition-all cursor-pointer select-none"
+                className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-[#FFC300] text-black font-bold flex items-center justify-center text-xs sm:text-sm shadow-xs hover:opacity-95 transition-all cursor-pointer select-none overflow-hidden border border-black/10 dark:border-white/10"
                 aria-label="User profile menu"
               >
-                {userInitials || 'FA'}
+                {passportPhoto ? (
+                  <img
+                    src={passportPhoto}
+                    alt="User Passport"
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  userInitials || 'FA'
+                )}
               </button>
 
               {profileMenuOpen && (

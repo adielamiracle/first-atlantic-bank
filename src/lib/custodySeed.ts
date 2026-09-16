@@ -1,8 +1,12 @@
 import { BankAccount, UserProfile } from '../types';
 import seedData from './custodySeedData.json';
 
-export const DEFAULT_INSTITUTIONAL_ACCOUNTS: BankAccount[] = (seedData.accounts || []) as BankAccount[];
-export const DEFAULT_INSTITUTIONAL_USERS: any[] = (seedData.users || []);
+export const DEFAULT_INSTITUTIONAL_ACCOUNTS: BankAccount[] = ((seedData.accounts || []) as BankAccount[]).filter(
+  a => a.userId !== 'usr_sterling_01' && !a.name?.toLowerCase().includes('sterling')
+);
+export const DEFAULT_INSTITUTIONAL_USERS: any[] = (seedData.users || []).filter(
+  u => u.id !== 'usr_sterling_01' && u.username !== 'jsterling' && !u.email?.includes('j.sterling')
+);
 
 const LOCAL_STORAGE_CUSTOMERS_KEY = 'fab_local_provisioned_customers_v2';
 const LOCAL_STORAGE_ACCOUNTS_KEY = 'fab_local_custody_accounts_v2';

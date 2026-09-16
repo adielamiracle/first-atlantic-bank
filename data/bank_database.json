@@ -1,46 +1,6 @@
 {
   "users": [
     [
-      "usr_sterling_01",
-      {
-        "id": "usr_sterling_01",
-        "email": "j.sterling@atlantic-client.com",
-        "username": "jsterling",
-        "firstName": "Jonathan",
-        "lastName": "Sterling",
-        "phone": "+1 (212) 849-2910",
-        "dialCode": "+1",
-        "dateOfBirth": "1984-04-16",
-        "nationality": "American",
-        "passportNumber": "US84920194A",
-        "passportPhoto": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500&auto=format&fit=crop&q=80",
-        "loginPin": "1234",
-        "ssnMasked": "•••-••-8492",
-        "nationalInsuranceMasked": "QQ 12 34 56 A",
-        "region": "US",
-        "approval_status": "APPROVED",
-        "address": {
-          "line1": "740 Park Avenue, Penthouse B",
-          "city": "New York",
-          "stateOrCounty": "NY",
-          "postalCode": "10021",
-          "country": "United States"
-        },
-        "mfaEnabled": true,
-        "mfaMethod": "AUTHENTICATOR",
-        "biometricsEnabled": true,
-        "kycTier": "TIER_2_VERIFIED_PREMIER",
-        "securityScore": 94,
-        "notifications": {
-          "emailAlerts": true,
-          "smsAlerts": true,
-          "pushAlerts": true,
-          "largeTransactionThresholdMinor": 500000
-        },
-        "lastLogin": "2026-09-01T12:38:50.334Z"
-      }
-    ],
-    [
       "usr_montgomery_02",
       {
         "id": "usr_montgomery_02",
@@ -756,9 +716,14 @@
       {
         "id": "18f086ef-3c11-4a42-9b44-8657ffd564f3",
         "email": "winterj548@gmail.com",
+        "username": "winterj548",
+        "firstName": "Winter",
+        "lastName": "J",
+        "phone": "+1 (555) 019-2830",
         "dialCode": "+1",
         "dateOfBirth": "1988-06-15",
         "nationality": "American",
+        "passportPhoto": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500",
         "loginPin": "1234",
         "ssnMasked": "•••-••-8899",
         "region": "US",
@@ -772,103 +737,11 @@
           "pushAlerts": true,
           "largeTransactionThresholdMinor": 500000
         },
-        "lastLogin": "2026-09-10T09:07:16.009Z"
+        "lastLogin": "2026-09-16T17:28:16.228Z"
       }
     ]
   ],
   "accounts": [
-    [
-      "acc_sterling_chk_01",
-      {
-        "id": "acc_sterling_chk_01",
-        "userId": "usr_sterling_01",
-        "accountNumber": "•••• 4892",
-        "accountNumberFull": "882049184892",
-        "routingNumber": "021000089",
-        "swiftBic": "FATLUS33NYC",
-        "name": "Premier Private Checking",
-        "type": "CHECKING_PREMIER",
-        "currency": "USD",
-        "balanceMinor": 5403000,
-        "availableBalanceMinor": 5403000,
-        "pendingHoldMinor": 250000,
-        "interestRateAPY": 1.25,
-        "status": "ACTIVE",
-        "region": "US",
-        "openedDate": "2021-03-15",
-        "dailyTransferLimitMinor": 50000000,
-        "statementCycleDay": 28
-      }
-    ],
-    [
-      "acc_sterling_sav_02",
-      {
-        "id": "acc_sterling_sav_02",
-        "userId": "usr_sterling_01",
-        "accountNumber": "•••• 7104",
-        "accountNumberFull": "882049187104",
-        "routingNumber": "021000089",
-        "swiftBic": "FATLUS33NYC",
-        "name": "Atlantic Apex High-Yield Savings",
-        "type": "SAVINGS_HIGH_YIELD",
-        "currency": "USD",
-        "balanceMinor": 38450000,
-        "availableBalanceMinor": 38450000,
-        "pendingHoldMinor": 0,
-        "interestRateAPY": 5.15,
-        "status": "ACTIVE",
-        "region": "US",
-        "openedDate": "2021-04-10",
-        "dailyTransferLimitMinor": 100000000,
-        "statementCycleDay": 28
-      }
-    ],
-    [
-      "acc_sterling_multigbp_03",
-      {
-        "id": "acc_sterling_multigbp_03",
-        "userId": "usr_sterling_01",
-        "accountNumber": "•••• 9381",
-        "accountNumberFull": "608371993810",
-        "sortCode": "40-12-88",
-        "iban": "GB29FATL40128860837199",
-        "swiftBic": "FATLGB22LON",
-        "name": "Global Multi-Currency GBP Reserve",
-        "type": "MULTI_CURRENCY_GLOBAL",
-        "currency": "GBP",
-        "balanceMinor": 8940000,
-        "availableBalanceMinor": 8940000,
-        "pendingHoldMinor": 0,
-        "interestRateAPY": 4.8,
-        "status": "ACTIVE",
-        "region": "UK",
-        "openedDate": "2022-06-20",
-        "dailyTransferLimitMinor": 75000000,
-        "statementCycleDay": 15
-      }
-    ],
-    [
-      "acc_sterling_crd_04",
-      {
-        "id": "acc_sterling_crd_04",
-        "userId": "usr_sterling_01",
-        "accountNumber": "•••• 1084",
-        "accountNumberFull": "4532890123451084",
-        "swiftBic": "FATLUS33NYC",
-        "name": "First Atlantic Infinite Visa Signature",
-        "type": "CREDIT_CARD_INFINITE",
-        "currency": "USD",
-        "balanceMinor": 341280,
-        "availableBalanceMinor": 9658720,
-        "pendingHoldMinor": 48500,
-        "creditLimitMinor": 10000000,
-        "status": "ACTIVE",
-        "region": "US",
-        "openedDate": "2021-03-20",
-        "dailyTransferLimitMinor": 2500000,
-        "statementCycleDay": 1
-      }
-    ],
     [
       "acc_usr_user_5427_usd_01",
       {
@@ -1077,59 +950,6 @@
       }
     ],
     [
-      "acc_usr_sterling_9948_usd_01",
-      {
-        "id": "acc_usr_sterling_9948_usd_01",
-        "userId": "usr_sterling_9948",
-        "accountNumber": "•••• 3329",
-        "accountNumberFull": "312173973329",
-        "routingNumber": "021000089",
-        "swiftBic": "FATLUS33NYC",
-        "name": "Premier Private Client Checking",
-        "type": "CHECKING_PREMIER",
-        "currency": "USD",
-        "balanceMinor": 500000,
-        "availableBalanceMinor": 500000,
-        "pendingHoldMinor": 0,
-        "interestRateAPY": 1.25,
-        "status": "ACTIVE",
-        "region": "US",
-        "openedDate": "2026-09-02",
-        "dailyTransferLimitMinor": 50000000,
-        "statementCycleDay": 28,
-        "customerName": "Marcus Sterling",
-        "customerEmail": "marcus.sterling@firstatlantic.com",
-        "customerPhone": "+15550192830"
-      }
-    ],
-    [
-      "acc_usr_sterling_9948_gbp_02",
-      {
-        "id": "acc_usr_sterling_9948_gbp_02",
-        "userId": "usr_sterling_9948",
-        "accountNumber": "•••• 6247",
-        "accountNumberFull": "956192006247",
-        "sortCode": "40-12-88",
-        "iban": "GB29FATL40128892006247",
-        "swiftBic": "FATLGB22LON",
-        "name": "Premier Private Client Checking",
-        "type": "CHECKING_PREMIER",
-        "currency": "GBP",
-        "balanceMinor": 250000,
-        "availableBalanceMinor": 250000,
-        "pendingHoldMinor": 0,
-        "interestRateAPY": 1.25,
-        "status": "ACTIVE",
-        "region": "UK",
-        "openedDate": "2026-09-02",
-        "dailyTransferLimitMinor": 50000000,
-        "statementCycleDay": 28,
-        "customerName": "Marcus Sterling",
-        "customerEmail": "marcus.sterling@firstatlantic.com",
-        "customerPhone": "+15550192830"
-      }
-    ],
-    [
       "acc_erin_megan_01",
       {
         "id": "acc_erin_megan_01",
@@ -1290,74 +1110,24 @@
         "accountNumberFull": "1092837461",
         "routingNumber": "021000089",
         "sortCode": "40-12-88",
+        "iban": "US89FATL0210000891092837461",
         "swiftBic": "FATLUS33NYC",
-        "type": "CHECKING_PREMIER",
+        "name": "High Yield Savings Vault",
+        "type": "SAVINGS_HIGH_YIELD",
         "currency": "USD",
-        "balanceMinor": 0,
-        "availableBalanceMinor": 0,
+        "balanceMinor": 5148000,
+        "availableBalanceMinor": 5148000,
         "pendingHoldMinor": 0,
-        "interestRateAPY": 0,
-        "status": "Active",
+        "interestRateAPY": 4.85,
+        "status": "ACTIVE",
         "region": "US",
-        "openedDate": "2026-09-10",
+        "openedDate": "2026-09-16",
         "dailyTransferLimitMinor": 50000000,
         "statementCycleDay": 28
       }
     ]
   ],
   "cards": [
-    [
-      "crd_deb_01",
-      {
-        "id": "crd_deb_01",
-        "accountId": "acc_sterling_chk_01",
-        "userId": "usr_sterling_01",
-        "cardNumberMasked": "•••• •••• •••• 4892",
-        "cardNumberFull": "4111 8892 0149 4892",
-        "cardHolderName": "JONATHAN STERLING",
-        "expiryMonth": 11,
-        "expiryYear": 2029,
-        "cvv": "849",
-        "cardType": "DEBIT_VISA_SIGNATURE",
-        "status": "ACTIVE",
-        "isVirtual": false,
-        "contactlessEnabled": true,
-        "onlineTransactionsEnabled": true,
-        "internationalSpendEnabled": true,
-        "dailyAtmLimitMinor": 500000,
-        "dailySpendLimitMinor": 2500000,
-        "travelNotices": [
-          {
-            "country": "United Kingdom",
-            "startDate": "2026-09-01",
-            "endDate": "2026-09-15"
-          }
-        ]
-      }
-    ],
-    [
-      "crd_inf_02",
-      {
-        "id": "crd_inf_02",
-        "accountId": "acc_sterling_crd_04",
-        "userId": "usr_sterling_01",
-        "cardNumberMasked": "•••• •••• •••• 1084",
-        "cardNumberFull": "4532 8901 2345 1084",
-        "cardHolderName": "JONATHAN STERLING",
-        "expiryMonth": 8,
-        "expiryYear": 2030,
-        "cvv": "392",
-        "cardType": "CREDIT_ATLANTIC_INFINITE",
-        "status": "ACTIVE",
-        "isVirtual": false,
-        "contactlessEnabled": true,
-        "onlineTransactionsEnabled": true,
-        "internationalSpendEnabled": true,
-        "dailyAtmLimitMinor": 1000000,
-        "dailySpendLimitMinor": 10000000,
-        "travelNotices": []
-      }
-    ],
     [
       "crd_usr_user_5427_01",
       {
@@ -1566,29 +1336,6 @@
       }
     ],
     [
-      "crd_usr_sterling_9948_01",
-      {
-        "id": "crd_usr_sterling_9948_01",
-        "accountId": "acc_usr_sterling_9948_gbp_02",
-        "userId": "usr_sterling_9948",
-        "cardNumberMasked": "•••• •••• •••• 6247",
-        "cardNumberFull": "4111 2425 1449 6247",
-        "cardHolderName": "MARCUS STERLING",
-        "expiryMonth": 12,
-        "expiryYear": 2031,
-        "cvv": "252",
-        "cardType": "DEBIT_VISA_SIGNATURE",
-        "status": "ACTIVE",
-        "isVirtual": false,
-        "contactlessEnabled": true,
-        "onlineTransactionsEnabled": true,
-        "internationalSpendEnabled": true,
-        "dailyAtmLimitMinor": 500000,
-        "dailySpendLimitMinor": 2500000,
-        "travelNotices": []
-      }
-    ],
-    [
       "crd_erin_01",
       {
         "id": "crd_erin_01",
@@ -1706,69 +1453,6 @@
   ],
   "ledger": [
     {
-      "id": "led_tx_1789030974524_8171",
-      "transactionId": "tx_1789030974524_8171",
-      "accountId": "acc_sterling_chk_01",
-      "direction": "DEBIT",
-      "amountMinor": 1500,
-      "currency": "USD",
-      "balanceAfterMinor": 5403000,
-      "description": "Transfer to Sarah Jenkins (US9920194827)",
-      "category": "Transfers",
-      "counterparty": "Sarah Jenkins",
-      "status": "SETTLED",
-      "channel": "WIRE",
-      "referenceNumber": "tx_1789030974524_8171",
-      "createdTimestamp": "2026-09-10T09:02:54.196Z",
-      "effectiveTimestamp": "2026-09-10T09:02:54.196Z",
-      "metadata": {
-        "beneficiaryAccount": "US9920194827",
-        "beneficiaryName": "Sarah Jenkins"
-      }
-    },
-    {
-      "id": "led_tx_1789030785343_2233",
-      "transactionId": "tx_1789030785343_2233",
-      "accountId": "acc_sterling_chk_01",
-      "direction": "DEBIT",
-      "amountMinor": 2500,
-      "currency": "USD",
-      "balanceAfterMinor": 5404500,
-      "description": "Transfer to Sarah Jenkins (US9920194827)",
-      "category": "Transfers",
-      "counterparty": "Sarah Jenkins",
-      "status": "SETTLED",
-      "channel": "WIRE",
-      "referenceNumber": "tx_1789030785343_2233",
-      "createdTimestamp": "2026-09-10T08:59:45.073Z",
-      "effectiveTimestamp": "2026-09-10T08:59:45.073Z",
-      "metadata": {
-        "beneficiaryAccount": "US9920194827",
-        "beneficiaryName": "Sarah Jenkins"
-      }
-    },
-    {
-      "id": "led_tx_1789030588054_6292",
-      "transactionId": "tx_1789030588054_6292",
-      "accountId": "acc_sterling_chk_01",
-      "direction": "DEBIT",
-      "amountMinor": 5000,
-      "currency": "USD",
-      "balanceAfterMinor": 5407000,
-      "description": "Transfer to Alice Morgan (US8492019482)",
-      "category": "Transfers",
-      "counterparty": "Alice Morgan",
-      "status": "SETTLED",
-      "channel": "WIRE",
-      "referenceNumber": "tx_1789030588054_6292",
-      "createdTimestamp": "2026-09-10T08:56:27.948Z",
-      "effectiveTimestamp": "2026-09-10T08:56:27.948Z",
-      "metadata": {
-        "beneficiaryAccount": "US8492019482",
-        "beneficiaryName": "Alice Morgan"
-      }
-    },
-    {
       "id": "led_1788872203364_351",
       "transactionId": "tx_adm_1788872203364_327",
       "accountId": "acc_erin_megan_01",
@@ -1835,27 +1519,6 @@
         "adminId": "adm_master_01",
         "adminName": "Alexandra Vance",
         "adminRole": "SUPER_ADMIN"
-      }
-    },
-    {
-      "id": "led_wise_1788869790673",
-      "transactionId": "tx_wise_1788869790673",
-      "accountId": "acc_sterling_chk_01",
-      "direction": "DEBIT",
-      "amountMinor": 50000,
-      "currency": "USD",
-      "balanceAfterMinor": 14841840,
-      "description": "Consulting invoice 2026-09",
-      "category": "Transfers",
-      "counterparty": "Alistair Finch",
-      "status": "SETTLED",
-      "channel": "WIRE",
-      "referenceNumber": "WISE-69790672",
-      "createdTimestamp": "2026-09-08T12:16:30.673Z",
-      "effectiveTimestamp": "2026-09-08T12:16:30.673Z",
-      "metadata": {
-        "wiseTransferId": "wise_tx_1788869790673_308154",
-        "feeMinor": 210
       }
     },
     {
@@ -2013,42 +1676,6 @@
       "settledTimestamp": "2026-09-04T05:19:55.208Z"
     },
     {
-      "id": "led_init_1788341333526",
-      "transactionId": "tx_init_1788341333526",
-      "accountId": "acc_usr_sterling_9948_gbp_02",
-      "direction": "CREDIT",
-      "amountMinor": 250000,
-      "currency": "GBP",
-      "balanceAfterMinor": 250000,
-      "description": "Initial Account Opening Deposit (Executive Clearance)",
-      "category": "Deposits",
-      "counterparty": "First Atlantic Bank Treasury Direct",
-      "status": "SETTLED",
-      "channel": "ADMIN_PORTAL",
-      "referenceNumber": "DEP-ADM-333526",
-      "createdTimestamp": "2026-09-02T09:28:53.526Z",
-      "effectiveTimestamp": "2026-09-02T09:28:53.526Z",
-      "settledTimestamp": "2026-09-02T09:28:53.526Z"
-    },
-    {
-      "id": "led_init_1788341329949",
-      "transactionId": "tx_init_1788341329949",
-      "accountId": "acc_usr_sterling_9948_usd_01",
-      "direction": "CREDIT",
-      "amountMinor": 500000,
-      "currency": "USD",
-      "balanceAfterMinor": 500000,
-      "description": "Initial Account Opening Deposit (Executive Clearance)",
-      "category": "Deposits",
-      "counterparty": "First Atlantic Bank Treasury Direct",
-      "status": "SETTLED",
-      "channel": "ADMIN_PORTAL",
-      "referenceNumber": "DEP-ADM-329949",
-      "createdTimestamp": "2026-09-02T09:28:49.949Z",
-      "effectiveTimestamp": "2026-09-02T09:28:49.949Z",
-      "settledTimestamp": "2026-09-02T09:28:49.949Z"
-    },
-    {
       "id": "led_init_1788340266701",
       "transactionId": "tx_init_1788340266701",
       "accountId": "acc_usr_jenkins_6699_usd_01",
@@ -2101,116 +1728,68 @@
       "createdTimestamp": "2026-09-01T17:45:55.428Z",
       "effectiveTimestamp": "2026-09-01T17:45:55.428Z",
       "settledTimestamp": "2026-09-01T17:45:55.428Z"
-    },
-    {
-      "id": "led_001",
-      "transactionId": "tx_fatl_99401",
-      "accountId": "acc_sterling_chk_01",
-      "direction": "CREDIT",
-      "amountMinor": 2850000,
-      "currency": "USD",
-      "balanceAfterMinor": 14892050,
-      "description": "Direct Deposit — Morgan Stanley Global Wealth Distribution",
-      "category": "Income",
-      "counterparty": "Morgan Stanley Wealth Management",
-      "status": "SETTLED",
-      "channel": "ACH",
-      "referenceNumber": "ACH-MS-20260815-99201",
-      "createdTimestamp": "2026-08-30T14:38:50.334Z",
-      "effectiveTimestamp": "2026-08-30T14:38:50.334Z",
-      "settledTimestamp": "2026-08-30T14:38:50.334Z"
-    },
-    {
-      "id": "led_002",
-      "transactionId": "tx_fatl_99392",
-      "accountId": "acc_sterling_chk_01",
-      "direction": "DEBIT",
-      "amountMinor": 250000,
-      "currency": "USD",
-      "balanceAfterMinor": 12042050,
-      "description": "Wire Out — Sotheby's International Realty Escrow",
-      "category": "Transfers",
-      "counterparty": "Sotheby's Realty NY Escrow Trust",
-      "status": "PENDING",
-      "channel": "WIRE",
-      "referenceNumber": "FEDWIRE-20260816-88192",
-      "createdTimestamp": "2026-08-31T14:38:50.334Z",
-      "effectiveTimestamp": "2026-08-31T14:38:50.334Z"
-    },
-    {
-      "id": "led_003",
-      "transactionId": "tx_fatl_99210",
-      "accountId": "acc_sterling_chk_01",
-      "direction": "DEBIT",
-      "amountMinor": 48500,
-      "currency": "USD",
-      "balanceAfterMinor": 12292050,
-      "description": "Bill Payment — ConEdison Electric NYC",
-      "category": "Bills & Utilities",
-      "counterparty": "Consolidated Edison NY",
-      "status": "SETTLED",
-      "channel": "ONLINE",
-      "referenceNumber": "BP-CONED-884910",
-      "createdTimestamp": "2026-08-28T14:38:50.334Z",
-      "effectiveTimestamp": "2026-08-28T14:38:50.334Z",
-      "settledTimestamp": "2026-08-28T14:38:50.334Z"
-    },
-    {
-      "id": "led_004",
-      "transactionId": "tx_fatl_99119",
-      "accountId": "acc_sterling_sav_02",
-      "direction": "CREDIT",
-      "amountMinor": 164890,
-      "currency": "USD",
-      "balanceAfterMinor": 38450000,
-      "description": "Monthly Compound Yield Payment (5.15% APY)",
-      "category": "Fees & Interest",
-      "counterparty": "First Atlantic Bank Treasury",
-      "status": "SETTLED",
-      "channel": "ADMIN_PORTAL",
-      "referenceNumber": "INT-APEX-202607-001",
-      "createdTimestamp": "2026-08-14T14:38:50.334Z",
-      "effectiveTimestamp": "2026-08-14T14:38:50.334Z",
-      "settledTimestamp": "2026-08-14T14:38:50.334Z"
-    },
-    {
-      "id": "led_005",
-      "transactionId": "tx_fatl_98901",
-      "accountId": "acc_sterling_multigbp_03",
-      "direction": "CREDIT",
-      "amountMinor": 5000000,
-      "currency": "GBP",
-      "balanceAfterMinor": 8940000,
-      "description": "Faster Payments Inbound — Barclays Private Bank London",
-      "category": "Transfers",
-      "counterparty": "Barclays Private Bank UK",
-      "status": "SETTLED",
-      "channel": "FPS",
-      "referenceNumber": "FPS-LON-99201948",
-      "createdTimestamp": "2026-08-25T14:38:50.334Z",
-      "effectiveTimestamp": "2026-08-25T14:38:50.334Z",
-      "settledTimestamp": "2026-08-25T14:38:50.334Z"
-    },
-    {
-      "id": "led_006",
-      "transactionId": "tx_fatl_98812",
-      "accountId": "acc_sterling_crd_04",
-      "direction": "DEBIT",
-      "amountMinor": 125000,
-      "currency": "USD",
-      "balanceAfterMinor": 341280,
-      "description": "The Carlyle Hotel New York — Fine Dining & Suites",
-      "category": "Shopping & Dining",
-      "counterparty": "The Carlyle Hotel NYC",
-      "status": "SETTLED",
-      "channel": "CARD_POS",
-      "referenceNumber": "POS-AUTH-48192-CARLYLE",
-      "createdTimestamp": "2026-08-29T14:38:50.334Z",
-      "effectiveTimestamp": "2026-08-29T14:38:50.334Z",
-      "settledTimestamp": "2026-08-29T14:38:50.334Z"
     }
   ],
   "auditLogs": [
+    {
+      "actorId": "18f086ef-3c11-4a42-9b44-8657ffd564f3",
+      "actorEmail": "winterj548@gmail.com",
+      "actorRole": "CUSTOMER",
+      "action": "PASSPORT_UPDATED",
+      "targetType": "USER",
+      "targetId": "18f086ef-3c11-4a42-9b44-8657ffd564f3",
+      "ipAddress": "108.45.192.8",
+      "userAgent": "curl/7.88.1",
+      "details": "Customer updated verified passport photo and credentials.",
+      "id": "aud_1789579699740_579",
+      "timestamp": "2026-09-16T17:28:19.740Z",
+      "signatureHash": "00000000000000000000000000000000000000000000000000000000551e1a9d"
+    },
+    {
+      "actorId": "18f086ef-3c11-4a42-9b44-8657ffd564f3",
+      "actorEmail": "winterj548@gmail.com",
+      "actorRole": "CUSTOMER",
+      "action": "PASSPORT_UPDATED",
+      "targetType": "USER",
+      "targetId": "18f086ef-3c11-4a42-9b44-8657ffd564f3",
+      "ipAddress": "108.45.192.8",
+      "userAgent": "curl/7.88.1",
+      "details": "Customer updated verified passport photo and credentials.",
+      "id": "aud_1789579670832_517",
+      "timestamp": "2026-09-16T17:27:50.832Z",
+      "signatureHash": "0000000000000000000000000000000000000000000000000000000054fdd7e8"
+    },
+    {
+      "actorId": "18f086ef-3c11-4a42-9b44-8657ffd564f3",
+      "actorEmail": "winterj548@gmail.com",
+      "actorRole": "CUSTOMER",
+      "action": "CUSTOMER_SESSION_AUTHORIZED",
+      "targetType": "USER",
+      "targetId": "18f086ef-3c11-4a42-9b44-8657ffd564f3",
+      "ipAddress": "108.45.192.8",
+      "userAgent": "curl/7.88.1",
+      "details": "Successful 2FA (undefined) sign-in.",
+      "id": "aud_1789579649918_788",
+      "timestamp": "2026-09-16T17:27:29.918Z",
+      "signatureHash": "0000000000000000000000000000000000000000000000000000000000843e06"
+    },
+    {
+      "id": "aud_adm_login_1789579639116",
+      "actorId": "adm_master_01",
+      "actorEmail": "admin@firstatlanticbank.com",
+      "actorRole": "SUPER_ADMIN",
+      "actorUsername": "alexandra.vance",
+      "category": "AUTHENTICATION",
+      "severity": "INFO",
+      "action": "ADMIN_AUTHENTICATED_LOGIN",
+      "targetType": "SECURITY",
+      "targetId": "adm_master_01",
+      "ipAddress": "199.16.156.12",
+      "userAgent": "First Atlantic Master Admin Suite v4.9 / MacOS",
+      "timestamp": "2026-09-16T17:27:19.116Z",
+      "details": "Master Administrator Alexandra Vance successfully authenticated via Executive Risk & Governance gateway.",
+      "signatureHash": "sig_admin_sec_1789579639116"
+    },
     {
       "actorId": "usr_erin_megan_83",
       "actorEmail": "erinmeg45@gmail.com",
@@ -2970,7 +2549,7 @@
         "name": "Alexandra Vance",
         "role": "SUPER_ADMIN",
         "department": "Executive Risk, Governance & Master Administration",
-        "lastLogin": "2026-09-06T14:17:29.924Z",
+        "lastLogin": "2026-09-16T17:27:19.115Z",
         "status": "ACTIVE"
       }
     ]
@@ -5037,10 +4616,6 @@
   ],
   "userPasswords": [
     [
-      "usr_sterling_01",
-      "AtlanticSecure2026!"
-    ],
-    [
       "usr_montgomery_02",
       "MayfairLondon2026!"
     ],
@@ -5255,11 +4830,28 @@
     [
       "18f086ef-3c11-4a42-9b44-8657ffd564f3",
       "AtlanticSecure2026!"
+    ],
+    [
+      "winterj548",
+      "AtlanticSecure2026!"
+    ],
+    [
+      "winterj548@gmail.com",
+      "AtlanticSecure2026!"
     ]
   ],
   "activeSessions": [],
   "accountTransferConfigs": [],
   "userNotifications": [
+    {
+      "id": "notif_1789579700382_704",
+      "userId": "18f086ef-3c11-4a42-9b44-8657ffd564f3",
+      "title": "Transfer Sent",
+      "message": "You sent $150 to Johnny Global",
+      "type": "TRANSFER",
+      "timestamp": "2026-09-16T17:28:20.382Z",
+      "isRead": false
+    },
     {
       "id": "notif_1789030974721_286",
       "userId": "usr_sterling_01",
@@ -5299,6 +4891,23 @@
   ],
   "transferAttempts": [
     {
+      "id": "tx_1789579700163_5564",
+      "sender_id": "18f086ef-3c11-4a42-9b44-8657ffd564f3",
+      "recipient": "Johnny Global",
+      "beneficiary_name": "Johnny Global",
+      "beneficiary_account": "US9920194827",
+      "amount": 150,
+      "fee": "No fee",
+      "currency": "USD",
+      "from": "High Yield Savings Vault ••••7461",
+      "status": "Completed",
+      "timestamp": "2026-09-16T17:28:19.763Z",
+      "date": "2026-09-16T17:28:19.763Z",
+      "reference": "Institutional settlement test",
+      "estimatedDelivery": "Next business day",
+      "notes": "External Account - Institutional settlement test"
+    },
+    {
       "id": "tx_1789030974524_8171",
       "sender_id": "usr_sterling_01",
       "beneficiary_account": "US9920194827",
@@ -5335,5 +4944,31 @@
       "notes": "External Account - Test transfer"
     }
   ],
-  "savedAt": "2026-09-10T09:07:16.250Z"
+  "beneficiaries": [
+    {
+      "id": "ben_1",
+      "name": "Johnny Mike",
+      "account": "4829104829",
+      "bank": "Chase Bank",
+      "avatar_url": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
+      "created_at": "2026-09-16T15:34:54.853Z"
+    },
+    {
+      "id": "ben_2",
+      "name": "Sarah Connor",
+      "account": "1092837461",
+      "bank": "Bank of America",
+      "avatar_url": "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&auto=format&fit=crop&q=80",
+      "created_at": "2026-09-16T15:34:54.853Z"
+    },
+    {
+      "id": "ben_3",
+      "name": "David Miller",
+      "account": "83920194",
+      "bank": "Barclays Bank UK",
+      "avatar_url": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80",
+      "created_at": "2026-09-16T15:34:54.853Z"
+    }
+  ],
+  "savedAt": "2026-09-16T17:28:20.482Z"
 }

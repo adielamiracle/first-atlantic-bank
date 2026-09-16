@@ -57,7 +57,7 @@ const MainAppRouter: React.FC = () => {
   useEffect(() => {
     const handleHashAndPath = () => {
       const hash = window.location.hash.toLowerCase();
-      const pathname = window.location.pathname.toLowerCase();
+      const pathname = (location.pathname || window.location.pathname).toLowerCase();
 
       // Legal & Privacy routes
       if (hash === '#privacy' || hash === '#/privacy' || pathname === '/privacy') {
@@ -138,7 +138,7 @@ const MainAppRouter: React.FC = () => {
       window.removeEventListener('hashchange', handleHashAndPath);
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [currentRole, setCurrentView]);
+  }, [currentRole, setCurrentView, location.pathname, location.hash]);
 
   // 1. Dedicated Admin Authentication Route - Hide completely for normal users
   if (currentView === 'AUTH_ADMIN_LOGIN') {
@@ -177,9 +177,13 @@ const MainAppRouter: React.FC = () => {
           <CustomerSidebar />
 
           {/* Main Content Pane */}
-          <div className="relative z-10 flex-1 flex flex-col min-w-0 pb-16 md:pb-0">
+          <div className="relative z-10 flex-1 flex flex-col min-w-0 pb-0 md:pb-0">
             <CustomerHeader />
-            <main className="flex-1 p-2.5 xs:p-3.5 sm:p-5 lg:p-6 max-w-7xl w-full mx-auto overflow-x-hidden min-w-0">
+            <main className={`flex-1 w-full mx-auto overflow-x-hidden min-w-0 ${
+              currentView === 'DASHBOARD_OVERVIEW' 
+                ? 'p-0 max-w-full' 
+                : 'p-2.5 xs:p-3.5 sm:p-5 lg:p-6 max-w-7xl pb-16 md:pb-6'
+            }`}>
               <AnimatePresence mode="wait">
                 <motion.div
                   key={currentView}
@@ -205,8 +209,8 @@ const MainAppRouter: React.FC = () => {
             </main>
           </div>
 
-          {/* Mobile Bottom Bar */}
-          <MobileBottomNav />
+          {/* Mobile Bottom Bar (Rendered for sub-pages, while DASHBOARD_OVERVIEW has its dedicated dock) */}
+          {currentView !== 'DASHBOARD_OVERVIEW' && <MobileBottomNav />}
         </div>
       </UserRoute>
     );

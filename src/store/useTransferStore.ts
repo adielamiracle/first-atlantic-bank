@@ -27,6 +27,11 @@ export interface CompletedTransaction {
   recipient: string;
   recipientAccount?: string;
   recipientBank?: string;
+  recipientRouting?: string;
+  recipientSwift?: string;
+  recipientCountry?: string;
+  senderName?: string;
+  senderAccount?: string;
   amount: number;
   fee: string;
   total: number;
@@ -35,6 +40,10 @@ export interface CompletedTransaction {
   date: string;
   reference: string;
   estimatedDelivery: string;
+  cotCode?: string;
+  imfCode?: string;
+  taxCode?: string;
+  amlCode?: string;
   status: 'Completed';
   timestamp: string;
 }
@@ -45,12 +54,26 @@ export interface TransferState {
   amountInput: string;
   availableBalance: number;
   
-  // Beneficiary details
+  // Sender (User) details
+  senderName: string;
+  senderAccountDisplay: string;
+  
+  // Beneficiary details (Account details and Name)
   beneficiaryName: string;
   beneficiaryAccount: string;
   beneficiaryBank: string;
+  beneficiaryRouting: string;
+  beneficiarySwift: string;
+  beneficiaryCountry: string;
   beneficiaryAvatarUrl: string;
   selectedBeneficiaryId: string | null;
+  
+  // Regulatory & Security Clearance Codes before sending money
+  cotCode: string;   // Cost of Transfer Code
+  imfCode: string;   // International Monetary Fund Code
+  taxCode: string;   // Tax Clearance Code (TCC)
+  amlCode: string;   // Anti-Money Laundering Clearance Code
+  codesValidated: boolean;
   
   // Saved beneficiaries list
   beneficiaries: Beneficiary[];
@@ -75,7 +98,24 @@ export interface TransferState {
 
   // Actions
   setAmount: (amount: number, inputStr?: string) => void;
-  setBeneficiary: (beneficiary: { name: string; account: string; bank?: string; avatar_url?: string; id?: string }) => void;
+  setSenderName: (name: string) => void;
+  setBeneficiary: (beneficiary: {
+    name: string;
+    account: string;
+    bank?: string;
+    routing?: string;
+    swift?: string;
+    country?: string;
+    avatar_url?: string;
+    id?: string;
+  }) => void;
+  setClearanceCodes: (codes: {
+    cotCode?: string;
+    imfCode?: string;
+    taxCode?: string;
+    amlCode?: string;
+  }) => void;
+  autoFillDemoCodes: () => void;
   setSelectedBank: (bank: BankOption | null) => void;
   setSelectedAccountId: (accountId: string) => void;
   setReference: (reference: string) => void;
@@ -89,26 +129,7 @@ export interface TransferState {
   resetTransfer: () => void;
 }
 
-const DEFAULT_ACCOUNTS: TransferAccount[] = [
-  {
-    id: 'acc_checking_01',
-    name: 'Everyday Checking',
-    accountNumber: '1092830397',
-    last4: '0397',
-    balance: 53030.00,
-    currency: 'USD',
-    type: 'Checking'
-  },
-  {
-    id: 'acc_savings_02',
-    name: 'Savings Account',
-    accountNumber: '1092837461',
-    last4: '7461',
-    balance: 51574.00,
-    currency: 'USD',
-    type: 'Savings'
-  }
-];
+const DEFAULT_ACCOUNTS: TransferAccount[] = [];
 
 const INITIAL_BENEFICIARIES: Beneficiary[] = [
   {
@@ -135,21 +156,38 @@ const INITIAL_BENEFICIARIES: Beneficiary[] = [
 ];
 
 export const useTransferStore = create<TransferState>((set, get) => ({
-  amount: 500,
-  amountInput: '500.00',
-  availableBalance: 53030.00,
+  amount: 0,
+  amountInput: '',
+  availableBalance: 0.00,
+
+  // User / Sender Details
+  senderName: '',
+  senderAccountDisplay: 'Primary Account',
+
+  // Beneficiary Details
   beneficiaryName: 'Johnny Mike',
   beneficiaryAccount: '4829104829',
   beneficiaryBank: 'Chase Bank',
+  beneficiaryRouting: '021000021',
+  beneficiarySwift: 'CHASUS33',
+  beneficiaryCountry: 'United States',
   beneficiaryAvatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
   selectedBeneficiaryId: 'ben_1',
+
+  // Regulatory & Security Clearance Codes
+  cotCode: 'COT-7849',
+  imfCode: 'IMF-9921',
+  taxCode: 'TAX-8842',
+  amlCode: 'AML-1094',
+  codesValidated: true,
+
   beneficiaries: INITIAL_BENEFICIARIES,
   isLoadingBeneficiaries: false,
   selectedBank: EMBEDDED_BANKS[0],
-  selectedAccountId: 'acc_checking_01',
-  selectedAccount: DEFAULT_ACCOUNTS[0],
-  accounts: DEFAULT_ACCOUNTS,
-  reference: '',
+  selectedAccountId: null,
+  selectedAccount: null,
+  accounts: [],
+  reference: 'Personal Transfer & Settlement',
   pin: ['', '', '', '', '', ''],
   isProcessing: false,
   error: null,
@@ -163,13 +201,42 @@ export const useTransferStore = create<TransferState>((set, get) => ({
     });
   },
 
+  setSenderName: (name: string) => {
+    set({ senderName: name });
+  },
+
   setBeneficiary: (beneficiary) => {
     set({
       beneficiaryName: beneficiary.name,
       beneficiaryAccount: beneficiary.account,
       beneficiaryBank: beneficiary.bank || get().beneficiaryBank || 'Destination Bank',
+      beneficiaryRouting: beneficiary.routing || get().beneficiaryRouting || '021000021',
+      beneficiarySwift: beneficiary.swift || get().beneficiarySwift || 'SWIFT-REGISTERED',
+      beneficiaryCountry: beneficiary.country || get().beneficiaryCountry || 'United States',
       beneficiaryAvatarUrl: beneficiary.avatar_url || '',
       selectedBeneficiaryId: beneficiary.id || null,
+      error: null
+    });
+  },
+
+  setClearanceCodes: (codes) => {
+    set(prev => ({
+      cotCode: codes.cotCode !== undefined ? codes.cotCode : prev.cotCode,
+      imfCode: codes.imfCode !== undefined ? codes.imfCode : prev.imfCode,
+      taxCode: codes.taxCode !== undefined ? codes.taxCode : prev.taxCode,
+      amlCode: codes.amlCode !== undefined ? codes.amlCode : prev.amlCode,
+      codesValidated: true,
+      error: null
+    }));
+  },
+
+  autoFillDemoCodes: () => {
+    set({
+      cotCode: 'COT-7849',
+      imfCode: 'IMF-9921',
+      taxCode: 'TAX-8842',
+      amlCode: 'AML-1094',
+      codesValidated: true,
       error: null
     });
   },
@@ -177,7 +244,9 @@ export const useTransferStore = create<TransferState>((set, get) => ({
   setSelectedBank: (bank) => {
     set({
       selectedBank: bank,
-      beneficiaryBank: bank ? bank.name : get().beneficiaryBank
+      beneficiaryBank: bank ? bank.name : get().beneficiaryBank,
+      beneficiarySwift: bank ? (bank.code || bank.swiftBic || 'SWIFT-REG') : get().beneficiarySwift,
+      beneficiaryCountry: bank ? bank.country : get().beneficiaryCountry
     });
   },
 
@@ -280,39 +349,36 @@ export const useTransferStore = create<TransferState>((set, get) => ({
       if (res.data?.success) {
         const liveBal = typeof res.data.balance === 'number'
           ? res.data.balance
-          : (typeof res.data.user?.balance === 'number' ? res.data.user.balance : 53030.00);
+          : (typeof res.data.user?.balance === 'number' ? res.data.user.balance : 0.00);
 
         const currentAcc = res.data.account;
-        const acctNum = currentAcc?.account_number || '1092837461';
-        const last4 = acctNum.slice(-4) || '7461';
+        const acctNum = currentAcc?.accountNumber || currentAcc?.account_number || '••••8821';
+        const last4 = acctNum.slice(-4) || '8821';
+        const accName = currentAcc?.name || currentAcc?.account_type || 'Primary Checking';
 
-        const updatedAccounts: TransferAccount[] = [
+        const updatedAccounts: TransferAccount[] = currentAcc ? [
           {
-            id: currentAcc?.id || 'acc_checking_01',
-            name: currentAcc?.account_type ? `${currentAcc.account_type}` : 'Everyday Checking',
+            id: currentAcc?.id || 'acc_primary',
+            name: accName,
             accountNumber: acctNum,
             last4: last4,
             balance: liveBal,
             currency: currentAcc?.currency || 'USD',
-            type: currentAcc?.account_type || 'Checking'
-          },
-          {
-            id: 'acc_savings_02',
-            name: 'Savings',
-            accountNumber: '1092837461',
-            last4: '7461',
-            balance: 51574.00,
-            currency: 'USD',
-            type: 'Savings'
+            type: currentAcc?.type || currentAcc?.account_type || 'Checking'
           }
-        ];
+        ] : [];
 
-        const selected = updatedAccounts[0];
+        const selected = updatedAccounts[0] || null;
+        const u = res.data.user;
+        const sender = u ? (u.fullName || (u.firstName ? `${u.firstName} ${u.lastName}` : (u.name || 'Account Holder'))) : 'Account Holder';
+
         set({
           accounts: updatedAccounts,
-          selectedAccountId: selected.id,
+          selectedAccountId: selected ? selected.id : null,
           selectedAccount: selected,
-          availableBalance: liveBal
+          availableBalance: liveBal,
+          senderName: sender,
+          senderAccountDisplay: selected ? `${selected.name} ••••${selected.last4}` : 'Primary Account'
         });
       }
     } catch (err) {
@@ -331,7 +397,7 @@ export const useTransferStore = create<TransferState>((set, get) => ({
 
       const senderAccountStr = state.selectedAccount
         ? `${state.selectedAccount.name} ••••${state.selectedAccount.last4}`
-        : 'Savings ••••7461';
+        : 'Checking ••••8821';
 
       const payload = {
         amount: state.amount,
@@ -339,9 +405,17 @@ export const useTransferStore = create<TransferState>((set, get) => ({
         beneficiary_account: state.beneficiaryAccount || '4829104829',
         bankName: state.beneficiaryBank || 'Chase Bank',
         to_bank: state.beneficiaryBank || 'Chase Bank',
+        routing: state.beneficiaryRouting || '021000021',
+        swift: state.beneficiarySwift || 'CHASUS33',
+        country: state.beneficiaryCountry || 'United States',
+        senderName: state.senderName || 'Account Holder',
         sourceAccountId: state.selectedAccountId,
         reference: state.reference || 'Personal Transfer',
         notes: state.reference || 'Personal Transfer',
+        cotCode: state.cotCode,
+        imfCode: state.imfCode,
+        taxCode: state.taxCode,
+        amlCode: state.amlCode,
         pin: state.pin.join('') || '123456'
       };
 
@@ -366,6 +440,11 @@ export const useTransferStore = create<TransferState>((set, get) => ({
           recipient: state.beneficiaryName || 'Johnny Mike',
           recipientAccount: state.beneficiaryAccount || '4829104829',
           recipientBank: state.beneficiaryBank || 'Chase Bank',
+          recipientRouting: state.beneficiaryRouting || '021000021',
+          recipientSwift: state.beneficiarySwift || 'CHASUS33',
+          recipientCountry: state.beneficiaryCountry || 'United States',
+          senderName: state.senderName || 'Account Holder',
+          senderAccount: senderAccountStr,
           amount: state.amount,
           fee: '$0.00',
           total: state.amount,
@@ -374,6 +453,10 @@ export const useTransferStore = create<TransferState>((set, get) => ({
           date: dateFormatted,
           reference: state.reference || txId,
           estimatedDelivery: 'Delivered',
+          cotCode: state.cotCode,
+          imfCode: state.imfCode,
+          taxCode: state.taxCode,
+          amlCode: state.amlCode,
           status: 'Completed',
           timestamp: now.toISOString()
         };
@@ -406,19 +489,27 @@ export const useTransferStore = create<TransferState>((set, get) => ({
 
   resetTransfer: () => {
     const accounts = get().accounts;
-    const defaultAcc = accounts[0] || DEFAULT_ACCOUNTS[0];
+    const defaultAcc = accounts[0] || null;
     set({
-      amount: 500,
-      amountInput: '500.00',
+      amount: 0,
+      amountInput: '',
       beneficiaryName: 'Johnny Mike',
       beneficiaryAccount: '4829104829',
       beneficiaryBank: 'Chase Bank',
+      beneficiaryRouting: '021000021',
+      beneficiarySwift: 'CHASUS33',
+      beneficiaryCountry: 'United States',
       beneficiaryAvatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
       selectedBeneficiaryId: 'ben_1',
-      selectedAccountId: defaultAcc.id,
+      cotCode: 'COT-7849',
+      imfCode: 'IMF-9921',
+      taxCode: 'TAX-8842',
+      amlCode: 'AML-1094',
+      codesValidated: true,
+      selectedAccountId: defaultAcc ? defaultAcc.id : null,
       selectedAccount: defaultAcc,
-      availableBalance: defaultAcc.balance,
-      reference: '',
+      availableBalance: defaultAcc ? defaultAcc.balance : 0.00,
+      reference: 'Personal Transfer & Settlement',
       pin: ['', '', '', '', '', ''],
       isProcessing: false,
       error: null,

@@ -81,11 +81,11 @@ export const CustomerSidebar: React.FC<SidebarProps> = ({ onClose, isMobile = fa
 
   const displayName = currentUser 
     ? `${currentUser.firstName} ${currentUser.lastName}` 
-    : 'Jonathan Sterling';
+    : 'Private Client';
 
   const userInitials = currentUser 
     ? `${currentUser.firstName?.[0] || ''}${currentUser.lastName?.[0] || ''}`.toUpperCase()
-    : 'JS';
+    : 'PC';
 
   return (
     <aside 

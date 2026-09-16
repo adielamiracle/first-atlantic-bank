@@ -32,15 +32,23 @@ export const SupabaseStatusChecker: React.FC<{
   onStatusChange
 }) => {
   const getEnvUrl = (): string => {
-    return ((typeof process !== 'undefined' && process.env?.NEXT_PUBLIC_SUPABASE_URL) ||
+    return (
+      (typeof import.meta !== 'undefined' && (import.meta as any).env?.VITE_SUPABASE_URL) ||
+      (typeof process !== 'undefined' && process.env?.VITE_SUPABASE_URL) ||
+      (typeof process !== 'undefined' && process.env?.NEXT_PUBLIC_SUPABASE_URL) ||
       (typeof window !== 'undefined' && (window as any).__ENV__?.NEXT_PUBLIC_SUPABASE_URL) ||
-      '').trim();
+      ''
+    ).trim();
   };
 
   const getEnvKey = (): string => {
-    return ((typeof process !== 'undefined' && process.env?.NEXT_PUBLIC_SUPABASE_ANON_KEY) ||
+    return (
+      (typeof import.meta !== 'undefined' && (import.meta as any).env?.VITE_SUPABASE_ANON_KEY) ||
+      (typeof process !== 'undefined' && process.env?.VITE_SUPABASE_ANON_KEY) ||
+      (typeof process !== 'undefined' && process.env?.NEXT_PUBLIC_SUPABASE_ANON_KEY) ||
       (typeof window !== 'undefined' && (window as any).__ENV__?.NEXT_PUBLIC_SUPABASE_ANON_KEY) ||
-      '').trim();
+      ''
+    ).trim();
   };
 
   const [isPinging, setIsPinging] = useState(false);
@@ -89,7 +97,10 @@ export const SupabaseStatusChecker: React.FC<{
 
     try {
       // Check backend Supabase diagnostics endpoint
-      const res = await fetch('/api/admin/supabase/status');
+      let res = await fetch('/api/supabase/status');
+      if (!res.ok) {
+        res = await fetch('/api/admin/supabase/status');
+      }
       if (res.ok) {
         const data = await res.json();
         const elapsed = Math.round(performance.now() - start);
@@ -195,7 +206,10 @@ export const SupabaseStatusChecker: React.FC<{
     setIsSyncing(true);
     setSyncSuccessMsg(null);
     try {
-      const res = await fetch('/api/admin/supabase/sync-all', { method: 'POST' });
+      let res = await fetch('/api/supabase/sync-all', { method: 'POST' });
+      if (!res.ok) {
+        res = await fetch('/api/admin/supabase/sync-all', { method: 'POST' });
+      }
       const data = await res.json();
       if (data.success) {
         const total = Object.values(data.syncedCounts || {}).reduce((a: any, b: any) => a + b, 0);
@@ -213,7 +227,10 @@ export const SupabaseStatusChecker: React.FC<{
 
   const handleFetchSchema = async () => {
     try {
-      const res = await fetch('/api/admin/supabase/schema');
+      let res = await fetch('/api/supabase/schema');
+      if (!res.ok) {
+        res = await fetch('/api/admin/supabase/schema');
+      }
       if (res.ok) {
         const text = await res.text();
         setSqlSchemaContent(text);

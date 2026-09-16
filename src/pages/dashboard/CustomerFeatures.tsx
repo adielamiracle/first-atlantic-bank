@@ -657,7 +657,7 @@ export const StatementsPage: React.FC = () => {
             <GlassPanel variant="subtle" className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 text-xs font-mono">
               <div>
                 <div className="text-slate-400 uppercase text-[10px]">Account Holder</div>
-                <div className="font-bold text-slate-900 dark:text-white font-sans text-sm">{currentUser ? `${currentUser.firstName} ${currentUser.lastName}` : 'Jonathan Sterling'}</div>
+                <div className="font-bold text-slate-900 dark:text-white font-sans text-sm">{currentUser ? `${currentUser.firstName} ${currentUser.lastName}` : 'Private Client'}</div>
                 <div className="text-slate-600 dark:text-slate-400">CIF: {currentUser?.id || 'FAB-99201948'}</div>
               </div>
               <div className="sm:text-right">
@@ -1285,12 +1285,18 @@ export const ProfilePage: React.FC = () => {
                 className="w-14 h-14 sm:w-16 sm:h-16 rounded-lg overflow-hidden border-2 border-white/80 bg-slate-900 shadow-md cursor-pointer relative hover:opacity-95 transition-opacity"
                 title="Click to change or upload passport photo"
               >
-                <img
-                  src={passportPhoto || currentUser?.passportPhoto || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&auto=format&fit=crop&q=80'}
-                  alt="Profile photo"
-                  className="w-full h-full object-cover"
-                  referrerPolicy="no-referrer"
-                />
+                {passportPhoto || currentUser?.passportPhoto ? (
+                  <img
+                    src={passportPhoto || currentUser?.passportPhoto}
+                    alt="Profile photo"
+                    className="w-full h-full object-cover"
+                    referrerPolicy="no-referrer"
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center bg-slate-800 text-yellow-400 font-bold text-base sm:text-lg select-none">
+                    {(firstName?.[0] || currentUser?.firstName?.[0] || 'F') + (lastName?.[0] || currentUser?.lastName?.[0] || 'A')}
+                  </div>
+                )}
                 <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white">
                   <Camera className="w-4 h-4 text-white drop-shadow-xs" />
                   <span className="text-[9px] font-semibold uppercase tracking-wider mt-0.5">Edit</span>
@@ -1329,7 +1335,7 @@ export const ProfilePage: React.FC = () => {
               </h1>
 
               <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-slate-200">
-                <span>Online ID: <strong className="text-white font-mono">{currentUser?.username || 'jsterling'}</strong></span>
+                <span>Online ID: <strong className="text-white font-mono">{currentUser?.username || 'client'}</strong></span>
                 <span>•</span>
                 <span>Customer Since: <strong className="text-white">2018</strong></span>
                 <span>•</span>

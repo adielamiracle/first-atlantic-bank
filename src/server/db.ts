@@ -188,15 +188,39 @@ export class BankDatabase {
     }
     
     this.ensureErinMeganExists();
+    this.purgeDemoAccounts();
     this.saveToDiskSync();
 
     // Hydrate & Sync with Supabase asynchronously on startup
     setTimeout(() => {
       loadDataFromSupabase(this).then(() => {
         this.ensureErinMeganExists();
+        this.purgeDemoAccounts();
         syncAllDataToSupabase(this).catch(e => console.debug('[Supabase Sync Init Notice]:', e));
       }).catch(e => console.debug('[Supabase Load Init Notice]:', e));
     }, 1000);
+  }
+
+  purgeDemoAccounts() {
+    try {
+      this.users.delete('usr_sterling_01');
+      this.userPasswords.delete('usr_sterling_01');
+      this.userPasswords.delete('jsterling');
+      this.userPasswords.delete('j.sterling@atlantic-client.com');
+      for (const [accId, acc] of Array.from(this.accounts.entries())) {
+        if (acc.userId === 'usr_sterling_01' || accId.includes('sterling') || (acc.name && acc.name.toLowerCase().includes('sterling'))) {
+          this.accounts.delete(accId);
+        }
+      }
+      for (const [cardId, card] of Array.from(this.cards.entries())) {
+        if (card.userId === 'usr_sterling_01' || cardId.includes('sterling') || (card.cardHolderName && card.cardHolderName.includes('STERLING'))) {
+          this.cards.delete(cardId);
+        }
+      }
+      this.ledger = this.ledger.filter(l => !l.accountId?.includes('sterling') && !l.description?.includes('Sterling'));
+    } catch (e) {
+      console.debug('Notice purging demo accounts:', e);
+    }
   }
 
   saveToDiskSync() {

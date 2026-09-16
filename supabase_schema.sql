@@ -60,6 +60,53 @@ CREATE TABLE IF NOT EXISTS public.accounts (
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- Upgrade existing tables seamlessly if they pre-existed with fewer columns
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'users' AND table_schema = 'public') THEN
+    ALTER TABLE public.users ADD COLUMN IF NOT EXISTS username TEXT;
+    ALTER TABLE public.users ADD COLUMN IF NOT EXISTS first_name TEXT;
+    ALTER TABLE public.users ADD COLUMN IF NOT EXISTS last_name TEXT;
+    ALTER TABLE public.users ADD COLUMN IF NOT EXISTS phone TEXT;
+    ALTER TABLE public.users ADD COLUMN IF NOT EXISTS dial_code TEXT;
+    ALTER TABLE public.users ADD COLUMN IF NOT EXISTS date_of_birth TEXT;
+    ALTER TABLE public.users ADD COLUMN IF NOT EXISTS nationality TEXT;
+    ALTER TABLE public.users ADD COLUMN IF NOT EXISTS passport_number TEXT;
+    ALTER TABLE public.users ADD COLUMN IF NOT EXISTS passport_photo TEXT;
+    ALTER TABLE public.users ADD COLUMN IF NOT EXISTS login_pin TEXT DEFAULT '1234';
+    ALTER TABLE public.users ADD COLUMN IF NOT EXISTS ssn_masked TEXT;
+    ALTER TABLE public.users ADD COLUMN IF NOT EXISTS national_insurance_masked TEXT;
+    ALTER TABLE public.users ADD COLUMN IF NOT EXISTS region TEXT DEFAULT 'US';
+    ALTER TABLE public.users ADD COLUMN IF NOT EXISTS approval_status TEXT DEFAULT 'APPROVED';
+    ALTER TABLE public.users ADD COLUMN IF NOT EXISTS kyc_tier TEXT DEFAULT 'TIER_2_VERIFIED_PREMIER';
+    ALTER TABLE public.users ADD COLUMN IF NOT EXISTS security_score INTEGER DEFAULT 95;
+    ALTER TABLE public.users ADD COLUMN IF NOT EXISTS address JSONB DEFAULT '{}'::jsonb;
+    ALTER TABLE public.users ADD COLUMN IF NOT EXISTS profile_data JSONB DEFAULT '{}'::jsonb;
+    ALTER TABLE public.users ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW();
+  END IF;
+
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'accounts' AND table_schema = 'public') THEN
+    ALTER TABLE public.accounts ADD COLUMN IF NOT EXISTS account_number_full TEXT;
+    ALTER TABLE public.accounts ADD COLUMN IF NOT EXISTS routing_number TEXT;
+    ALTER TABLE public.accounts ADD COLUMN IF NOT EXISTS sort_code TEXT;
+    ALTER TABLE public.accounts ADD COLUMN IF NOT EXISTS iban TEXT;
+    ALTER TABLE public.accounts ADD COLUMN IF NOT EXISTS swift_bic TEXT;
+    ALTER TABLE public.accounts ADD COLUMN IF NOT EXISTS name TEXT;
+    ALTER TABLE public.accounts ADD COLUMN IF NOT EXISTS type TEXT;
+    ALTER TABLE public.accounts ADD COLUMN IF NOT EXISTS balance_minor BIGINT DEFAULT 0;
+    ALTER TABLE public.accounts ADD COLUMN IF NOT EXISTS available_balance_minor BIGINT DEFAULT 0;
+    ALTER TABLE public.accounts ADD COLUMN IF NOT EXISTS pending_hold_minor BIGINT DEFAULT 0;
+    ALTER TABLE public.accounts ADD COLUMN IF NOT EXISTS interest_rate_apy NUMERIC DEFAULT 0.0;
+    ALTER TABLE public.accounts ADD COLUMN IF NOT EXISTS credit_limit_minor BIGINT DEFAULT 0;
+    ALTER TABLE public.accounts ADD COLUMN IF NOT EXISTS region TEXT DEFAULT 'US';
+    ALTER TABLE public.accounts ADD COLUMN IF NOT EXISTS opened_date TEXT;
+    ALTER TABLE public.accounts ADD COLUMN IF NOT EXISTS daily_transfer_limit_minor BIGINT DEFAULT 50000000;
+    ALTER TABLE public.accounts ADD COLUMN IF NOT EXISTS statement_cycle_day INTEGER DEFAULT 28;
+    ALTER TABLE public.accounts ADD COLUMN IF NOT EXISTS account_data JSONB DEFAULT '{}'::jsonb;
+    ALTER TABLE public.accounts ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW();
+  END IF;
+END $$;
+
 -- 3. BANK CARDS TABLE
 CREATE TABLE IF NOT EXISTS public.cards (
   id TEXT PRIMARY KEY,
