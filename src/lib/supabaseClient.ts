@@ -42,7 +42,30 @@ export function isValidSupabaseKey(key: string): boolean {
   ) {
     return false;
   }
-  return /^[A-Za-z0-9_\-\.]+$/.test(trimmed);
+  if (!/^[A-Za-z0-9_\-\.]+$/.test(trimmed)) {
+    return false;
+  }
+
+  // Reject future-dated JWTs that cause "JWT issued at future"
+  if (trimmed.includes('.')) {
+    const parts = trimmed.split('.');
+    if (parts.length === 3) {
+      try {
+        const payloadStr = typeof atob === 'function'
+          ? atob(parts[1].replace(/-/g, '+').replace(/_/g, '/'))
+          : (typeof Buffer !== 'undefined' ? Buffer.from(parts[1], 'base64').toString('utf8') : '');
+        if (payloadStr) {
+          const payload = JSON.parse(payloadStr);
+          const nowSec = Math.floor(Date.now() / 1000);
+          if (payload.iat && payload.iat > nowSec + 30) {
+            return false;
+          }
+        }
+      } catch {}
+    }
+  }
+
+  return true;
 }
 
 export function isValidSupabaseUrl(url: string): boolean {
@@ -65,7 +88,16 @@ export function isValidSupabaseUrl(url: string): boolean {
 }
 
 const rawUrl = (candidateUrls.find(u => isValidSupabaseUrl(u)) || '').trim();
-const rawKey = (candidateKeys.find(k => isValidSupabaseKey(k)) || '').trim();
+const validKeys = candidateKeys
+  .map(k => (k || '').trim())
+  .filter(k => isValidSupabaseKey(k));
+
+const rawKey = (
+  validKeys.find(k => k.startsWith('sb_secret_')) ||
+  validKeys.find(k => !k.includes('.')) ||
+  validKeys[0] ||
+  ''
+).trim();
 
 // Detect if real, valid Supabase configuration is provided
 export const isSupabaseConfigured = Boolean(
@@ -273,7 +305,7 @@ export async function ensureDemoUsersInSupabase(): Promise<void> {
   }
   try {
     const demoAccounts = [
-      { email: 'j.sterling@atlantic-client.com', password: '1234', data: { name: 'Jonathan Sterling', role: 'client', pin: '1234' } },
+      { email: 'j.sterling@atlantic-client.com', password: '', data: { name: '', role: 'client', pin: '' } },
       { email: 'admin@firstatlanticbank.com', password: 'AdminMaster2026!', data: { name: 'Alexandra Vance', role: 'admin', twoFactor: '994820' } }
     ];
 

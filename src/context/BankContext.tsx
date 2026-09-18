@@ -533,7 +533,7 @@ export const BankProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         } else {
           setAdminStats((prev: any) => prev || {
             totalManagedAssetsUsdMinor: 14820000000,
-            totalAccounts: getStoredInstitutionalAccounts().length || 19,
+            totalAccounts: getStoredInstitutionalAccounts().length,
             pendingApplicationsCount: 3,
             activeClearingDesks: 3
           });

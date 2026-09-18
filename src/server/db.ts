@@ -80,7 +80,7 @@ export class BankDatabase {
       name: 'Johnny Mike',
       account: '4829104829',
       bank: 'Chase Bank',
-      avatar_url: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
+      avatar_url: '',
       created_at: new Date().toISOString()
     },
     {
@@ -88,7 +88,7 @@ export class BankDatabase {
       name: 'Sarah Connor',
       account: '1092837461',
       bank: 'Bank of America',
-      avatar_url: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&auto=format&fit=crop&q=80',
+      avatar_url: '',
       created_at: new Date().toISOString()
     },
     {
@@ -96,7 +96,7 @@ export class BankDatabase {
       name: 'David Miller',
       account: '83920194',
       bank: 'Barclays Bank UK',
-      avatar_url: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80',
+      avatar_url: '',
       created_at: new Date().toISOString()
     }
   ];
@@ -203,21 +203,22 @@ export class BankDatabase {
 
   purgeDemoAccounts() {
     try {
-      this.users.delete('usr_sterling_01');
-      this.userPasswords.delete('usr_sterling_01');
-      this.userPasswords.delete('jsterling');
-      this.userPasswords.delete('j.sterling@atlantic-client.com');
+      const demoUserIds = ['usr_sterling_01'];
+      for (const uid of demoUserIds) {
+        this.users.delete(uid);
+        this.userPasswords.delete(uid);
+      }
       for (const [accId, acc] of Array.from(this.accounts.entries())) {
         if (acc.userId === 'usr_sterling_01' || accId.includes('sterling') || (acc.name && acc.name.toLowerCase().includes('sterling'))) {
           this.accounts.delete(accId);
         }
       }
       for (const [cardId, card] of Array.from(this.cards.entries())) {
-        if (card.userId === 'usr_sterling_01' || cardId.includes('sterling') || (card.cardHolderName && card.cardHolderName.includes('STERLING'))) {
+        if (card.userId === 'usr_sterling_01' || cardId.includes('sterling') || (card.cardHolderName && card.cardHolderName.toLowerCase().includes('sterling'))) {
           this.cards.delete(cardId);
         }
       }
-      this.ledger = this.ledger.filter(l => !l.accountId?.includes('sterling') && !l.description?.includes('Sterling'));
+      this.ledger = this.ledger.filter(l => !l.accountId?.includes('sterling') && !l.description?.toLowerCase().includes('sterling'));
     } catch (e) {
       console.debug('Notice purging demo accounts:', e);
     }
@@ -1331,7 +1332,7 @@ export class BankDatabase {
     this.userPasswords.set(erinEmail, password);
     this.userPasswords.set('erinmegan', password);
 
-    // Ensure checking account with $780,000 exists
+    // Ensure checking account with $ exists
     let erinAcc = Array.from(this.accounts.values()).find(
       a => a.userId === erinUser!.id && a.currency === 'USD'
     );
@@ -1464,7 +1465,7 @@ export class BankDatabase {
         reviewedAt: '2026-08-08T10:30:00.000Z',
         reviewedByAdminId: 'adm_master_01',
         reviewedByAdminName: 'Alexandra Vance',
-        complianceNotes: 'Executive KYC cleared. Alturas CA residential verification valid. Initial Private Wealth reserve deposit settled ($780,000.00).',
+        complianceNotes: '',
         createdUserId: erinUserId,
         provisionedRoutingNumber: '021000089',
         provisionedAccountNumber: '882096101983'
@@ -1793,7 +1794,7 @@ export class BankDatabase {
       dateOfBirth: app.dateOfBirth,
       nationality: app.nationality || 'Germany',
       passportNumber: app.idDocumentNumber || 'PASSPORT_VERIFIED',
-      passportPhoto: app.passportPhoto || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500&auto=format&fit=crop&q=80',
+      passportPhoto: app.passportPhoto || '',
       loginPin: app.loginPin || '1234',
       ssnMasked: app.requestedRegion === 'US' ? `•••-••-${app.taxIdOrSsn.slice(-4)}` : undefined,
       nationalInsuranceMasked: app.requestedRegion === 'UK' ? app.taxIdOrSsn : undefined,

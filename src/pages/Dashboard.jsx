@@ -644,9 +644,10 @@ export const Dashboard = () => {
         : 'Primary Checking';
 
       try {
-        const token = localStorage.getItem('fab_session_token') || localStorage.getItem('token') || '';
+        const token = localStorage.getItem('fab_session_token') || localStorage.getItem('token') || currentUser?.id || '';
         const headers = { 'Content-Type': 'application/json' };
         if (token) headers['Authorization'] = `Bearer ${token}`;
+        if (currentUser?.id) headers['x-user-id'] = currentUser.id;
 
         await fetch('/api/transfers/execute', {
           method: 'POST',
@@ -665,7 +666,8 @@ export const Dashboard = () => {
             imfCode: imfCodeInput.trim(),
             pin: transferPinInput.trim(),
             note: sendNote || 'Direct Mobile Wire',
-            sourceAccountId: accounts[0]?.id
+            sourceAccountId: accounts[0]?.id,
+            userId: currentUser?.id
           })
         });
       } catch (e) {}
@@ -2828,9 +2830,31 @@ export const Dashboard = () => {
                 </div>
 
                 <button
-                  onClick={() => {
+                  onClick={async () => {
                     const newBal = liveBalance + 500;
                     setLiveBalance(newBal);
+                    try {
+                      const token = localStorage.getItem('fab_session_token') || localStorage.getItem('token') || currentUser?.id || '';
+                      const headers = { 'Content-Type': 'application/json' };
+                      if (token) headers['Authorization'] = `Bearer ${token}`;
+                      if (currentUser?.id) headers['x-user-id'] = currentUser.id;
+
+                      await fetch('/api/deposits/instant', {
+                        method: 'POST',
+                        headers,
+                        body: JSON.stringify({
+                          accountId: accounts[0]?.id,
+                          amountMinor: 50000,
+                          userId: currentUser?.id,
+                          description: 'Instant Mobile Check Deposit'
+                        })
+                      });
+                      if (typeof refreshData === 'function') {
+                        refreshData().catch(() => {});
+                      }
+                    } catch (e) {
+                      console.warn('Instant deposit sync notice:', e);
+                    }
                     showToast?.('Deposit Credited', '$500.00 instant mobile check deposit settled.');
                     setShowTopUpModal(false);
                   }}

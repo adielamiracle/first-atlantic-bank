@@ -23,7 +23,29 @@ export function isValidSupabaseKey(key?: string | null): boolean {
     return false;
   }
   // Standard valid JWT base64url or API key token format
-  return /^[A-Za-z0-9_\-\.]+$/.test(trimmed);
+  if (!/^[A-Za-z0-9_\-\.]+$/.test(trimmed)) {
+    return false;
+  }
+
+  // If key is a JWT (has 3 dot-separated parts), inspect payload to prevent "JWT issued at future"
+  if (trimmed.includes('.')) {
+    const parts = trimmed.split('.');
+    if (parts.length === 3) {
+      try {
+        const payloadStr = Buffer.from(parts[1], 'base64').toString('utf8');
+        const payload = JSON.parse(payloadStr);
+        const nowSec = Math.floor(Date.now() / 1000);
+        // If JWT iat is in the future relative to server clock, reject it to avoid "JWT issued at future"
+        if (payload.iat && payload.iat > nowSec + 30) {
+          return false;
+        }
+      } catch {
+        return false;
+      }
+    }
+  }
+
+  return true;
 }
 
 export function isValidSupabaseUrl(url?: string | null): boolean {
@@ -54,13 +76,25 @@ const candidateUrls = [
 ];
 const sbUrl = (candidateUrls.find(u => isValidSupabaseUrl(u)) || '').trim();
 
+// Prioritize secret role keys (sb_secret_...) as they bypass RLS, don't expire, and are not affected by JWT clock skew
 const candidateKeys = [
   process.env.SUPABASE_SERVICE_ROLE_KEY,
   process.env.VITE_SUPABASE_ANON_KEY,
   process.env.SUPABASE_ANON_KEY,
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 ];
-const sbKey = (candidateKeys.find(k => isValidSupabaseKey(k)) || '').trim();
+
+const validKeys = candidateKeys
+  .map(k => (k || '').trim())
+  .filter(k => isValidSupabaseKey(k));
+
+// Prioritize native non-JWT secret keys, then publishable keys, then valid non-future JWT keys
+const sbKey = (
+  validKeys.find(k => k.startsWith('sb_secret_')) ||
+  validKeys.find(k => !k.includes('.')) ||
+  validKeys[0] ||
+  ''
+).trim();
 
 export const isServerSupabaseConfigured = Boolean(
   isValidSupabaseUrl(sbUrl) && isValidSupabaseKey(sbKey)
@@ -94,24 +128,94 @@ export function getServerSupabase(): SupabaseClient | null {
   return serverSupabaseClient;
 }
 
+// In-memory schema cache mapping table names to their valid column names
+let tableSchemaCache: Record<string, Set<string>> | null = null;
+let schemaFetchPromise: Promise<Record<string, Set<string>> | null> | null = null;
+
 /**
- * Non-blocking safe sync to any Supabase table
+ * Discovers and caches available table definitions from Supabase OpenAPI schema
+ */
+export async function getTableSchema(tableName: string): Promise<Set<string> | null> {
+  if (tableSchemaCache) {
+    return tableSchemaCache[tableName] || null;
+  }
+  if (!schemaFetchPromise && isServerSupabaseConfigured) {
+    schemaFetchPromise = (async () => {
+      try {
+        const fetchUrl = `${sbUrl}/rest/v1/?apikey=${sbKey}`;
+        const resp = await fetch(fetchUrl, {
+          headers: {
+            apikey: sbKey,
+            Authorization: `Bearer ${sbKey}`
+          }
+        });
+        if (resp.ok) {
+          const spec: any = await resp.json();
+          const map: Record<string, Set<string>> = {};
+          for (const [tName, def] of Object.entries(spec.definitions || {})) {
+            const props = (def as any)?.properties || {};
+            map[tName] = new Set(Object.keys(props));
+          }
+          tableSchemaCache = map;
+          return map;
+        }
+      } catch (err) {
+        // Non-blocking schema fetch failure
+      }
+      return null;
+    })();
+  }
+  const fullCache = await schemaFetchPromise;
+  return fullCache ? fullCache[tableName] || null : null;
+}
+
+/**
+ * Non-blocking safe sync to any Supabase table with dynamic schema column filtering
  */
 export async function syncRecordToSupabase(tableName: string, record: any): Promise<boolean> {
   if (!serverSupabaseClient || !record) return false;
   try {
-    const item = Array.isArray(record) ? record : [record];
+    const validColumns = await getTableSchema(tableName);
+    // If the schema cache is loaded and this table does not exist in Supabase, safely skip without error
+    if (tableSchemaCache && !tableSchemaCache[tableName]) {
+      return false;
+    }
+
+    const items = Array.isArray(record) ? record : [record];
+    // Filter each item's properties to only valid columns present in the schema cache
+    const sanitizedItems = items.map(item => {
+      if (!validColumns || validColumns.size === 0) return item;
+      const clean: Record<string, any> = {};
+      for (const [k, v] of Object.entries(item)) {
+        if (validColumns.has(k)) {
+          clean[k] = v;
+        }
+      }
+      return clean;
+    });
+
+    if (sanitizedItems.length === 0 || Object.keys(sanitizedItems[0]).length === 0) {
+      return false;
+    }
+
     const { error } = await serverSupabaseClient
       .from(tableName)
-      .upsert(item, { onConflict: 'id' });
+      .upsert(sanitizedItems, { onConflict: 'id' });
 
     if (error) {
+      // Suppress noisy benign logs for schema differences, missing columns, or timing issues
+      if (
+        error.message?.includes('schema cache') ||
+        error.message?.includes('JWT issued at future') ||
+        error.message?.includes('violates foreign key constraint')
+      ) {
+        return false;
+      }
       console.debug(`[Supabase Table Sync ${tableName}]:`, error.message);
       return false;
     }
     return true;
   } catch (err: any) {
-    console.debug(`[Supabase Sync Catch ${tableName}]:`, err?.message || err);
     return false;
   }
 }
@@ -220,59 +324,76 @@ export async function uploadFileToSupabase(
  */
 export async function syncUserToSupabase(user: any): Promise<boolean> {
   if (!user || !serverSupabaseClient) return false;
-  
-  // 1. Try comprehensive full-schema upsert first
-  const fullUpsertOk = await syncRecordToSupabase('users', {
-    id: user.id,
-    email: user.email,
-    username: user.username,
-    first_name: user.firstName || user.first_name || '',
-    last_name: user.lastName || user.last_name || '',
-    phone: user.phone || '',
-    dial_code: user.dialCode || '+1',
-    date_of_birth: user.dateOfBirth || '',
-    nationality: user.nationality || '',
-    passport_number: user.passportNumber || '',
-    passport_photo: user.passportPhoto || '',
-    login_pin: user.loginPin || '1234',
-    ssn_masked: user.ssnMasked || '',
-    national_insurance_masked: user.nationalInsuranceMasked || '',
-    region: user.region || 'US',
-    approval_status: user.approval_status || 'APPROVED',
-    kyc_tier: user.kycTier || 'TIER_2_VERIFIED_PREMIER',
-    security_score: user.securityScore || 95,
-    address: user.address || {},
-    profile_data: user,
-    updated_at: new Date().toISOString()
-  });
 
-  if (fullUpsertOk) return true;
-
-  // 2. Adaptive fallback: If table has basic schema (id, email, full_name, profile_image_url, role)
   try {
-    const fullName = `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.username || user.email;
-    const patchData: any = {
-      full_name: fullName,
-      profile_image_url: user.passportPhoto || null,
-      role: user.role === 'admin' ? 'admin' : 'user'
-    };
+    const validColumns = await getTableSchema('users');
+    const fullName = `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.fullName || user.username || user.email;
 
-    // Locate user record by email or id
+    // 1. Check if user already exists in Supabase by email or id
+    const orCondition = user.email ? (user.id ? `id.eq.${user.id},email.eq.${user.email}` : `email.eq.${user.email}`) : `id.eq.${user.id}`;
     const { data: existing } = await serverSupabaseClient
       .from('users')
-      .select('id')
-      .or(`id.eq.${user.id},email.eq.${user.email}`)
+      .select('id, email')
+      .or(orCondition)
       .limit(1);
 
     if (existing && existing.length > 0) {
-      const { error: patchErr } = await serverSupabaseClient
+      // Build update payload containing ONLY columns that exist in the Supabase schema
+      const updatePayload: Record<string, any> = {};
+      const candidateFields: Record<string, any> = {
+        full_name: fullName,
+        profile_image_url: user.passportPhoto || user.profileImageUrl || null,
+        role: user.role === 'admin' ? 'admin' : 'user'
+      };
+
+      for (const [k, v] of Object.entries(candidateFields)) {
+        if (!validColumns || validColumns.has(k)) {
+          updatePayload[k] = v;
+        }
+      }
+
+      // If schema supports additional columns, safely include them
+      if (validColumns) {
+        if (validColumns.has('phone') && user.phone) updatePayload.phone = user.phone;
+        if (validColumns.has('region') && user.region) updatePayload.region = user.region;
+        if (validColumns.has('status') && user.approval_status) updatePayload.status = user.approval_status;
+        if (validColumns.has('address') && user.address) updatePayload.address = user.address;
+        if (validColumns.has('updated_at')) updatePayload.updated_at = new Date().toISOString();
+      }
+
+      const { error: updateErr } = await serverSupabaseClient
         .from('users')
-        .update(patchData)
+        .update(updatePayload)
         .eq('id', existing[0].id);
-      if (!patchErr) return true;
+
+      if (!updateErr) return true;
+    } else {
+      // User does not exist in Supabase yet.
+      // Supabase public.users requires a foreign key into auth.users.id (must be valid UUID).
+      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(user.id || '');
+      if (isUuid) {
+        const insertPayload: Record<string, any> = {
+          id: user.id,
+          email: user.email,
+          full_name: fullName,
+          profile_image_url: user.passportPhoto || null,
+          role: user.role === 'admin' ? 'admin' : 'user'
+        };
+        // Strip any keys not in schema
+        const filteredPayload: Record<string, any> = {};
+        for (const [k, v] of Object.entries(insertPayload)) {
+          if (!validColumns || validColumns.has(k)) {
+            filteredPayload[k] = v;
+          }
+        }
+        const { error: insertErr } = await serverSupabaseClient
+          .from('users')
+          .insert([filteredPayload]);
+        if (!insertErr) return true;
+      }
     }
-  } catch (fallbackErr) {
-    console.debug('[Supabase User Fallback Notice]:', fallbackErr);
+  } catch (err: any) {
+    // Non-blocking sync notice
   }
 
   return false;
@@ -283,62 +404,79 @@ export async function syncUserToSupabase(user: any): Promise<boolean> {
  */
 export async function syncAccountToSupabase(acc: any): Promise<boolean> {
   if (!acc || !serverSupabaseClient) return false;
-  
-  // 1. Try comprehensive full-schema upsert first
-  const fullUpsertOk = await syncRecordToSupabase('accounts', {
-    id: acc.id,
-    user_id: acc.userId || acc.user_id,
-    account_number: acc.accountNumber || acc.account_number,
-    account_number_full: acc.accountNumberFull || acc.account_number_full || '',
-    routing_number: acc.routingNumber || acc.routing_number || '',
-    sort_code: acc.sortCode || acc.sort_code || '',
-    iban: acc.iban || '',
-    swift_bic: acc.swiftBic || acc.swift_bic || 'FATLUS33NYC',
-    name: acc.name,
-    type: acc.type,
-    currency: acc.currency,
-    balance_minor: acc.balanceMinor !== undefined ? acc.balanceMinor : acc.balance_minor || 0,
-    available_balance_minor: acc.availableBalanceMinor !== undefined ? acc.availableBalanceMinor : acc.available_balance_minor || 0,
-    pending_hold_minor: acc.pendingHoldMinor || acc.pending_hold_minor || 0,
-    interest_rate_apy: acc.interestRateAPY || acc.interest_rate_apy || 0.0,
-    status: acc.status || 'ACTIVE',
-    region: acc.region || 'US',
-    opened_date: acc.openedDate || acc.opened_date || new Date().toISOString().split('T')[0],
-    daily_transfer_limit_minor: acc.dailyTransferLimitMinor || acc.daily_transfer_limit_minor || 50000000,
-    statement_cycle_day: acc.statementCycleDay || acc.statement_cycle_day || 28,
-    account_data: acc,
-    updated_at: new Date().toISOString()
-  });
 
-  if (fullUpsertOk) return true;
-
-  // 2. Adaptive fallback: If table has basic schema (id, user_id, account_number, account_name, balance, currency, account_type, status)
   try {
+    const validColumns = await getTableSchema('accounts');
     const rawBalMinor = acc.balanceMinor !== undefined ? acc.balanceMinor : (acc.balance_minor || 0);
     const balanceDollars = Number((rawBalMinor / 100).toFixed(2));
-    const patchData: any = {
-      account_name: acc.name || 'Premier Account',
-      balance: balanceDollars,
-      currency: acc.currency || 'USD',
-      status: acc.status || 'Active'
-    };
-
     const accNum = acc.accountNumber || acc.account_number;
+
+    // 1. Locate existing account record in Supabase
+    const orClause = accNum ? (acc.id ? `id.eq.${acc.id},account_number.eq.${accNum}` : `account_number.eq.${accNum}`) : `id.eq.${acc.id}`;
     const { data: existing } = await serverSupabaseClient
       .from('accounts')
-      .select('id')
-      .or(`id.eq.${acc.id},account_number.eq.${accNum}`)
+      .select('id, user_id, account_number')
+      .or(orClause)
       .limit(1);
 
     if (existing && existing.length > 0) {
-      const { error: patchErr } = await serverSupabaseClient
+      const updatePayload: Record<string, any> = {};
+      const candidateFields: Record<string, any> = {
+        account_name: acc.name || acc.accountName || 'Primary Account',
+        balance: balanceDollars,
+        currency: acc.currency || 'USD',
+        account_type: acc.type === 'SAVINGS_HIGH_YIELD' ? 'Savings' : 'Checking',
+        status: (acc.status || 'ACTIVE').toUpperCase()
+      };
+
+      for (const [k, v] of Object.entries(candidateFields)) {
+        if (!validColumns || validColumns.has(k)) {
+          updatePayload[k] = v;
+        }
+      }
+
+      if (validColumns) {
+        if (validColumns.has('balance_minor')) updatePayload.balance_minor = rawBalMinor;
+        if (validColumns.has('available_balance')) updatePayload.available_balance = balanceDollars;
+        if (validColumns.has('available_balance_minor')) updatePayload.available_balance_minor = rawBalMinor;
+        if (validColumns.has('updated_at')) updatePayload.updated_at = new Date().toISOString();
+      }
+
+      const { error: updateErr } = await serverSupabaseClient
         .from('accounts')
-        .update(patchData)
+        .update(updatePayload)
         .eq('id', existing[0].id);
-      if (!patchErr) return true;
+
+      if (!updateErr) return true;
+    } else {
+      // If account does not exist in Supabase and id is a UUID, attempt insert
+      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(acc.id || '');
+      const isUserUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(acc.userId || acc.user_id || '');
+      if (isUuid && isUserUuid) {
+        const insertPayload: Record<string, any> = {
+          id: acc.id,
+          user_id: acc.userId || acc.user_id,
+          account_number: accNum,
+          account_name: acc.name || acc.accountName || 'Primary Account',
+          balance: balanceDollars,
+          currency: acc.currency || 'USD',
+          account_type: acc.type === 'SAVINGS_HIGH_YIELD' ? 'Savings' : 'Checking',
+          status: (acc.status || 'ACTIVE').toUpperCase()
+        };
+        const filteredPayload: Record<string, any> = {};
+        for (const [k, v] of Object.entries(insertPayload)) {
+          if (!validColumns || validColumns.has(k)) {
+            filteredPayload[k] = v;
+          }
+        }
+        const { error: insertErr } = await serverSupabaseClient
+          .from('accounts')
+          .insert([filteredPayload]);
+        if (!insertErr) return true;
+      }
     }
   } catch (fallbackErr) {
-    console.debug('[Supabase Account Fallback Notice]:', fallbackErr);
+    // Non-blocking sync notice
   }
 
   return false;
@@ -744,13 +882,13 @@ export async function loadDataFromSupabase(db: any): Promise<boolean> {
           username: derivedUsername,
           firstName: derivedFirstName,
           lastName: derivedLastName,
-          phone: row.phone || '+1 (555) 019-2830',
+          phone: row.phone || '',
           dialCode: row.dial_code || '+1',
-          dateOfBirth: row.date_of_birth || '1988-06-15',
+          dateOfBirth: row.date_of_birth || '',
           nationality: row.nationality || 'American',
           passportNumber: row.passport_number,
-          passportPhoto: row.passport_photo || row.profile_image_url || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500&auto=format&fit=crop&q=80',
-          loginPin: row.login_pin || '1234',
+          passportPhoto: row.passport_photo || row.profile_image_url || 'icon',
+          loginPin: row.login_pin || '',
           ssnMasked: row.ssn_masked || '•••-••-8899',
           region: row.region || 'US',
           approval_status: row.approval_status || 'APPROVED',
@@ -766,9 +904,9 @@ export async function loadDataFromSupabase(db: any): Promise<boolean> {
           lastLogin: new Date().toISOString()
         };
         db.users.set(row.id, fullUser);
-        db.userPasswords.set(row.id, 'AtlanticSecure2026!');
-        if (fullUser.username) db.userPasswords.set(fullUser.username, 'AtlanticSecure2026!');
-        if (fullUser.email) db.userPasswords.set(fullUser.email.toLowerCase(), 'AtlanticSecure2026!');
+        db.userPasswords.set(row.id, '');
+        if (fullUser.username) db.userPasswords.set(fullUser.username, '');
+        if (fullUser.email) db.userPasswords.set(fullUser.email.toLowerCase(), '');
       }
     }
 
@@ -785,11 +923,11 @@ export async function loadDataFromSupabase(db: any): Promise<boolean> {
           userId: row.user_id,
           accountNumber: row.account_number,
           accountNumberFull: row.account_number_full || row.account_number,
-          routingNumber: row.routing_number || '021000089',
-          sortCode: row.sort_code || '40-12-88',
+          routingNumber: row.routing_number || '',
+          sortCode: row.sort_code || '',
           iban: row.iban || `US89FATL021000089${row.account_number}`,
-          swiftBic: row.swift_bic || 'FATLUS33NYC',
-          name: row.name || row.account_name || 'Primary Vault Account',
+          swiftBic: row.swift_bic || '',
+          name: row.name || row.account_name || '',
           type: row.type || (row.account_type === 'Savings' ? 'SAVINGS_HIGH_YIELD' : 'CHECKING_PREMIER'),
           currency: row.currency || 'USD',
           balanceMinor: balMinor,
@@ -816,10 +954,10 @@ export async function loadDataFromSupabase(db: any): Promise<boolean> {
           userId: row.user_id,
           cardNumberMasked: row.card_number_masked,
           cardNumberFull: row.card_number_full || '4111 0000 0000 0000',
-          cardHolderName: row.card_holder_name || 'CLIENT',
+          cardHolderName: row.card_holder_name || '',
           expiryMonth: row.expiry_month || 12,
           expiryYear: row.expiry_year || 2031,
-          cvv: row.cvv || '123',
+          cvv: row.cvv || '',
           cardType: row.card_type || 'DEBIT_VISA_SIGNATURE',
           status: row.status || 'ACTIVE',
           isVirtual: Boolean(row.is_virtual),

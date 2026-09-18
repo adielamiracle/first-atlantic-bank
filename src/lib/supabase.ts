@@ -1,12 +1,31 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
-// Read Supabase environmental variables
-const supabaseUrl = (typeof process !== 'undefined' && process.env?.NEXT_PUBLIC_SUPABASE_URL) || 
-  (typeof window !== 'undefined' && (window as any).__ENV__?.NEXT_PUBLIC_SUPABASE_URL) || 
-  '';
-const supabaseAnonKey = (typeof process !== 'undefined' && process.env?.NEXT_PUBLIC_SUPABASE_ANON_KEY) || 
-  (typeof window !== 'undefined' && (window as any).__ENV__?.NEXT_PUBLIC_SUPABASE_ANON_KEY) || 
-  '';
+// Read Supabase environmental variables across Vite and node
+const getEnv = (key: string): string => {
+  if (typeof import.meta !== 'undefined' && (import.meta as any)?.env?.[key]) {
+    return String((import.meta as any).env[key]).trim();
+  }
+  if (typeof process !== 'undefined' && process.env?.[key]) {
+    return String(process.env[key]).trim();
+  }
+  if (typeof window !== 'undefined' && (window as any).__ENV__?.[key]) {
+    return String((window as any).__ENV__[key]).trim();
+  }
+  return '';
+};
+
+const candidateUrls = [
+  getEnv('VITE_SUPABASE_URL'),
+  getEnv('NEXT_PUBLIC_SUPABASE_URL'),
+  getEnv('SUPABASE_URL')
+];
+
+const candidateKeys = [
+  getEnv('VITE_SUPABASE_ANON_KEY'),
+  getEnv('SUPABASE_SERVICE_ROLE_KEY'),
+  getEnv('SUPABASE_ANON_KEY'),
+  getEnv('NEXT_PUBLIC_SUPABASE_ANON_KEY')
+];
 
 export function isValidSupabaseKey(key?: string | null): boolean {
   if (!key || typeof key !== 'string') return false;
@@ -24,7 +43,30 @@ export function isValidSupabaseKey(key?: string | null): boolean {
   ) {
     return false;
   }
-  return /^[A-Za-z0-9_\-\.]+$/.test(trimmed);
+  if (!/^[A-Za-z0-9_\-\.]+$/.test(trimmed)) {
+    return false;
+  }
+
+  // Check if JWT is future-dated
+  if (trimmed.includes('.')) {
+    const parts = trimmed.split('.');
+    if (parts.length === 3) {
+      try {
+        const payloadStr = typeof atob === 'function'
+          ? atob(parts[1].replace(/-/g, '+').replace(/_/g, '/'))
+          : (typeof Buffer !== 'undefined' ? Buffer.from(parts[1], 'base64').toString('utf8') : '');
+        if (payloadStr) {
+          const payload = JSON.parse(payloadStr);
+          const nowSec = Math.floor(Date.now() / 1000);
+          if (payload.iat && payload.iat > nowSec + 30) {
+            return false;
+          }
+        }
+      } catch {}
+    }
+  }
+
+  return true;
 }
 
 export function isValidSupabaseUrl(url?: string | null): boolean {
@@ -45,6 +87,18 @@ export function isValidSupabaseUrl(url?: string | null): boolean {
   }
   return true;
 }
+
+const supabaseUrl = (candidateUrls.find(u => isValidSupabaseUrl(u)) || '').trim();
+const validKeys = candidateKeys
+  .map(k => (k || '').trim())
+  .filter(k => isValidSupabaseKey(k));
+
+const supabaseAnonKey = (
+  validKeys.find(k => k.startsWith('sb_secret_')) ||
+  validKeys.find(k => !k.includes('.')) ||
+  validKeys[0] ||
+  ''
+).trim();
 
 let supabaseInstance: SupabaseClient | null = null;
 

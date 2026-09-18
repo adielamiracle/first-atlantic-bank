@@ -11,6 +11,15 @@ export const DEFAULT_INSTITUTIONAL_USERS: any[] = (seedData.users || []).filter(
 const LOCAL_STORAGE_CUSTOMERS_KEY = 'fab_local_provisioned_customers_v2';
 const LOCAL_STORAGE_ACCOUNTS_KEY = 'fab_local_custody_accounts_v2';
 
+const LEGACY_MOCK_ACCOUNT_IDS = new Set([
+  'acc_sterling_chk_01', 'acc_sterling_sav_02', 'acc_sterling_multigbp_03', 'acc_sterling_crd_04',
+  'acc_usr_user_5427_usd_01', 'acc_usr_supabaseuser_1034_usd_01', 'acc_usr_balance_4532_usd_01',
+  'acc_usr_vance_1810_usd_01', 'acc_usr_hayes_7681_usd_01', 'acc_usr_tester_6242_usd_01',
+  'acc_usr_jenkins_6699_usd_01', 'acc_usr_morgan_2054_usd_01', 'acc_usr_rostova_6059_usd_01',
+  'acc_usr_sterling_9948_usd_01', 'acc_usr_sterling_9948_gbp_02', 'acc_erin_megan_01',
+  'acc_usr_provision_8886_usd_01', 'acc_usr_verification_3745_usd_01', 'acc_usr_doe_9099_usd_01'
+]);
+
 /**
  * Get all merged institutional accounts: built-in seed accounts + any accounts provisioned locally
  */
@@ -19,16 +28,23 @@ export function getStoredInstitutionalAccounts(): BankAccount[] {
     const raw = localStorage.getItem(LOCAL_STORAGE_ACCOUNTS_KEY);
     if (raw) {
       const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed) && parsed.length > 0) {
-        // Merge seed accounts with custom local accounts
+      if (Array.isArray(parsed)) {
+        // Merge seed accounts with custom local accounts, filtering out deleted mock seed entries
         const map = new Map<string, BankAccount>();
-        DEFAULT_INSTITUTIONAL_ACCOUNTS.forEach(a => map.set(a.id, a));
-        parsed.forEach((a: BankAccount) => map.set(a.id, a));
-        return Array.from(map.values()).sort((a, b) => {
-          if (a.customerEmail === 'erinmeg45@gmail.com' || a.userId === 'usr_erin_megan_83') return -1;
-          if (b.customerEmail === 'erinmeg45@gmail.com' || b.userId === 'usr_erin_megan_83') return 1;
+        DEFAULT_INSTITUTIONAL_ACCOUNTS.forEach(a => {
+          if (!LEGACY_MOCK_ACCOUNT_IDS.has(a.id)) map.set(a.id, a);
+        });
+        parsed.forEach((a: BankAccount) => {
+          if (a && a.id && !LEGACY_MOCK_ACCOUNT_IDS.has(a.id)) {
+            map.set(a.id, a);
+          }
+        });
+        const filtered = Array.from(map.values()).sort((a, b) => {
           return (b.balanceMinor || 0) - (a.balanceMinor || 0);
         });
+        // Resave cleaned list
+        localStorage.setItem(LOCAL_STORAGE_ACCOUNTS_KEY, JSON.stringify(filtered));
+        return filtered;
       }
     }
   } catch (e) {

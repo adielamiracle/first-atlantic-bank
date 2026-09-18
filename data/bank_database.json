@@ -509,7 +509,7 @@
           "pushAlerts": true,
           "largeTransactionThresholdMinor": 500000
         },
-        "lastLogin": "2026-09-10T09:06:06.699Z"
+        "lastLogin": "2026-09-18T17:10:26.649Z"
       }
     ],
     [
@@ -719,12 +719,12 @@
         "username": "winterj548",
         "firstName": "Winter",
         "lastName": "J",
-        "phone": "+1 (555) 019-2830",
+        "phone": "",
         "dialCode": "+1",
-        "dateOfBirth": "1988-06-15",
+        "dateOfBirth": "",
         "nationality": "American",
-        "passportPhoto": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500",
-        "loginPin": "1234",
+        "passportPhoto": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500&auto=format&fit=crop&q=80",
+        "loginPin": "",
         "ssnMasked": "•••-••-8899",
         "region": "US",
         "approval_status": "APPROVED",
@@ -737,7 +737,7 @@
           "pushAlerts": true,
           "largeTransactionThresholdMinor": 500000
         },
-        "lastLogin": "2026-09-16T17:28:16.228Z"
+        "lastLogin": "2026-09-18T17:27:41.992Z"
       }
     ]
   ],
@@ -754,8 +754,8 @@
         "name": "Premier Private Client Checking",
         "type": "CHECKING_PREMIER",
         "currency": "USD",
-        "balanceMinor": 4948000,
-        "availableBalanceMinor": 4948000,
+        "balanceMinor": 4823000,
+        "availableBalanceMinor": 4823000,
         "pendingHoldMinor": 0,
         "interestRateAPY": 1.25,
         "status": "ACTIVE",
@@ -1108,20 +1108,20 @@
         "userId": "18f086ef-3c11-4a42-9b44-8657ffd564f3",
         "accountNumber": "1092837461",
         "accountNumberFull": "1092837461",
-        "routingNumber": "021000089",
-        "sortCode": "40-12-88",
+        "routingNumber": "",
+        "sortCode": "",
         "iban": "US89FATL0210000891092837461",
-        "swiftBic": "FATLUS33NYC",
+        "swiftBic": "",
         "name": "High Yield Savings Vault",
-        "type": "SAVINGS_HIGH_YIELD",
+        "type": "CHECKING_PREMIER",
         "currency": "USD",
-        "balanceMinor": 5148000,
-        "availableBalanceMinor": 5148000,
+        "balanceMinor": 5123000,
+        "availableBalanceMinor": 5123000,
         "pendingHoldMinor": 0,
-        "interestRateAPY": 4.85,
+        "interestRateAPY": 0,
         "status": "ACTIVE",
         "region": "US",
-        "openedDate": "2026-09-16",
+        "openedDate": "2026-09-18",
         "dailyTransferLimitMinor": 50000000,
         "statementCycleDay": 28
       }
@@ -1453,6 +1453,69 @@
   ],
   "ledger": [
     {
+      "id": "led_tx_1789617502858_5018",
+      "transactionId": "tx_1789617502858_5018",
+      "accountId": "acc_usr_user_5427_usd_01",
+      "direction": "DEBIT",
+      "amountMinor": 100000,
+      "currency": "USD",
+      "balanceAfterMinor": 4823000,
+      "description": "Transfer to Leslie Parker (4829104829)",
+      "category": "Transfers",
+      "counterparty": "Leslie Parker",
+      "status": "SETTLED",
+      "channel": "WIRE",
+      "referenceNumber": "tx_1789617502858_5018",
+      "createdTimestamp": "2026-09-17T03:58:22.753Z",
+      "effectiveTimestamp": "2026-09-17T03:58:22.753Z",
+      "metadata": {
+        "beneficiaryAccount": "4829104829",
+        "beneficiaryName": "Leslie Parker"
+      }
+    },
+    {
+      "id": "led_tx_1789617409123_6898",
+      "transactionId": "tx_1789617409123_6898",
+      "accountId": "acc_usr_user_5427_usd_01",
+      "direction": "DEBIT",
+      "amountMinor": 25000,
+      "currency": "USD",
+      "balanceAfterMinor": 4923000,
+      "description": "Transfer to Leslie Parker (4829104829)",
+      "category": "Transfers",
+      "counterparty": "Leslie Parker",
+      "status": "SETTLED",
+      "channel": "WIRE",
+      "referenceNumber": "tx_1789617409123_6898",
+      "createdTimestamp": "2026-09-17T03:56:48.841Z",
+      "effectiveTimestamp": "2026-09-17T03:56:48.841Z",
+      "metadata": {
+        "beneficiaryAccount": "4829104829",
+        "beneficiaryName": "Leslie Parker"
+      }
+    },
+    {
+      "id": "led_tx_1789617346758_9308",
+      "transactionId": "tx_1789617346758_9308",
+      "accountId": "9ad44416-3a40-4855-b844-d797b919e35e",
+      "direction": "DEBIT",
+      "amountMinor": 25000,
+      "currency": "USD",
+      "balanceAfterMinor": 5123000,
+      "description": "Transfer to Leslie Parker (4829104829)",
+      "category": "Transfers",
+      "counterparty": "Leslie Parker",
+      "status": "SETTLED",
+      "channel": "WIRE",
+      "referenceNumber": "tx_1789617346758_9308",
+      "createdTimestamp": "2026-09-17T03:55:46.653Z",
+      "effectiveTimestamp": "2026-09-17T03:55:46.653Z",
+      "metadata": {
+        "beneficiaryAccount": "4829104829",
+        "beneficiaryName": "Leslie Parker"
+      }
+    },
+    {
       "id": "led_1788872203364_351",
       "transactionId": "tx_adm_1788872203364_327",
       "accountId": "acc_erin_megan_01",
@@ -1731,6 +1794,34 @@
     }
   ],
   "auditLogs": [
+    {
+      "actorId": "usr_erin_megan_83",
+      "actorEmail": "erinmeg45@gmail.com",
+      "actorRole": "CUSTOMER",
+      "action": "CUSTOMER_SESSION_AUTHORIZED",
+      "targetType": "USER",
+      "targetId": "usr_erin_megan_83",
+      "ipAddress": "108.45.192.8",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36 OPR/135.0.0.0",
+      "details": "Successful Sovereign Identity & 4-Digit Security PIN validation.",
+      "id": "aud_1789751426649_533",
+      "timestamp": "2026-09-18T17:10:26.649Z",
+      "signatureHash": "0000000000000000000000000000000000000000000000000000000044808c16"
+    },
+    {
+      "actorId": "usr_erin_megan_83",
+      "actorEmail": "erinmeg45@gmail.com",
+      "actorRole": "CUSTOMER",
+      "action": "CUSTOMER_SESSION_AUTHORIZED",
+      "targetType": "USER",
+      "targetId": "usr_erin_megan_83",
+      "ipAddress": "108.45.192.8",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36 OPR/135.0.0.0",
+      "details": "Successful Sovereign Identity & 4-Digit Security PIN validation.",
+      "id": "aud_1789748736798_931",
+      "timestamp": "2026-09-18T16:25:36.798Z",
+      "signatureHash": "000000000000000000000000000000000000000000000000000000005417a3b7"
+    },
     {
       "actorId": "18f086ef-3c11-4a42-9b44-8657ffd564f3",
       "actorEmail": "winterj548@gmail.com",
@@ -4829,20 +4920,47 @@
     ],
     [
       "18f086ef-3c11-4a42-9b44-8657ffd564f3",
-      "AtlanticSecure2026!"
+      ""
     ],
     [
       "winterj548",
-      "AtlanticSecure2026!"
+      ""
     ],
     [
       "winterj548@gmail.com",
-      "AtlanticSecure2026!"
+      ""
     ]
   ],
   "activeSessions": [],
   "accountTransferConfigs": [],
   "userNotifications": [
+    {
+      "id": "notif_1789617502938_741",
+      "userId": "usr_user_5427",
+      "title": "Transfer Sent",
+      "message": "You sent $1000 to Leslie Parker",
+      "type": "TRANSFER",
+      "timestamp": "2026-09-17T03:58:22.938Z",
+      "isRead": false
+    },
+    {
+      "id": "notif_1789617409253_293",
+      "userId": "usr_user_5427",
+      "title": "Transfer Sent",
+      "message": "You sent $250 to Leslie Parker",
+      "type": "TRANSFER",
+      "timestamp": "2026-09-17T03:56:49.253Z",
+      "isRead": false
+    },
+    {
+      "id": "notif_1789617346868_699",
+      "userId": "18f086ef-3c11-4a42-9b44-8657ffd564f3",
+      "title": "Transfer Sent",
+      "message": "You sent $250 to Leslie Parker",
+      "type": "TRANSFER",
+      "timestamp": "2026-09-17T03:55:46.868Z",
+      "isRead": false
+    },
     {
       "id": "notif_1789579700382_704",
       "userId": "18f086ef-3c11-4a42-9b44-8657ffd564f3",
@@ -4890,6 +5008,57 @@
     }
   ],
   "transferAttempts": [
+    {
+      "id": "tx_1789617502858_5018",
+      "sender_id": "usr_user_5427",
+      "recipient": "Leslie Parker",
+      "beneficiary_name": "Leslie Parker",
+      "beneficiary_account": "4829104829",
+      "amount": 1000,
+      "fee": "No fee",
+      "currency": "USD",
+      "from": "Premier Private Client Checking ••••6841",
+      "status": "Completed",
+      "timestamp": "2026-09-17T03:58:22.753Z",
+      "date": "2026-09-17T03:58:22.753Z",
+      "reference": "Rent for March",
+      "estimatedDelivery": "Next business day",
+      "notes": "External Account"
+    },
+    {
+      "id": "tx_1789617409123_6898",
+      "sender_id": "usr_user_5427",
+      "recipient": "Leslie Parker",
+      "beneficiary_name": "Leslie Parker",
+      "beneficiary_account": "4829104829",
+      "amount": 250,
+      "fee": "No fee",
+      "currency": "USD",
+      "from": "Premier Private Client Checking ••••6841",
+      "status": "Completed",
+      "timestamp": "2026-09-17T03:56:48.841Z",
+      "date": "2026-09-17T03:56:48.841Z",
+      "reference": "Rent for March",
+      "estimatedDelivery": "Next business day",
+      "notes": "External Account"
+    },
+    {
+      "id": "tx_1789617346758_9308",
+      "sender_id": "18f086ef-3c11-4a42-9b44-8657ffd564f3",
+      "recipient": "Leslie Parker",
+      "beneficiary_name": "Leslie Parker",
+      "beneficiary_account": "4829104829",
+      "amount": 250,
+      "fee": "No fee",
+      "currency": "USD",
+      "from": "High Yield Savings Vault ••••7461",
+      "status": "Completed",
+      "timestamp": "2026-09-17T03:55:46.653Z",
+      "date": "2026-09-17T03:55:46.653Z",
+      "reference": "Rent for March",
+      "estimatedDelivery": "Next business day",
+      "notes": "External Account"
+    },
     {
       "id": "tx_1789579700163_5564",
       "sender_id": "18f086ef-3c11-4a42-9b44-8657ffd564f3",
@@ -4970,5 +5139,5 @@
       "created_at": "2026-09-16T15:34:54.853Z"
     }
   ],
-  "savedAt": "2026-09-16T17:28:20.482Z"
+  "savedAt": "2026-09-18T17:27:42.256Z"
 }

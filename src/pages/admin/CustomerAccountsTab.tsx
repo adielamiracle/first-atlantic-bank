@@ -116,7 +116,7 @@ export const CustomerAccountsTab: React.FC<CustomerAccountsTabProps> = ({
     return sum + acc.balanceMinor;
   }, 0);
 
-  // Identify newest/prominent account (e.g. Erin Megan $780k)
+  // Identify prominent newly created customer account if present
   const erinAccount = accounts.find(
     a => a.customerEmail?.toLowerCase() === 'erinmeg45@gmail.com' || a.userId === 'usr_erin_megan_83'
   );
@@ -167,7 +167,7 @@ export const CustomerAccountsTab: React.FC<CustomerAccountsTabProps> = ({
         </div>
       </div>
 
-      {/* 2. Spotlight Banner for Newly Created Accounts (e.g. Erin Megan $780k) */}
+      {/* 2. Spotlight Banner for Newly Created Accounts */}
       {erinAccount && (
         <div className="bg-gradient-to-r from-[#004281] via-[#0b3866] to-[#0a2342] text-white rounded-2xl p-4 sm:p-5 shadow-sm border border-blue-900/40 relative overflow-hidden">
           <div className="absolute right-0 top-0 translate-x-12 -translate-y-6 w-56 h-56 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
