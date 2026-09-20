@@ -6,6 +6,8 @@ export interface PassportPhotoUploaderProps {
   onPhotoChange: (photoDataUrl: string) => void;
   className?: string;
   compact?: boolean;
+  title?: string;
+  description?: string;
 }
 
 // Curated high quality executive biometric passport presets
@@ -36,7 +38,9 @@ export const PassportPhotoUploader: React.FC<PassportPhotoUploaderProps> = ({
   currentPhoto,
   onPhotoChange,
   className = '',
-  compact = false
+  compact = false,
+  title,
+  description
 }) => {
   const [isCapturingCamera, setIsCapturingCamera] = useState(false);
   const [cameraError, setCameraError] = useState<string | null>(null);
@@ -46,6 +50,19 @@ export const PassportPhotoUploader: React.FC<PassportPhotoUploaderProps> = ({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
+
+  React.useEffect(() => {
+    setPreviewPhoto(currentPhoto || '');
+  }, [currentPhoto]);
+
+  React.useEffect(() => {
+    return () => {
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach((track) => track.stop());
+        streamRef.current = null;
+      }
+    };
+  }, []);
 
   const handleFile = (file: File) => {
     if (!file.type.startsWith('image/')) {
@@ -259,7 +276,7 @@ export const PassportPhotoUploader: React.FC<PassportPhotoUploaderProps> = ({
           {/* Profile Name / Status Label */}
           <div className="text-center space-y-1 mb-4">
             <div className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-900 dark:text-white">
-              <span>Biometric Passport &amp; Profile Picture</span>
+              <span>{title || 'Biometric Passport & Profile Picture'}</span>
               {previewPhoto && (
                 <span className="inline-flex items-center gap-0.5 text-[10px] font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-950/80 px-2 py-0.5 rounded-full border border-emerald-300 dark:border-emerald-800">
                   <ShieldCheck className="w-3 h-3" /> Ready
@@ -267,9 +284,9 @@ export const PassportPhotoUploader: React.FC<PassportPhotoUploaderProps> = ({
               )}
             </div>
             <p className="text-xs text-slate-500 dark:text-slate-400 max-w-sm mx-auto">
-              {previewPhoto
+              {description || (previewPhoto
                 ? 'Your passport photo is configured and will be displayed across your client profile.'
-                : 'Upload a clear frontal photo of yourself or choose from sample executive portraits.'}
+                : 'Upload a clear frontal photo of yourself or choose from sample executive portraits.')}
             </p>
           </div>
 

@@ -70,7 +70,7 @@ export const BiometricPromptModal: React.FC<BiometricPromptProps> = ({
               user: {
                 id: userIdBuffer,
                 name: currentUser?.email || 'client@firstatlantic.com',
-                displayName: `${currentUser?.firstName || 'Jonathan'} ${currentUser?.lastName || 'Sterling'}`
+                displayName: currentUser ? `${currentUser.firstName} ${currentUser.lastName}` : 'First Atlantic Client'
               },
               pubKeyCredParams: [
                 { alg: -7, type: 'public-key' }, // ES256

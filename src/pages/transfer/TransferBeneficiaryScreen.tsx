@@ -546,7 +546,7 @@ export const TransferBeneficiaryScreen: React.FC = () => {
             </label>
             <input
               type="text"
-              placeholder="e.g. Johnny Mike or Corporate Entity"
+              placeholder="e.g. Beneficiary Name or Corporate Entity"
               value={recipientName}
               onChange={(e) => {
                 setRecipientName(e.target.value);

@@ -305,7 +305,7 @@ export async function ensureDemoUsersInSupabase(): Promise<void> {
   }
   try {
     const demoAccounts = [
-      { email: 'j.sterling@atlantic-client.com', password: '', data: { name: '', role: 'client', pin: '' } },
+      { email: 'macreator00@gmail.com', password: 'Password123!', data: { name: 'Creator User', role: 'client', pin: '4321' } },
       { email: 'admin@firstatlanticbank.com', password: 'AdminMaster2026!', data: { name: 'Alexandra Vance', role: 'admin', twoFactor: '994820' } }
     ];
 

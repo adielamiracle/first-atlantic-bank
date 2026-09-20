@@ -16,7 +16,7 @@ export const GoogleSignInModal: React.FC<GoogleSignInModalProps> = ({
 }) => {
   const { loginWithGoogle, showToast } = useBank();
   const [isProcessing, setIsProcessing] = useState(false);
-  const [selectedAccountType, setSelectedAccountType] = useState<'PRIMARY' | 'DEMO_STERLING' | 'CUSTOM'>('PRIMARY');
+  const [selectedAccountType, setSelectedAccountType] = useState<'PRIMARY' | 'CUSTOM'>('PRIMARY');
   const [customEmail, setCustomEmail] = useState('');
   const [customName, setCustomName] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
@@ -167,37 +167,6 @@ export const GoogleSignInModal: React.FC<GoogleSignInModalProps> = ({
                 </div>
               </div>
               <ArrowRight className="w-4 h-4 text-emerald-600 transition-transform group-hover:translate-x-1" />
-            </button>
-
-            {/* Julian Sterling Persona */}
-            <button
-              type="button"
-              disabled={isProcessing}
-              onClick={() => {
-                setSelectedAccountType('DEMO_STERLING');
-                handleAuthenticate({
-                  email: 'j.sterling@atlantic-client.com',
-                  name: 'Julian Sterling',
-                  picture: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=500&auto=format&fit=crop&q=80'
-                });
-              }}
-              className="w-full text-left p-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-800/40 hover:bg-slate-100 dark:hover:bg-slate-800/80 transition-all flex items-center justify-between group cursor-pointer"
-            >
-              <div className="flex items-center gap-3">
-                <img
-                  src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&auto=format&fit=crop&q=80"
-                  alt="Julian Sterling"
-                  className="w-9 h-9 rounded-full object-cover border border-slate-200 dark:border-slate-700"
-                  referrerPolicy="no-referrer"
-                />
-                <div>
-                  <div className="text-xs font-bold text-slate-900 dark:text-white">Julian Sterling</div>
-                  <div className="text-[11px] text-slate-500 font-mono">j.sterling@atlantic-client.com</div>
-                </div>
-              </div>
-              <span className="text-[11px] font-semibold text-slate-500 group-hover:text-slate-800 dark:group-hover:text-slate-200">
-                Sign In
-              </span>
             </button>
 
             {/* Custom Google Account Option */}

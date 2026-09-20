@@ -134,7 +134,7 @@ export const TransferReviewScreen: React.FC = () => {
 
             <div className="flex items-center justify-between text-xs">
               <span className="text-slate-400">Recipient Full Name:</span>
-              <span className="font-semibold text-white capitalize">{beneficiaryName || 'Johnny Mike'}</span>
+              <span className="font-semibold text-white capitalize">{beneficiaryName || 'Recipient'}</span>
             </div>
 
             <div className="flex items-center justify-between text-xs">

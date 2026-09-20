@@ -74,32 +74,7 @@ export class BankDatabase {
   accountTransferConfigs: Map<string, 'instant_success' | 'pending_review' | 'manual_approval'> = new Map();
   userNotifications: Array<{ id: string; userId: string; title: string; message: string; type: string; timestamp: string; isRead: boolean }> = [];
   transferAttempts: Array<{ id: string; sender_id: string; beneficiary_account: string; amount: number; status: string; timestamp: string; notes: string }> = [];
-  beneficiaries: Array<{ id: string; user_id?: string; name: string; account: string; bank: string; avatar_url?: string; created_at: string }> = [
-    {
-      id: 'ben_1',
-      name: 'Johnny Mike',
-      account: '4829104829',
-      bank: 'Chase Bank',
-      avatar_url: '',
-      created_at: new Date().toISOString()
-    },
-    {
-      id: 'ben_2',
-      name: 'Sarah Connor',
-      account: '1092837461',
-      bank: 'Bank of America',
-      avatar_url: '',
-      created_at: new Date().toISOString()
-    },
-    {
-      id: 'ben_3',
-      name: 'David Miller',
-      account: '83920194',
-      bank: 'Barclays Bank UK',
-      avatar_url: '',
-      created_at: new Date().toISOString()
-    }
-  ];
+  beneficiaries: Array<{ id: string; user_id?: string; name: string; account: string; bank: string; avatar_url?: string; created_at: string }> = [];
 
   getBeneficiaries(userId?: string) {
     if (userId) {
@@ -187,15 +162,15 @@ export class BankDatabase {
       this.seedInitialData();
     }
     
-    this.ensureErinMeganExists();
     this.purgeDemoAccounts();
+    this.ensureCreatorUserExists();
     this.saveToDiskSync();
 
     // Hydrate & Sync with Supabase asynchronously on startup
     setTimeout(() => {
       loadDataFromSupabase(this).then(() => {
-        this.ensureErinMeganExists();
         this.purgeDemoAccounts();
+        this.ensureCreatorUserExists();
         syncAllDataToSupabase(this).catch(e => console.debug('[Supabase Sync Init Notice]:', e));
       }).catch(e => console.debug('[Supabase Load Init Notice]:', e));
     }, 1000);
@@ -203,24 +178,153 @@ export class BankDatabase {
 
   purgeDemoAccounts() {
     try {
-      const demoUserIds = ['usr_sterling_01'];
+      const demoUserIds = [
+        'usr_sterling_01', 'usr_montgomery_02', 'usr_castiglione_03',
+        'usr_supabaseuser_1034', 'usr_balance_4532', 'usr_vance_1810',
+        'usr_hayes_7681', 'usr_tester_6242', 'usr_jenkins_6699',
+        'usr_morgan_2054', 'usr_rostova_6059', 'usr_sterling_9948',
+        'usr_erin_megan_83', 'usr_provision_8886', 'usr_verification_3745',
+        'usr_doe_9099', 'usr_vance_1709', 'usr_testuser999',
+        '18f086ef-3c11-4a42-9b44-8657ffd564f3'
+      ];
       for (const uid of demoUserIds) {
         this.users.delete(uid);
         this.userPasswords.delete(uid);
       }
+      for (const [userId, user] of Array.from(this.users.entries())) {
+        if (
+          user.email !== 'macreator00@gmail.com' &&
+          user.username !== 'macreator00' &&
+          user.id !== 'usr_user_5427' &&
+          (demoUserIds.includes(userId) ||
+           user.email?.includes('atlantic-client.com') ||
+           user.email?.includes('mayfair-advisors.co.uk') ||
+           user.email?.includes('lux-private.lu') ||
+           user.email?.includes('techcorp.io') ||
+           user.email?.includes('premierbank.io') ||
+           user.email?.includes('firstatlantic.com') ||
+           user.email?.includes('erinmeg45@gmail.com') ||
+           user.email?.includes('example.com') ||
+           user.email?.includes('winterj548@gmail.com'))
+        ) {
+          this.users.delete(userId);
+          this.userPasswords.delete(userId);
+        }
+      }
+      const validUserIds = new Set(Array.from(this.users.keys()));
       for (const [accId, acc] of Array.from(this.accounts.entries())) {
-        if (acc.userId === 'usr_sterling_01' || accId.includes('sterling') || (acc.name && acc.name.toLowerCase().includes('sterling'))) {
+        if (
+          !validUserIds.has(acc.userId) ||
+          demoUserIds.includes(acc.userId) ||
+          accId.includes('sterling') ||
+          accId === 'acc_erin_megan_01' ||
+          acc.balanceMinor === 78000000 ||
+          (acc.name && acc.name.includes('Premier Private Wealth Reserve'))
+        ) {
           this.accounts.delete(accId);
         }
       }
+      const validAccountIds = new Set(Array.from(this.accounts.keys()));
       for (const [cardId, card] of Array.from(this.cards.entries())) {
-        if (card.userId === 'usr_sterling_01' || cardId.includes('sterling') || (card.cardHolderName && card.cardHolderName.toLowerCase().includes('sterling'))) {
+        if (
+          !validUserIds.has(card.userId) ||
+          !validAccountIds.has(card.accountId) ||
+          demoUserIds.includes(card.userId) ||
+          cardId.includes('sterling') ||
+          cardId === 'crd_erin_01'
+        ) {
           this.cards.delete(cardId);
         }
       }
-      this.ledger = this.ledger.filter(l => !l.accountId?.includes('sterling') && !l.description?.toLowerCase().includes('sterling'));
+      this.ledger = this.ledger.filter(
+        l =>
+          l.accountId &&
+          validAccountIds.has(l.accountId) &&
+          !l.accountId?.includes('sterling') &&
+          l.accountId !== 'acc_erin_megan_01' &&
+          l.amountMinor !== 78000000
+      );
     } catch (e) {
       console.debug('Notice purging demo accounts:', e);
+    }
+  }
+
+  ensureCreatorUserExists() {
+    try {
+      const creatorEmail = 'macreator00@gmail.com';
+      let user = Array.from(this.users.values()).find(
+        u => u.email?.toLowerCase() === creatorEmail || u.username?.toLowerCase() === 'macreator00' || u.id === 'usr_user_5427'
+      );
+      if (!user) {
+        user = {
+          id: 'usr_user_5427',
+          email: creatorEmail,
+          username: 'macreator00',
+          firstName: 'Creator',
+          lastName: 'User',
+          phone: '+1 (555) 839-2044',
+          dialCode: '+1',
+          dateOfBirth: '1990-01-15',
+          nationality: 'United States',
+          passportNumber: 'US-755427',
+          passportPhoto: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500&auto=format&fit=crop&q=80',
+          loginPin: '1234',
+          ssnMasked: '•••-••-8899',
+          region: 'US',
+          approval_status: 'APPROVED',
+          address: {
+            line1: '742 Evergreen Terrace',
+            city: 'New York',
+            stateOrCounty: 'NY',
+            postalCode: '10001',
+            country: 'United States'
+          },
+          mfaEnabled: false,
+          mfaMethod: 'AUTHENTICATOR',
+          biometricsEnabled: true,
+          kycTier: 'TIER_3_INSTITUTIONAL',
+          securityScore: 95,
+          notifications: {
+            emailAlerts: true,
+            smsAlerts: true,
+            pushAlerts: true,
+            largeTransactionThresholdMinor: 500000
+          },
+          lastLogin: new Date().toISOString()
+        };
+        this.users.set(user.id, user);
+      }
+      user.approval_status = 'APPROVED';
+      this.userPasswords.set(user.id, 'Password123!');
+      this.userPasswords.set(creatorEmail, 'Password123!');
+      this.userPasswords.set('macreator00', 'Password123!');
+
+      let userAcc = Array.from(this.accounts.values()).find(a => a.userId === user!.id);
+      if (!userAcc) {
+        userAcc = {
+          id: `acc_${user.id}_usd_01`,
+          userId: user.id,
+          accountNumber: '•••• 5427',
+          accountNumberFull: '882049105427',
+          routingNumber: '021000089',
+          swiftBic: 'FATLUS33NYC',
+          name: 'Premier Private Client Checking',
+          type: 'CHECKING_PREMIER',
+          currency: 'USD',
+          balanceMinor: 2500000,
+          availableBalanceMinor: 2500000,
+          pendingHoldMinor: 0,
+          interestRateAPY: 2.15,
+          status: 'ACTIVE',
+          region: 'US',
+          openedDate: '2026-01-15',
+          dailyTransferLimitMinor: 100000000,
+          statementCycleDay: 15
+        };
+        this.accounts.set(userAcc.id, userAcc);
+      }
+    } catch (e) {
+      console.debug('Notice ensuring creator user:', e);
     }
   }
 
@@ -293,1189 +397,93 @@ export class BankDatabase {
   }
 
   seedInitialData() {
-    // 1. Seed Customer: Jonathan Sterling (Premier Private Client)
-    const primaryUser: UserProfile = {
-      id: 'usr_sterling_01',
-      email: 'j.sterling@atlantic-client.com',
-      username: 'jsterling',
-      firstName: 'Jonathan',
-      lastName: 'Sterling',
-      phone: '+1 (212) 849-2910',
-      dialCode: '+1',
-      dateOfBirth: '1984-04-16',
-      nationality: 'American',
-      passportNumber: 'US84920194A',
-      passportPhoto: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500&auto=format&fit=crop&q=80',
-      loginPin: '1234',
-      ssnMasked: '•••-••-8492',
-      nationalInsuranceMasked: 'QQ 12 34 56 A',
-      region: 'US',
-      approval_status: 'APPROVED',
-      address: {
-        line1: '740 Park Avenue, Penthouse B',
-        city: 'New York',
-        stateOrCounty: 'NY',
-        postalCode: '10021',
-        country: 'United States'
-      },
-      mfaEnabled: true,
-      mfaMethod: 'AUTHENTICATOR',
-      biometricsEnabled: true,
-      kycTier: 'TIER_2_VERIFIED_PREMIER',
-      securityScore: 94,
-      notifications: {
-        emailAlerts: true,
-        smsAlerts: true,
-        pushAlerts: true,
-        largeTransactionThresholdMinor: 500000 // $5,000.00
-      },
-      lastLogin: new Date(Date.now() - 3600000 * 2).toISOString()
-    };
-
-    this.users.set(primaryUser.id, primaryUser);
-    this.userPasswords.set(primaryUser.id, 'AtlanticSecure2026!');
-
-    // 2. Seed UK Dual-Citizen Account: Lady Evelyn Montgomery
-    const ukUser: UserProfile = {
-      id: 'usr_montgomery_02',
-      email: 'evelyn.montgomery@mayfair-advisors.co.uk',
-      username: 'emontgomery',
-      firstName: 'Evelyn',
-      lastName: 'Montgomery',
-      phone: '+44 20 7946 0912',
-      dialCode: '+44',
-      dateOfBirth: '1979-11-23',
-      nationality: 'British',
-      passportNumber: 'GB98201499C',
-      passportPhoto: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=500&auto=format&fit=crop&q=80',
-      loginPin: '4321',
-      ssnMasked: '•••-••-1190',
-      nationalInsuranceMasked: 'AB 98 76 54 C',
-      region: 'UK',
-      approval_status: 'APPROVED',
-      address: {
-        line1: '14 Berkeley Square, Mayfair',
-        city: 'London',
-        stateOrCounty: 'Greater London',
-        postalCode: 'W1J 6BQ',
-        country: 'United Kingdom'
-      },
-      mfaEnabled: true,
-      mfaMethod: 'SMS',
-      biometricsEnabled: true,
-      kycTier: 'TIER_3_INSTITUTIONAL',
-      securityScore: 98,
-      notifications: {
-        emailAlerts: true,
-        smsAlerts: true,
-        pushAlerts: true,
-        largeTransactionThresholdMinor: 1000000 // £10,000.00
-      },
-      lastLogin: new Date(Date.now() - 3600000 * 5).toISOString()
-    };
-
-    this.users.set(ukUser.id, ukUser);
-    this.userPasswords.set(ukUser.id, 'MayfairLondon2026!');
-
-    // 3. Single Master Administrator (Exclusive platform administrator)
-    const singleMasterAdmin: AdminUser = {
-      id: 'adm_master_01',
-      email: 'admin@firstatlanticbank.com',
-      name: 'Alexandra Vance',
-      role: 'SUPER_ADMIN',
-      department: 'Executive Risk, Governance & Master Administration',
-      lastLogin: new Date().toISOString(),
-      status: 'ACTIVE'
-    };
-
-    this.adminUsers.set(singleMasterAdmin.id, singleMasterAdmin);
-    this.userPasswords.set(singleMasterAdmin.id, 'AdminMaster2026!');
-    this.userPasswords.set('admin@firstatlanticbank.com', 'AdminMaster2026!');
-    this.userPasswords.set('admin', 'AdminMaster2026!');
-
-    // 4. Seed Accounts for Jonathan Sterling
-    const acc1: BankAccount = {
-      id: 'acc_sterling_chk_01',
-      userId: primaryUser.id,
-      accountNumber: '•••• 4892',
-      accountNumberFull: '882049184892',
-      routingNumber: '021000089',
-      sortCode: undefined,
-      swiftBic: 'FATLUS33NYC',
-      name: 'Premier Private Checking',
-      type: 'CHECKING_PREMIER',
-      currency: 'USD',
-      balanceMinor: 14892050, // $148,920.50
-      availableBalanceMinor: 14642050, // $146,420.50 ($2,500 pending hold)
-      pendingHoldMinor: 250000,
-      interestRateAPY: 1.25,
-      status: 'ACTIVE',
-      region: 'US',
-      openedDate: '2021-03-15',
-      dailyTransferLimitMinor: 50000000, // $500,000.00
-      statementCycleDay: 28
-    };
-
-    const acc2: BankAccount = {
-      id: 'acc_sterling_sav_02',
-      userId: primaryUser.id,
-      accountNumber: '•••• 7104',
-      accountNumberFull: '882049187104',
-      routingNumber: '021000089',
-      swiftBic: 'FATLUS33NYC',
-      name: 'Atlantic Apex High-Yield Savings',
-      type: 'SAVINGS_HIGH_YIELD',
-      currency: 'USD',
-      balanceMinor: 38450000, // $384,500.00
-      availableBalanceMinor: 38450000,
-      pendingHoldMinor: 0,
-      interestRateAPY: 5.15,
-      status: 'ACTIVE',
-      region: 'US',
-      openedDate: '2021-04-10',
-      dailyTransferLimitMinor: 100000000,
-      statementCycleDay: 28
-    };
-
-    const acc3: BankAccount = {
-      id: 'acc_sterling_multigbp_03',
-      userId: primaryUser.id,
-      accountNumber: '•••• 9381',
-      accountNumberFull: '608371993810',
-      sortCode: '40-12-88',
-      iban: 'GB29FATL40128860837199',
-      swiftBic: 'FATLGB22LON',
-      name: 'Global Multi-Currency GBP Reserve',
-      type: 'MULTI_CURRENCY_GLOBAL',
-      currency: 'GBP',
-      balanceMinor: 8940000, // £89,400.00
-      availableBalanceMinor: 8940000,
-      pendingHoldMinor: 0,
-      interestRateAPY: 4.80,
-      status: 'ACTIVE',
-      region: 'UK',
-      openedDate: '2022-06-20',
-      dailyTransferLimitMinor: 75000000,
-      statementCycleDay: 15
-    };
-
-    const acc4: BankAccount = {
-      id: 'acc_sterling_crd_04',
-      userId: primaryUser.id,
-      accountNumber: '•••• 1084',
-      accountNumberFull: '4532890123451084',
-      swiftBic: 'FATLUS33NYC',
-      name: 'First Atlantic Infinite Visa Signature',
-      type: 'CREDIT_CARD_INFINITE',
-      currency: 'USD',
-      balanceMinor: 341280, // Current spend $3,412.80
-      availableBalanceMinor: 9658720, // Available credit ($100,000 limit - $3,412.80)
-      pendingHoldMinor: 48500,
-      creditLimitMinor: 10000000, // $100,000.00
-      status: 'ACTIVE',
-      region: 'US',
-      openedDate: '2021-03-20',
-      dailyTransferLimitMinor: 2500000,
-      statementCycleDay: 1
-    };
-
-    this.accounts.set(acc1.id, acc1);
-    this.accounts.set(acc2.id, acc2);
-    this.accounts.set(acc3.id, acc3);
-    this.accounts.set(acc4.id, acc4);
-
-    // 5. Seed Cards for Jonathan
-    const card1: BankCard = {
-      id: 'crd_deb_01',
-      accountId: acc1.id,
-      userId: primaryUser.id,
-      cardNumberMasked: '•••• •••• •••• 4892',
-      cardNumberFull: '4111 8892 0149 4892',
-      cardHolderName: 'JONATHAN STERLING',
-      expiryMonth: 11,
-      expiryYear: 2029,
-      cvv: '849',
-      cardType: 'DEBIT_VISA_SIGNATURE',
-      status: 'ACTIVE',
-      isVirtual: false,
-      contactlessEnabled: true,
-      onlineTransactionsEnabled: true,
-      internationalSpendEnabled: true,
-      dailyAtmLimitMinor: 500000,
-      dailySpendLimitMinor: 2500000,
-      travelNotices: [
-        { country: 'United Kingdom', startDate: '2026-09-01', endDate: '2026-09-15' }
-      ]
-    };
-
-    const card2: BankCard = {
-      id: 'crd_inf_02',
-      accountId: acc4.id,
-      userId: primaryUser.id,
-      cardNumberMasked: '•••• •••• •••• 1084',
-      cardNumberFull: '4532 8901 2345 1084',
-      cardHolderName: 'JONATHAN STERLING',
-      expiryMonth: 8,
-      expiryYear: 2030,
-      cvv: '392',
-      cardType: 'CREDIT_ATLANTIC_INFINITE',
-      status: 'ACTIVE',
-      isVirtual: false,
-      contactlessEnabled: true,
-      onlineTransactionsEnabled: true,
-      internationalSpendEnabled: true,
-      dailyAtmLimitMinor: 1000000,
-      dailySpendLimitMinor: 10000000,
-      travelNotices: []
-    };
-
-    this.cards.set(card1.id, card1);
-    this.cards.set(card2.id, card2);
-
-    // 6. Seed Detailed Ledger History for Jonathan
     const now = Date.now();
     const day = 86400000;
 
-    const initialLedger: LedgerEntry[] = [
-      {
-        id: 'led_001',
-        transactionId: 'tx_fatl_99401',
-        accountId: acc1.id,
-        direction: 'CREDIT',
-        amountMinor: 2850000, // $28,500.00
-        currency: 'USD',
-        balanceAfterMinor: 14892050,
-        description: 'Direct Deposit — Morgan Stanley Global Wealth Distribution',
-        category: 'Income',
-        counterparty: 'Morgan Stanley Wealth Management',
-        status: 'SETTLED',
-        channel: 'ACH',
-        referenceNumber: 'ACH-MS-20260815-99201',
-        createdTimestamp: new Date(now - day * 2).toISOString(),
-        effectiveTimestamp: new Date(now - day * 2).toISOString(),
-        settledTimestamp: new Date(now - day * 2).toISOString()
-      },
-      {
-        id: 'led_002',
-        transactionId: 'tx_fatl_99392',
-        accountId: acc1.id,
-        direction: 'DEBIT',
-        amountMinor: 250000, // $2,500.00
-        currency: 'USD',
-        balanceAfterMinor: 12042050,
-        description: 'Wire Out — Sotheby\'s International Realty Escrow',
-        category: 'Transfers',
-        counterparty: 'Sotheby\'s Realty NY Escrow Trust',
-        status: 'PENDING',
-        channel: 'WIRE',
-        referenceNumber: 'FEDWIRE-20260816-88192',
-        createdTimestamp: new Date(now - day * 1).toISOString(),
-        effectiveTimestamp: new Date(now - day * 1).toISOString()
-      },
-      {
-        id: 'led_003',
-        transactionId: 'tx_fatl_99210',
-        accountId: acc1.id,
-        direction: 'DEBIT',
-        amountMinor: 48500, // $485.00
-        currency: 'USD',
-        balanceAfterMinor: 12292050,
-        description: 'Bill Payment — ConEdison Electric NYC',
-        category: 'Bills & Utilities',
-        counterparty: 'Consolidated Edison NY',
-        status: 'SETTLED',
-        channel: 'ONLINE',
-        referenceNumber: 'BP-CONED-884910',
-        createdTimestamp: new Date(now - day * 4).toISOString(),
-        effectiveTimestamp: new Date(now - day * 4).toISOString(),
-        settledTimestamp: new Date(now - day * 4).toISOString()
-      },
-      {
-        id: 'led_004',
-        transactionId: 'tx_fatl_99119',
-        accountId: acc2.id,
-        direction: 'CREDIT',
-        amountMinor: 164890, // $1,648.90
-        currency: 'USD',
-        balanceAfterMinor: 38450000,
-        description: 'Monthly Compound Yield Payment (5.15% APY)',
-        category: 'Fees & Interest',
-        counterparty: 'First Atlantic Bank Treasury',
-        status: 'SETTLED',
-        channel: 'ADMIN_PORTAL',
-        referenceNumber: 'INT-APEX-202607-001',
-        createdTimestamp: new Date(now - day * 18).toISOString(),
-        effectiveTimestamp: new Date(now - day * 18).toISOString(),
-        settledTimestamp: new Date(now - day * 18).toISOString()
-      },
-      {
-        id: 'led_005',
-        transactionId: 'tx_fatl_98901',
-        accountId: acc3.id,
-        direction: 'CREDIT',
-        amountMinor: 5000000, // £50,000.00
-        currency: 'GBP',
-        balanceAfterMinor: 8940000,
-        description: 'Faster Payments Inbound — Barclays Private Bank London',
-        category: 'Transfers',
-        counterparty: 'Barclays Private Bank UK',
-        status: 'SETTLED',
-        channel: 'FPS',
-        referenceNumber: 'FPS-LON-99201948',
-        createdTimestamp: new Date(now - day * 7).toISOString(),
-        effectiveTimestamp: new Date(now - day * 7).toISOString(),
-        settledTimestamp: new Date(now - day * 7).toISOString()
-      },
-      {
-        id: 'led_006',
-        transactionId: 'tx_fatl_98812',
-        accountId: acc4.id,
-        direction: 'DEBIT',
-        amountMinor: 125000, // $1,250.00
-        currency: 'USD',
-        balanceAfterMinor: 341280,
-        description: 'The Carlyle Hotel New York — Fine Dining & Suites',
-        category: 'Shopping & Dining',
-        counterparty: 'The Carlyle Hotel NYC',
-        status: 'SETTLED',
-        channel: 'CARD_POS',
-        referenceNumber: 'POS-AUTH-48192-CARLYLE',
-        createdTimestamp: new Date(now - day * 3).toISOString(),
-        effectiveTimestamp: new Date(now - day * 3).toISOString(),
-        settledTimestamp: new Date(now - day * 3).toISOString()
-      }
-    ];
-
-    this.ledger.push(...initialLedger);
-
-    // Seed corresponding double-entry transactions in doubleEntryLedger engine
-    try {
-      // Seed Tx 1: Inbound Direct Deposit
-      doubleEntryLedger.commitJournalTransaction({
-        referenceNumber: 'ACH-MS-20260815-99201',
-        transactionType: 'INBOUND_WIRE',
-        description: 'Direct Deposit — Morgan Stanley Wealth Management',
-        effectiveAt: new Date(now - day * 2).toISOString(),
-        lines: [
-          {
-            id: 'jl_init_1',
-            accountId: 'GL_1001_FED_RESERVE_CASH',
-            accountType: 'GL_ASSET',
-            accountName: 'Federal Reserve Master Account Cash',
-            direction: 'DEBIT',
-            amountMinor: 2850000,
-            currency: 'USD',
-            description: 'ACH Clearing Settlement Settlement Inflow'
-          },
-          {
-            id: 'jl_init_2',
-            accountId: acc1.id,
-            accountType: 'CUSTOMER_DEPOSIT',
-            accountName: `${acc1.name} (${acc1.accountNumber})`,
-            direction: 'CREDIT',
-            amountMinor: 2850000,
-            currency: 'USD',
-            description: 'Direct Deposit — Morgan Stanley Global Wealth Distribution'
-          }
-        ]
-      });
-
-      // Seed Tx 2: Outbound Fedwire
-      doubleEntryLedger.commitJournalTransaction({
-        referenceNumber: 'FEDWIRE-20260816-88192',
-        transactionType: 'OUTBOUND_WIRE',
-        description: "Wire Out — Sotheby's International Realty Escrow",
-        effectiveAt: new Date(now - day * 1).toISOString(),
-        lines: [
-          {
-            id: 'jl_init_3',
-            accountId: acc1.id,
-            accountType: 'CUSTOMER_DEPOSIT',
-            accountName: `${acc1.name} (${acc1.accountNumber})`,
-            direction: 'DEBIT',
-            amountMinor: 250000,
-            currency: 'USD',
-            description: "Escrow Wire Outflow"
-          },
-          {
-            id: 'jl_init_4',
-            accountId: 'GL_1001_FED_RESERVE_CASH',
-            accountType: 'GL_ASSET',
-            accountName: 'Federal Reserve Master Account Cash',
-            direction: 'CREDIT',
-            amountMinor: 250000,
-            currency: 'USD',
-            description: 'Fedwire Funds Settlement Outflow'
-          }
-        ]
-      });
-
-      // Seed Tx 3: Bill Payment ConEd
-      doubleEntryLedger.commitJournalTransaction({
-        referenceNumber: 'BP-CONED-884910',
-        transactionType: 'BILL_PAYMENT',
-        description: 'Bill Payment — ConEdison Electric NYC',
-        effectiveAt: new Date(now - day * 4).toISOString(),
-        lines: [
-          {
-            id: 'jl_init_5',
-            accountId: acc1.id,
-            accountType: 'CUSTOMER_DEPOSIT',
-            accountName: `${acc1.name} (${acc1.accountNumber})`,
-            direction: 'DEBIT',
-            amountMinor: 48500,
-            currency: 'USD',
-            description: 'Bill Payment Remittance'
-          },
-          {
-            id: 'jl_init_6',
-            accountId: 'GL_1001_FED_RESERVE_CASH',
-            accountType: 'GL_ASSET',
-            accountName: 'Federal Reserve Master Account Cash',
-            direction: 'CREDIT',
-            amountMinor: 48500,
-            currency: 'USD',
-            description: 'Utility Clearing Settlement'
-          }
-        ]
-      });
-
-      // Seed Tx 4: Compound Yield Payment
-      doubleEntryLedger.commitJournalTransaction({
-        referenceNumber: 'INT-APEX-202607-001',
-        transactionType: 'INTEREST_COMPOUND',
-        description: 'Monthly Compound Yield Payment (5.15% APY)',
-        effectiveAt: new Date(now - day * 18).toISOString(),
-        lines: [
-          {
-            id: 'jl_init_7',
-            accountId: 'GL_5001_DEPOSIT_INTEREST_EXPENSE',
-            accountType: 'GL_EXPENSE',
-            accountName: 'High-Yield Savings Compound Interest Expense',
-            direction: 'DEBIT',
-            amountMinor: 164890,
-            currency: 'USD',
-            description: 'Accrued Compound Yield Expense'
-          },
-          {
-            id: 'jl_init_8',
-            accountId: acc2.id,
-            accountType: 'CUSTOMER_DEPOSIT',
-            accountName: `${acc2.name} (${acc2.accountNumber})`,
-            direction: 'CREDIT',
-            amountMinor: 164890,
-            currency: 'USD',
-            description: 'Monthly Compound Yield Payment'
-          }
-        ]
-      });
-
-      // Seed Tx 5: Inbound Faster Payments GBP
-      doubleEntryLedger.commitJournalTransaction({
-        referenceNumber: 'FPS-LON-99201948',
-        transactionType: 'INBOUND_WIRE',
-        description: 'Faster Payments Inbound — Barclays Private Bank London',
-        effectiveAt: new Date(now - day * 7).toISOString(),
-        lines: [
-          {
-            id: 'jl_init_9',
-            accountId: 'GL_1002_BOE_SETTLEMENT_CASH',
-            accountType: 'GL_ASSET',
-            accountName: 'Bank of England RTGS Reserve Account',
-            direction: 'DEBIT',
-            amountMinor: 5000000,
-            currency: 'GBP',
-            description: 'FPS Clearing Settlement Inflow'
-          },
-          {
-            id: 'jl_init_10',
-            accountId: acc3.id,
-            accountType: 'CUSTOMER_DEPOSIT',
-            accountName: `${acc3.name} (${acc3.accountNumber})`,
-            direction: 'CREDIT',
-            amountMinor: 5000000,
-            currency: 'GBP',
-            description: 'Faster Payments Inbound'
-          }
-        ]
-      });
-    } catch (e) {
-      console.warn('Seeding double-entry transactions warning:', e);
-    }
-
-    // 7. Seed Audit Logs
-    this.auditLogs.push(
-      {
-        id: 'aud_88910',
-        actorId: singleMasterAdmin.id,
-        actorEmail: singleMasterAdmin.email,
-        actorRole: 'SUPER_ADMIN',
-        action: 'ACCOUNT_LIMIT_UPGRADE',
-        targetType: 'ACCOUNT',
-        targetId: acc1.id,
-        ipAddress: '199.16.156.12',
-        userAgent: 'First Atlantic Institutional Core v4.2 / MacOS',
-        timestamp: new Date(now - day * 10).toISOString(),
-        details: 'Approved daily wire limit escalation to $500,000.00 per private banking mandate.',
-        signatureHash: 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855'
-      },
-      {
-        id: 'aud_88911',
-        actorId: primaryUser.id,
-        actorEmail: primaryUser.email,
-        actorRole: 'CUSTOMER',
-        action: 'MFA_AUTHENTICATED_LOGIN',
-        targetType: 'SECURITY',
-        targetId: primaryUser.id,
-        ipAddress: '108.45.192.8',
-        userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 14_5) AppleWebKit/537.36 Chrome/128.0.0.0 Safari/537.36',
-        timestamp: new Date(now - 3600000 * 2).toISOString(),
-        details: 'Hardware authenticator TOTP verified successfully from New York, US.',
-        signatureHash: 'd4735e3a265e16eee03f59718b9b5d03019c07d8b6c51f90da3a666eec13ab35'
-      }
-    );
-
-    // 8. Seed Adjustments
-    this.adjustments.push({
-      id: 'adj_9910',
-      referenceNumber: 'ADJ-FAB-2026-0091',
-      accountId: acc1.id,
-      accountNumber: acc1.accountNumber,
-      customerName: `${primaryUser.firstName} ${primaryUser.lastName}`,
-      amountMinor: 3500, // $35.00
-      currency: 'USD',
-      direction: 'CREDIT',
-      adjustmentType: 'FEE_REVERSAL',
-      reason: 'Waiver of international wire dispatch inquiry fee as courtesy to Private Client',
-      effectiveDate: new Date(now - day * 12).toISOString().slice(0, 10),
-      makerAdminId: singleMasterAdmin.id,
-      makerAdminName: singleMasterAdmin.name,
-      checkerAdminId: singleMasterAdmin.id,
-      checkerAdminName: singleMasterAdmin.name,
-      status: 'APPROVED_AND_POSTED',
-      createdTimestamp: new Date(now - day * 12).toISOString(),
-      postedTimestamp: new Date(now - day * 12 + 3600000).toISOString(),
-      approvalNotes: 'Approved per Executive relationship manager discretionary policy.'
-    });
-
-    // 9. Seed Risk Events
-    this.riskEvents.push({
-      id: 'rsk_101',
-      userId: primaryUser.id,
-      customerName: `${primaryUser.firstName} ${primaryUser.lastName}`,
-      riskScore: 24,
-      severity: 'LOW',
-      eventType: 'UNRECOGNIZED_DEVICE',
-      description: 'New login session initiated from Safari on Apple iPad in Boston, MA.',
-      ipAddress: '65.112.8.94',
-      location: 'Boston, MA, United States',
-      status: 'DISMISSED',
-      timestamp: new Date(now - day * 5).toISOString()
-    });
-
-    // 10. Seed Support Cases
-    this.supportCases.push({
-      id: 'cas_7721',
-      userId: primaryUser.id,
-      customerName: `${primaryUser.firstName} ${primaryUser.lastName}`,
-      subject: 'Global Multi-Currency Sort Code Verification for London Escrow',
-      category: 'TRANSFERS',
-      status: 'RESOLVED',
-      priority: 'MEDIUM',
-      messages: [
-        {
-          id: 'msg_01',
-          sender: 'CUSTOMER',
-          senderName: 'Jonathan Sterling',
-          message: 'Good morning, please provide the verified clearing sort code and London SWIFT BIC for receiving a GBP 150,000 real estate escrow distribution next week.',
-          timestamp: new Date(now - day * 8).toISOString()
-        },
-        {
-          id: 'msg_02',
-          sender: 'SUPPORT_AGENT',
-          senderName: 'Victoria Hastings (Private Banking Concierge)',
-          message: 'Good morning Mr. Sterling. Your dedicated UK sorting code is 40-12-88 with SWIFT BIC FATLGB22LON. We have placed a pre-advice notice on your Global GBP account so funds clear instantly upon arrival.',
-          timestamp: new Date(now - day * 8 + 3600000 * 2).toISOString()
-        }
-      ],
-      createdTimestamp: new Date(now - day * 8).toISOString(),
-      updatedTimestamp: new Date(now - day * 8 + 3600000 * 2).toISOString()
-    });
-
-    // 11. Seed International & European Account Applications
-    const app1: AccountApplication = {
-      id: 'app_frankfurt_01',
-      referenceNumber: 'FAB-EU-2026-99214',
-      firstName: 'Maximilian',
-      middleName: 'Heinrich',
-      lastName: 'von Berg',
-      email: 'm.vonberg@rhein-finanz.de',
-      phone: '+49 69 9002 1890',
-      dateOfBirth: '1982-07-14',
-      nationality: 'Germany',
-      taxIdOrSsn: 'DE 948 201 492',
-      idDocumentType: 'PASSPORT',
-      idDocumentNumber: 'C78942018',
-      idDocumentFileName: 'passport_germany_m_vonberg.pdf',
-      proofOfAddressFileName: 'utility_frankfurt_strom.pdf',
-      address: {
-        line1: 'Bockenheimer Landstraße 42',
-        line2: 'Westend-Süd',
-        city: 'Frankfurt am Main',
-        stateOrProvince: 'Hessen',
-        postalCode: '60323',
-        country: 'Germany'
-      },
-      employmentStatus: 'EXECUTIVE',
-      employerOrBusinessName: 'Rhein Asset Management GmbH',
-      sourceOfWealth: 'BUSINESS_PROCEEDS',
-      annualIncomeRange: 'EUR_250K_1M',
-      isPep: false,
-      requestedCurrency: 'EUR',
-      requestedAccountType: 'CHECKING_PREMIER',
-      requestedRegion: 'EU',
-      initialDepositAmountMinor: 15000000, // €150,000.00
-      requestDebitCard: true,
-      username: 'mvonberg',
-      passwordHashed: 'FrankfurtSecure2026!',
-      mfaPreference: 'AUTHENTICATOR',
-      status: 'PENDING_COMPLIANCE_REVIEW',
-      riskScore: 18,
-      submittedAt: new Date(now - day * 1.5).toISOString(),
-      complianceNotes: 'Sanction and PEP screening cleared clean. High-value European corporate executive.'
+    // 1. Master System Administrator
+    const masterAdmin: AdminUser = {
+      id: "adm_master_01",
+      email: "admin@firstatlanticbank.com",
+      name: "Alexandra Vance",
+      role: "SUPER_ADMIN",
+      department: "Executive Risk, Governance & Master Administration",
+      lastLogin: new Date(now - 3600000).toISOString(),
+      status: "ACTIVE"
     };
+    this.adminUsers.set(masterAdmin.id, masterAdmin);
+    this.userPasswords.set(masterAdmin.id, "AdminVault2026!");
+    this.userPasswords.set(masterAdmin.email, "AdminVault2026!");
 
-    const app2: AccountApplication = {
-      id: 'app_paris_02',
-      referenceNumber: 'FAB-EU-2026-78401',
-      firstName: 'Dr. Chloé',
-      middleName: 'Margaux',
-      lastName: 'Laurent',
-      email: 'chloe.laurent@sorbonne-med.fr',
-      phone: '+33 1 42 68 55 00',
-      dateOfBirth: '1988-03-22',
-      nationality: 'France',
-      taxIdOrSsn: 'FR 84 920 184 902',
-      idDocumentType: 'EU_NATIONAL_ID',
-      idDocumentNumber: 'FR-994820149',
-      idDocumentFileName: 'cni_france_claurent.pdf',
-      proofOfAddressFileName: 'edf_electricite_paris.pdf',
-      address: {
-        line1: '28 Avenue Montaigne',
-        city: 'Paris',
-        stateOrProvince: 'Île-de-France',
-        postalCode: '75008',
-        country: 'France'
-      },
-      employmentStatus: 'SELF_EMPLOYED',
-      employerOrBusinessName: 'Cabinet Médical Montaigne',
-      sourceOfWealth: 'SALARY',
-      annualIncomeRange: 'EUR_100K_250K',
-      isPep: false,
-      requestedCurrency: 'EUR',
-      requestedAccountType: 'SAVINGS_HIGH_YIELD',
-      requestedRegion: 'EU',
-      initialDepositAmountMinor: 8500000, // €85,000.00
-      requestDebitCard: true,
-      username: 'claurent',
-      passwordHashed: 'ParisMedical2026!',
-      mfaPreference: 'SMS',
-      status: 'PENDING_COMPLIANCE_REVIEW',
-      riskScore: 22,
-      submittedAt: new Date(now - 3600000 * 14).toISOString(),
-      complianceNotes: 'Verified French professional medical license and residential documentation.'
-    };
+    // 2. Ensure Primary Creator User exists with real checking account
+    this.ensureCreatorUserExists();
 
-    const app3: AccountApplication = {
-      id: 'app_london_03',
-      referenceNumber: 'FAB-UK-2026-10294',
-      firstName: 'Sir Alistair',
-      lastName: 'Crawford',
-      email: 'alistair.crawford@crawford-heritage.co.uk',
-      phone: '+44 20 7946 0411',
-      dateOfBirth: '1970-09-05',
-      nationality: 'United Kingdom',
-      taxIdOrSsn: 'AB 12 34 56 Z',
-      idDocumentType: 'PASSPORT',
-      idDocumentNumber: 'UK99014820',
-      idDocumentFileName: 'passport_uk_acrawford.pdf',
-      proofOfAddressFileName: 'council_tax_westminster.pdf',
-      address: {
-        line1: '8 Grosvenor Crescent, Belgravia',
-        city: 'London',
-        stateOrProvince: 'Greater London',
-        postalCode: 'SW1X 7EE',
-        country: 'United Kingdom'
-      },
-      employmentStatus: 'BUSINESS_OWNER',
-      sourceOfWealth: 'INHERITANCE',
-      annualIncomeRange: 'EUR_1M_PLUS',
-      isPep: false,
-      requestedCurrency: 'GBP',
-      requestedAccountType: 'MULTI_CURRENCY_GLOBAL',
-      requestedRegion: 'UK',
-      initialDepositAmountMinor: 50000000, // £500,000.00
-      requestDebitCard: true,
-      username: 'acrawford',
-      passwordHashed: 'Belgravia2026!',
-      mfaPreference: 'AUTHENTICATOR',
-      status: 'APPROVED',
-      riskScore: 12,
-      submittedAt: new Date(now - day * 5).toISOString(),
-      reviewedAt: new Date(now - day * 4).toISOString(),
-      reviewedByAdminId: singleMasterAdmin.id,
-      reviewedByAdminName: singleMasterAdmin.name,
-      complianceNotes: 'Fully verified private client. Assigned dedicated London Mayfair concierge desk.',
-      provisionedIban: 'GB29FATL40128899014820',
-      provisionedSortCode: '40-12-88',
-      provisionedAccountNumber: '99014820'
-    };
-
-    this.applications.set(app1.id, app1);
-    this.applications.set(app2.id, app2);
-    this.applications.set(app3.id, app3);
-
-    // Seed 30-day historical application trajectory for realistic analytics & trend visualization
-    const historicalApplicants = [
-      { name: 'Arthur Pendelton', email: 'a.pendelton@oxford-endowment.uk', nat: 'United Kingdom', reg: 'UK' as BankRegion, curr: 'GBP' as CurrencyCode, dep: 45000000, daysAgo: 28, status: 'APPROVED' as const },
-      { name: 'Éléonore Moreau', email: 'e.moreau@bordeaux-vins.fr', nat: 'France', reg: 'EU' as BankRegion, curr: 'EUR' as CurrencyCode, dep: 22000000, daysAgo: 27, status: 'APPROVED' as const },
-      { name: 'Klaus Lindemann', email: 'k.lindemann@berlin-tech.de', nat: 'Germany', reg: 'EU' as BankRegion, curr: 'EUR' as CurrencyCode, dep: 18000000, daysAgo: 25, status: 'APPROVED' as const },
-      { name: 'Harrison Vance Jr.', email: 'hvance@manhattan-cap.com', nat: 'United States', reg: 'US' as BankRegion, curr: 'USD' as CurrencyCode, dep: 75000000, daysAgo: 24, status: 'APPROVED' as const },
-      { name: 'Giacomo Rossi', email: 'g.rossi@milano-moda.it', nat: 'Italy', reg: 'EU' as BankRegion, curr: 'EUR' as CurrencyCode, dep: 30000000, daysAgo: 23, status: 'APPROVED' as const },
-      { name: 'Lady Fiona MacLeod', email: 'f.macleod@edinburgh-estates.uk', nat: 'United Kingdom', reg: 'UK' as BankRegion, curr: 'GBP' as CurrencyCode, dep: 60000000, daysAgo: 22, status: 'APPROVED' as const },
-      { name: 'Dr. Sebastian Becker', email: 's.becker@zurich-clinics.ch', nat: 'Switzerland', reg: 'EU' as BankRegion, curr: 'EUR' as CurrencyCode, dep: 40000000, daysAgo: 20, status: 'APPROVED' as const },
-      { name: 'Camilla Thorne', email: 'c.thorne@mayfair-art.co.uk', nat: 'United Kingdom', reg: 'UK' as BankRegion, curr: 'GBP' as CurrencyCode, dep: 25000000, daysAgo: 19, status: 'APPROVED' as const },
-      { name: 'Julian Drake', email: 'j.drake@boston-ventures.us', nat: 'United States', reg: 'US' as BankRegion, curr: 'USD' as CurrencyCode, dep: 50000000, daysAgo: 18, status: 'APPROVED' as const },
-      { name: 'Amalia van den Berg', email: 'a.vandenberg@amsterdam-holding.nl', nat: 'Netherlands', reg: 'EU' as BankRegion, curr: 'EUR' as CurrencyCode, dep: 35000000, daysAgo: 16, status: 'APPROVED' as const },
-      { name: 'Edward Sterling-Hall', email: 'e.sterlinghall@cotswolds-heritage.uk', nat: 'United Kingdom', reg: 'UK' as BankRegion, curr: 'GBP' as CurrencyCode, dep: 80000000, daysAgo: 15, status: 'APPROVED' as const },
-      { name: 'Benoît Dubois', email: 'b.dubois@lyon-logistics.fr', nat: 'France', reg: 'EU' as BankRegion, curr: 'EUR' as CurrencyCode, dep: 19000000, daysAgo: 14, status: 'APPROVED' as const },
-      { name: 'Marta Rodriguez', email: 'm.rodriguez@madrid-prop.es', nat: 'Spain', reg: 'EU' as BankRegion, curr: 'EUR' as CurrencyCode, dep: 28000000, daysAgo: 13, status: 'REJECTED' as const },
-      { name: 'Charles Montgomery', email: 'c.montgomery@chicago-trust.us', nat: 'United States', reg: 'US' as BankRegion, curr: 'USD' as CurrencyCode, dep: 65000000, daysAgo: 11, status: 'APPROVED' as const },
-      { name: 'Sophie de Winter', email: 's.dewinter@brussels-advisory.be', nat: 'Belgium', reg: 'EU' as BankRegion, curr: 'EUR' as CurrencyCode, dep: 32000000, daysAgo: 10, status: 'APPROVED' as const },
-      { name: 'David Sinclair', email: 'd.sinclair@aberdeen-energy.uk', nat: 'United Kingdom', reg: 'UK' as BankRegion, curr: 'GBP' as CurrencyCode, dep: 42000000, daysAgo: 9, status: 'APPROVED' as const },
-      { name: 'Oliver Kensington', email: 'o.kensington@chelsea-capital.co.uk', nat: 'United Kingdom', reg: 'UK' as BankRegion, curr: 'GBP' as CurrencyCode, dep: 55000000, daysAgo: 8, status: 'APPROVED' as const },
-      { name: 'Henrik Larsson', email: 'h.larsson@stockholm-nordic.se', nat: 'Sweden', reg: 'EU' as BankRegion, curr: 'EUR' as CurrencyCode, dep: 24000000, daysAgo: 7, status: 'APPROVED' as const },
-      { name: 'Genevieve Du Pont', email: 'g.dupont@geneva-wealth.ch', nat: 'Switzerland', reg: 'EU' as BankRegion, curr: 'EUR' as CurrencyCode, dep: 90000000, daysAgo: 6, status: 'APPROVED' as const },
-      { name: 'Alexander Wright', email: 'a.wright@greenwich-funds.us', nat: 'United States', reg: 'US' as BankRegion, curr: 'USD' as CurrencyCode, dep: 48000000, daysAgo: 4, status: 'APPROVED' as const },
-      { name: 'Baroness Helena von Stauffen', email: 'helena.stauffen@geneva-trust.ch', nat: 'Switzerland', reg: 'EU' as BankRegion, curr: 'EUR' as CurrencyCode, dep: 50000000, daysAgo: 3, status: 'PENDING_COMPLIANCE_REVIEW' as const },
-      { name: 'Lord Sterling Montgomery-Fox', email: 's.montgomeryfox@mayfair-advisors.co.uk', nat: 'United Kingdom', reg: 'UK' as BankRegion, curr: 'GBP' as CurrencyCode, dep: 35000000, daysAgo: 2, status: 'PENDING_COMPLIANCE_REVIEW' as const },
-      { name: 'Constance Waverly', email: 'c.waverly@sanfrancisco-founders.us', nat: 'United States', reg: 'US' as BankRegion, curr: 'USD' as CurrencyCode, dep: 62000000, daysAgo: 0.8, status: 'PENDING_COMPLIANCE_REVIEW' as const }
-    ];
-
-    historicalApplicants.forEach((h, idx) => {
-      const names = h.name.split(' ');
-      const firstName = names[0];
-      const lastName = names.slice(1).join(' ');
-      const subTime = new Date(now - day * h.daysAgo).toISOString();
-      const refCode = `FAB-${h.reg}-2026-${80000 + idx * 37}`;
-      const appId = `app_hist_${idx + 1}`;
-
-      const appObj: AccountApplication = {
-        id: appId,
-        referenceNumber: refCode,
-        firstName,
-        lastName,
-        email: h.email,
-        phone: h.reg === 'UK' ? '+44 20 7946 0999' : h.reg === 'US' ? '+1 (212) 555-0199' : '+49 69 9002 9999',
-        dateOfBirth: '1980-05-12',
-        nationality: h.nat,
-        taxIdOrSsn: 'REG-TAX-99014',
-        idDocumentType: 'PASSPORT',
-        idDocumentNumber: `DOC-${89201 + idx}`,
-        idDocumentFileName: `passport_${firstName.toLowerCase()}_${lastName.toLowerCase()}.pdf`,
-        proofOfAddressFileName: `utility_statement_${lastName.toLowerCase()}.pdf`,
-        address: {
-          line1: `${10 + idx} High Street`,
-          city: h.reg === 'UK' ? 'London' : h.reg === 'US' ? 'New York' : 'Frankfurt',
-          stateOrProvince: h.reg === 'UK' ? 'Greater London' : h.reg === 'US' ? 'NY' : 'Hessen',
-          postalCode: h.reg === 'UK' ? 'EC2N 2DB' : h.reg === 'US' ? '10005' : '60311',
-          country: h.nat
-        },
-        employmentStatus: 'EXECUTIVE',
-        employerOrBusinessName: `${lastName} Holdings Group`,
-        sourceOfWealth: 'INVESTMENTS',
-        annualIncomeRange: 'EUR_500K_1M',
-        isPep: idx % 7 === 0,
-        requestedCurrency: h.curr,
-        requestedAccountType: 'CHECKING_PREMIER',
-        requestedRegion: h.reg,
-        initialDepositAmountMinor: h.dep,
-        requestDebitCard: true,
-        username: `${firstName.toLowerCase()}${lastName.toLowerCase().replace(/[^a-z]/g, '')}`,
-        passwordHashed: 'InstitutionalSecure2026!',
-        mfaPreference: 'AUTHENTICATOR',
-        status: h.status,
-        riskScore: 10 + (idx % 15),
-        submittedAt: subTime,
-        reviewedAt: h.status !== 'PENDING_COMPLIANCE_REVIEW' ? new Date(now - day * (h.daysAgo - 0.5)).toISOString() : undefined,
-        reviewedByAdminId: h.status !== 'PENDING_COMPLIANCE_REVIEW' ? singleMasterAdmin.id : undefined,
-        reviewedByAdminName: h.status !== 'PENDING_COMPLIANCE_REVIEW' ? singleMasterAdmin.name : undefined,
-        complianceNotes: h.status === 'APPROVED' ? 'Cleared compliance AML thresholds.' : h.status === 'REJECTED' ? 'Incomplete source of funds documentation.' : 'Pending KYC verification.',
-        provisionedIban: h.status === 'APPROVED' ? (h.reg === 'UK' ? `GB29FATL401288${80000000 + idx}` : h.reg === 'EU' ? `DE89FATL50070010${80000000 + idx}` : undefined) : undefined,
-        provisionedAccountNumber: h.status === 'APPROVED' ? `${80000000 + idx}` : undefined
-      };
-
-      this.applications.set(appObj.id, appObj);
-    });
-
-    // 12. Seed Pending User: Count Henri de Castiglione (Awaiting Dual-Signature Approval)
-    const pendingUser: UserProfile = {
-      id: 'usr_castiglione_03',
-      email: 'henri.castiglione@lux-private.lu',
-      username: 'hcastiglione',
-      firstName: 'Henri',
-      lastName: 'de Castiglione',
-      phone: '+352 20 88 19 00',
-      dateOfBirth: '1975-06-18',
-      region: 'EU',
-      approval_status: 'PENDING',
-      address: {
-        line1: '12 Boulevard Royal',
-        city: 'Luxembourg City',
-        stateOrCounty: 'Luxembourg',
-        postalCode: 'L-2449',
-        country: 'Luxembourg'
-      },
-      mfaEnabled: true,
-      mfaMethod: 'AUTHENTICATOR',
-      biometricsEnabled: true,
-      kycTier: 'TIER_3_INSTITUTIONAL',
-      securityScore: 89,
-      notifications: {
-        emailAlerts: true,
-        smsAlerts: true,
-        pushAlerts: true,
-        largeTransactionThresholdMinor: 2500000
-      },
-      lastLogin: new Date(now - day * 1).toISOString()
-    };
-
-    this.users.set(pendingUser.id, pendingUser);
-    this.userPasswords.set(pendingUser.id, 'LuxembourgSecure2026!');
-
-    // 13. Seed Dual-Signature Account Activation Queue
-    this.activationRequests.push(
-      {
-        id: 'act_req_01',
-        userId: pendingUser.id,
-        referenceNumber: 'FAB-ACT-2026-9901',
-        userName: `${pendingUser.firstName} ${pendingUser.lastName}`,
-        userEmail: pendingUser.email,
-        userRegion: 'EU',
-        requestedAccountType: 'CHECKING_PREMIER',
-        requestedCurrency: 'EUR',
-        initialDepositMinor: 25000000, // €250,000.00
-        riskScore: 16,
-        reason: 'Private Wealth European onboarding — institutional identity and AML verification completed.',
-        targetApprovalStatus: 'APPROVED',
-        makerAdminId: singleMasterAdmin.id,
-        makerAdminName: singleMasterAdmin.name,
-        makerAdminRole: singleMasterAdmin.role,
-        makerTimestamp: new Date(now - 3600000 * 6).toISOString(),
-        makerNotes: 'Verified beneficial ownership, tax residence in Luxembourg, and Source of Wealth documentation.',
-        makerSignatureHash: this.computeHash(`${singleMasterAdmin.id}_ACTIVATE_${pendingUser.id}_${now - 3600000 * 6}`),
-        status: 'PENDING_DUAL_APPROVAL'
-      },
-      {
-        id: 'act_req_02',
-        userId: 'usr_laurent_paris_04',
-        applicationId: app2.id,
-        referenceNumber: 'FAB-ACT-2026-9902',
-        userName: `${app2.firstName} ${app2.lastName}`,
-        userEmail: app2.email,
-        userRegion: 'EU',
-        requestedAccountType: 'SAVINGS_HIGH_YIELD',
-        requestedCurrency: 'EUR',
-        initialDepositMinor: 8500000, // €85,000.00
-        riskScore: 22,
-        reason: 'New Medical Professional Euro Reserve account onboarding.',
-        targetApprovalStatus: 'APPROVED',
-        makerAdminId: singleMasterAdmin.id,
-        makerAdminName: singleMasterAdmin.name,
-        makerAdminRole: singleMasterAdmin.role,
-        makerTimestamp: new Date(now - 3600000 * 2).toISOString(),
-        makerNotes: 'Sanctions clearance verified. National ID and French address certified.',
-        makerSignatureHash: this.computeHash(`${singleMasterAdmin.id}_ACTIVATE_app2_${now - 3600000 * 2}`),
-        status: 'PENDING_DUAL_APPROVAL'
-      }
-    );
-
-    // 12. Seed Master Bank Receiving Accounts (Where all incoming client deposits / wire transfers are received)
+    // 3. Institutional Receiving Accounts (Treasury clearing desks)
     const recAccUSD: BankReceivingAccount = {
-      id: 'rec_bank_usd_01',
-      label: 'Primary USD Master Treasury Inflow Desk',
-      bankName: 'First Atlantic Bank N.A. (New York)',
-      beneficiaryName: 'First Atlantic Bank & Trust Corporation - Inflow Treasury',
-      accountNumberOrIban: '02100008988492019',
-      routingNumber: '021000089',
-      swiftBic: 'FATLUS33NYC',
-      currency: 'USD',
-      region: 'US',
-      bankAddress: '450 Lexington Avenue, Suite 2800, New York, NY 10017, USA',
-      intermediaryBankName: 'Federal Reserve Bank of New York (Fedwire Direct)',
-      intermediarySwiftBic: 'FRNYUS33',
-      specialInstructions: 'Quote Client Name and FAB Account Number in Field 70 (Remittance Info / Reference). Funds credited instantly upon SWIFT / Fedwire receipt.',
+      id: "rec_bank_usd_01",
+      label: "Primary USD Master Treasury Inflow Desk",
+      bankName: "First Atlantic Bank N.A. (New York)",
+      beneficiaryName: "First Atlantic Bank & Trust Corporation - Inflow Treasury",
+      accountNumberOrIban: "02100008988492019",
+      routingNumber: "021000089",
+      swiftBic: "FATLUS33NYC",
+      currency: "USD",
+      region: "US",
+      bankAddress: "450 Lexington Avenue, Suite 2800, New York, NY 10017, USA",
+      intermediaryBankName: "Federal Reserve Bank of New York (Fedwire Direct)",
+      intermediarySwiftBic: "FRNYUS33",
+      specialInstructions: "Quote Client Name and FAB Account Number in Field 70 (Remittance Info / Reference). Funds credited instantly upon SWIFT / Fedwire receipt.",
       isDefault: true,
-      status: 'ACTIVE',
+      status: "ACTIVE",
       updatedAt: new Date(now - day * 15).toISOString()
     };
 
     const recAccGBP: BankReceivingAccount = {
-      id: 'rec_bank_gbp_02',
-      label: 'UK & Sterling Clearing Receiving Desk',
-      bankName: 'First Atlantic Bank UK PLC (London Mayfair)',
-      beneficiaryName: 'First Atlantic Bank UK PLC - Client Inbound Settlement Desk',
-      accountNumberOrIban: 'GB29 FATL 4012 8881 9201 94',
-      sortCode: '40-12-88',
-      swiftBic: 'FATLGB22LON',
-      currency: 'GBP',
-      region: 'UK',
-      bankAddress: '12 Berkeley Square, Mayfair, London W1J 6BD, United Kingdom',
-      intermediaryBankName: 'Bank of England CHAPS / FPS Real-Time Settlement Hub',
-      specialInstructions: 'Include 8-digit client account number in reference field for automated STP straight-through clearing.',
+      id: "rec_bank_gbp_02",
+      label: "UK & Sterling Clearing Receiving Desk",
+      bankName: "First Atlantic Bank UK PLC (London Mayfair)",
+      beneficiaryName: "First Atlantic Bank UK PLC - Client Inbound Settlement Desk",
+      accountNumberOrIban: "GB29 FATL 4012 8881 9201 94",
+      sortCode: "40-12-88",
+      swiftBic: "FATLGB22LON",
+      currency: "GBP",
+      region: "UK",
+      bankAddress: "12 Berkeley Square, Mayfair, London W1J 6BD, United Kingdom",
+      intermediaryBankName: "Bank of England CHAPS / FPS Real-Time Settlement Hub",
+      specialInstructions: "Include 8-digit client account number in reference field for automated STP straight-through clearing.",
       isDefault: true,
-      status: 'ACTIVE',
+      status: "ACTIVE",
       updatedAt: new Date(now - day * 10).toISOString()
     };
 
     const recAccEUR: BankReceivingAccount = {
-      id: 'rec_bank_eur_03',
-      label: 'European Union SEPA & TARGET2 Inflow Desk',
-      bankName: 'First Atlantic Bank Europe S.A. (Frankfurt)',
-      beneficiaryName: 'First Atlantic Bank Europe S.A. - European Liquidity Clearing',
-      accountNumberOrIban: 'DE89 5001 0517 9920 1849 00',
-      swiftBic: 'FATLDEFFXXX',
-      currency: 'EUR',
-      region: 'EU',
-      bankAddress: 'Mainzer Landstraße 46, 60325 Frankfurt am Main, Germany',
-      intermediaryBankName: 'Deutsche Bundesbank / ECB TARGET2 Clearing Gate',
-      specialInstructions: 'SEPA Instant & TARGET2 supported. Please specify EUR account reference.',
+      id: "rec_bank_eur_03",
+      label: "European Union SEPA & TARGET2 Inflow Desk",
+      bankName: "First Atlantic Bank Europe S.A. (Frankfurt)",
+      beneficiaryName: "First Atlantic Bank Europe S.A. - European Liquidity Clearing",
+      accountNumberOrIban: "DE89 5001 0517 9920 1849 00",
+      swiftBic: "FATLDEFFXXX",
+      currency: "EUR",
+      region: "EU",
+      bankAddress: "Mainzer Landstraße 46, 60325 Frankfurt am Main, Germany",
+      intermediaryBankName: "Deutsche Bundesbank / ECB TARGET2 Clearing Gate",
+      specialInstructions: "SEPA Instant & TARGET2 supported. Please specify EUR account reference.",
       isDefault: true,
-      status: 'ACTIVE',
+      status: "ACTIVE",
       updatedAt: new Date(now - day * 5).toISOString()
     };
 
     this.receivingAccounts.set(recAccUSD.id, recAccUSD);
     this.receivingAccounts.set(recAccGBP.id, recAccGBP);
     this.receivingAccounts.set(recAccEUR.id, recAccEUR);
-
-    this.ensureErinMeganExists();
   }
 
   ensureErinMeganExists() {
-    const erinEmail = 'erinmeg45@gmail.com';
-    const erinUserId = 'usr_erin_megan_83';
-    const erinAccId = 'acc_erin_megan_01';
-    const erinCardId = 'crd_erin_01';
-    const targetBalanceMinor = 78000000; // $780,000.00 in minor cents
-
-    let erinUser = Array.from(this.users.values()).find(
-      u => u.email.toLowerCase() === erinEmail || u.username.toLowerCase() === 'erinmegan' || u.id === erinUserId
-    );
-
-    if (!erinUser) {
-      erinUser = {
-        id: erinUserId,
-        email: erinEmail,
-        username: 'erinmegan',
-        firstName: 'Erin',
-        lastName: 'Megan',
-        phone: '+1 (530) 233-8490',
-        dialCode: '+1',
-        dateOfBirth: '1983-08-08',
-        nationality: 'American',
-        passportNumber: 'US83081983A',
-        passportPhoto: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=500&auto=format&fit=crop&q=80',
-        loginPin: '1234',
-        ssnMasked: '•••-••-9610',
-        region: 'US',
-        approval_status: 'APPROVED',
-        address: {
-          line1: '160 WILLOW VIEW Dr',
-          city: 'Alturas',
-          stateOrCounty: 'CA',
-          postalCode: '96101',
-          country: 'United States'
-        },
-        mfaEnabled: true,
-        mfaMethod: 'AUTHENTICATOR',
-        biometricsEnabled: true,
-        kycTier: 'TIER_3_INSTITUTIONAL',
-        securityScore: 98,
-        notifications: {
-          emailAlerts: true,
-          smsAlerts: true,
-          pushAlerts: true,
-          largeTransactionThresholdMinor: 500000
-        },
-        lastLogin: new Date().toISOString()
-      };
-      this.users.set(erinUser.id, erinUser);
-    } else {
-      erinUser.firstName = 'Erin';
-      erinUser.lastName = 'Megan';
-      erinUser.dateOfBirth = '1983-08-08';
-      erinUser.approval_status = 'APPROVED';
-      erinUser.address = {
-        line1: '160 WILLOW VIEW Dr',
-        city: 'Alturas',
-        stateOrCounty: 'CA',
-        postalCode: '96101',
-        country: 'United States'
-      };
-      this.users.set(erinUser.id, erinUser);
-    }
-
-    // Set passwords
-    const password = 'Erinmegan100';
-    this.userPasswords.set(erinUser.id, password);
-    this.userPasswords.set(erinEmail, password);
-    this.userPasswords.set('erinmegan', password);
-
-    // Ensure checking account with $ exists
-    let erinAcc = Array.from(this.accounts.values()).find(
-      a => a.userId === erinUser!.id && a.currency === 'USD'
-    );
-
-    if (!erinAcc) {
-      erinAcc = {
-        id: erinAccId,
-        userId: erinUser.id,
-        accountNumber: '•••• 9610',
-        accountNumberFull: '882096101983',
-        routingNumber: '021000089',
-        swiftBic: 'FATLUS33NYC',
-        name: 'Premier Private Wealth Reserve',
-        type: 'CHECKING_PREMIER',
-        currency: 'USD',
-        balanceMinor: targetBalanceMinor,
-        availableBalanceMinor: targetBalanceMinor,
-        pendingHoldMinor: 0,
-        interestRateAPY: 2.15,
-        status: 'ACTIVE',
-        region: 'US',
-        openedDate: '2026-08-08',
-        dailyTransferLimitMinor: 100000000,
-        statementCycleDay: 8
-      };
-      this.accounts.set(erinAcc.id, erinAcc);
-    } else {
-      erinAcc.balanceMinor = targetBalanceMinor;
-      erinAcc.availableBalanceMinor = targetBalanceMinor;
-      erinAcc.status = 'ACTIVE';
-      this.accounts.set(erinAcc.id, erinAcc);
-    }
-
-    // Ensure Card exists
-    let erinCard = Array.from(this.cards.values()).find(
-      c => c.userId === erinUser!.id
-    );
-    if (!erinCard) {
-      erinCard = {
-        id: erinCardId,
-        accountId: erinAcc.id,
-        userId: erinUser.id,
-        cardNumberMasked: '•••• •••• •••• 9610',
-        cardNumberFull: '4111 8892 9610 8308',
-        cardHolderName: 'ERIN MEGAN',
-        expiryMonth: 8,
-        expiryYear: 2031,
-        cvv: '582',
-        cardType: 'DEBIT_VISA_SIGNATURE',
-        status: 'ACTIVE',
-        isVirtual: false,
-        contactlessEnabled: true,
-        onlineTransactionsEnabled: true,
-        internationalSpendEnabled: true,
-        dailyAtmLimitMinor: 1000000,
-        dailySpendLimitMinor: 10000000,
-        travelNotices: []
-      };
-      this.cards.set(erinCard.id, erinCard);
-    }
-
-    // Ensure initial funding ledger entry exists
-    const hasLedger = this.ledger.some(
-      l => l.accountId === erinAcc!.id && l.amountMinor === targetBalanceMinor
-    );
-    if (!hasLedger) {
-      this.ledger.unshift({
-        id: `led_erin_${Date.now()}`,
-        transactionId: 'tx_fatl_erin_780k',
-        accountId: erinAcc.id,
-        direction: 'CREDIT',
-        amountMinor: targetBalanceMinor,
-        currency: 'USD',
-        balanceAfterMinor: targetBalanceMinor,
-        description: 'Initial Private Client Wealth Reserve Deposit — Federal Reserve Fedwire Escrow Settlement',
-        category: 'Deposits',
-        counterparty: 'Federal Reserve Bank of New York / Wire Escrow',
-        status: 'SETTLED',
-        channel: 'WIRE',
-        referenceNumber: 'FEDWIRE-20260808-780000',
-        createdTimestamp: new Date().toISOString(),
-        effectiveTimestamp: new Date().toISOString(),
-        settledTimestamp: new Date().toISOString()
-      });
-    }
-
-    // Ensure application dossier exists in this.applications so it appears in Customer Applications tab
-    const erinAppId = 'app_erin_megan_83';
-    let erinApp = this.applications.get(erinAppId);
-    if (!erinApp) {
-      erinApp = {
-        id: erinAppId,
-        referenceNumber: 'FAB-US-1983-0808',
-        firstName: 'Erin',
-        lastName: 'Megan',
-        email: erinEmail,
-        phone: '+1 (530) 233-8490',
-        dialCode: '+1',
-        dateOfBirth: '1983-08-08',
-        nationality: 'American',
-        taxIdOrSsn: '•••-••-9610',
-        idDocumentType: 'PASSPORT',
-        idDocumentNumber: 'US83081983A',
-        passportPhoto: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=500&auto=format&fit=crop&q=80',
-        address: {
-          line1: '160 WILLOW VIEW Dr',
-          city: 'Alturas',
-          stateOrProvince: 'CA',
-          postalCode: '96101',
-          country: 'United States'
-        },
-        employmentStatus: 'EXECUTIVE',
-        employerOrBusinessName: 'Private Wealth Enterprise',
-        sourceOfWealth: 'INVESTMENTS',
-        annualIncomeRange: '$500,000+',
-        isPep: false,
-        requestedCurrency: 'USD',
-        requestedAccountType: 'CHECKING_PREMIER',
-        requestedRegion: 'US',
-        initialDepositAmountMinor: targetBalanceMinor,
-        initialDepositMinor: targetBalanceMinor,
-        requestDebitCard: true,
-        username: 'erinmegan',
-        passwordHashed: 'Erinmegan100',
-        loginPin: '1234',
-        mfaPreference: 'AUTHENTICATOR',
-        status: 'APPROVED',
-        riskScore: 6,
-        submittedAt: '2026-08-08T10:00:00.000Z',
-        reviewedAt: '2026-08-08T10:30:00.000Z',
-        reviewedByAdminId: 'adm_master_01',
-        reviewedByAdminName: 'Alexandra Vance',
-        complianceNotes: '',
-        createdUserId: erinUserId,
-        provisionedRoutingNumber: '021000089',
-        provisionedAccountNumber: '882096101983'
-      } as any;
-      this.applications.set(erinAppId, erinApp);
-    }
-
-    // Persist synchronously to local disk JSON file
-    this.saveToDiskSync();
+    // Deprecated and purged: mock accounts and reserve balances removed per policy
   }
+
+
+
+
 
   // --- ACCOUNT APPLICATIONS & ONBOARDING WORKFLOW ---
 

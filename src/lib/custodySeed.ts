@@ -13,7 +13,7 @@ const LOCAL_STORAGE_ACCOUNTS_KEY = 'fab_local_custody_accounts_v2';
 
 const LEGACY_MOCK_ACCOUNT_IDS = new Set([
   'acc_sterling_chk_01', 'acc_sterling_sav_02', 'acc_sterling_multigbp_03', 'acc_sterling_crd_04',
-  'acc_usr_user_5427_usd_01', 'acc_usr_supabaseuser_1034_usd_01', 'acc_usr_balance_4532_usd_01',
+  'acc_usr_supabaseuser_1034_usd_01', 'acc_usr_balance_4532_usd_01',
   'acc_usr_vance_1810_usd_01', 'acc_usr_hayes_7681_usd_01', 'acc_usr_tester_6242_usd_01',
   'acc_usr_jenkins_6699_usd_01', 'acc_usr_morgan_2054_usd_01', 'acc_usr_rostova_6059_usd_01',
   'acc_usr_sterling_9948_usd_01', 'acc_usr_sterling_9948_gbp_02', 'acc_erin_megan_01',
@@ -138,17 +138,91 @@ export function getStoredUserCredentials(identifier: string): { password?: strin
 }
 
 /**
- * Clear all cache storages and local cache for instant UI refresh
+ * Clear all cache storages, obsolete service workers, and stale mock local caches for instant UI refresh
  */
 export async function purgeAllAppCaches(): Promise<void> {
   try {
-    if (typeof window !== 'undefined' && 'caches' in window) {
-      const cacheKeys = await window.caches.keys();
-      await Promise.all(cacheKeys.map(k => window.caches.delete(k)));
+    if (typeof window === 'undefined') return;
+
+    // 1. Clear CacheStorage (service worker / HTTP caches)
+    if ('caches' in window) {
+      try {
+        const cacheKeys = await window.caches.keys();
+        await Promise.all(cacheKeys.map(k => window.caches.delete(k)));
+      } catch (e) {
+        console.debug('CacheStorage clear notice:', e);
+      }
     }
-    // Also clear session storage and temporary network caches
-    sessionStorage.clear();
-    console.info('[First Atlantic Bank] Cache Storage successfully purged.');
+
+    // 2. Unregister any stale service workers
+    if ('serviceWorker' in navigator) {
+      try {
+        const registrations = await navigator.serviceWorker.getRegistrations();
+        for (const registration of registrations) {
+          await registration.unregister();
+        }
+      } catch (e) {
+        console.debug('ServiceWorker unregister notice:', e);
+      }
+    }
+
+    // 3. Clear session storage
+    try {
+      sessionStorage.clear();
+    } catch {}
+
+    // 4. Purge legacy mock localStorage keys that cause old mock data to reload
+    try {
+      const stalePrefixes = [
+        'fab_local_custody_accounts',
+        'fab_local_provisioned_customers',
+        'sb_table_',
+        'sb_fallback_user_',
+        'sb_storage_',
+        'fab_cached_',
+        'mock_',
+        'demo_mock'
+      ];
+
+      const keysToRemove: string[] = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key) {
+          if (stalePrefixes.some(prefix => key.startsWith(prefix))) {
+            keysToRemove.push(key);
+          }
+          if (key === 'fab_current_user') {
+            try {
+              const u = JSON.parse(localStorage.getItem(key) || '{}');
+              if (
+                u.id === 'usr_sterling_01' ||
+                u.email?.includes('j.sterling') ||
+                u.username === 'jsterling' ||
+                u.id?.includes('sterling')
+              ) {
+                keysToRemove.push(key, 'fab_session_token', 'token', 'fab_token');
+              }
+            } catch {}
+          }
+          if (key === 'last_registered_username') {
+            const val = localStorage.getItem(key);
+            if (val && (val.includes('sterling') || val.includes('jsterling'))) {
+              keysToRemove.push(key);
+            }
+          }
+        }
+      }
+
+      keysToRemove.forEach(k => {
+        try {
+          localStorage.removeItem(k);
+        } catch {}
+      });
+    } catch (e) {
+      console.debug('LocalStorage stale keys purge notice:', e);
+    }
+
+    console.info('[First Atlantic Bank] Cache Storage, Service Workers, and Stale Mocks successfully purged.');
   } catch (err) {
     console.warn('[Cache Purge Warning]:', err);
   }

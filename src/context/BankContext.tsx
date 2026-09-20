@@ -256,7 +256,13 @@ export const BankProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [currentRole, setCurrentRole] = useState<'CUSTOMER' | 'ADMIN' | 'GUEST'>('GUEST');
   const [token, setToken] = useState<string | null>(null);
   const [region, setRegion] = useState<BankRegion>('EU');
-  const [currentView, setCurrentView] = useState<AppView>('PUBLIC_HOME');
+  const [currentView, setCurrentViewRaw] = useState<AppView>('PUBLIC_HOME');
+  const setCurrentView = (view: AppView) => {
+    setCurrentViewRaw(view);
+    if (view !== 'DASHBOARD_TRANSFERS' && typeof window !== 'undefined' && window.location.pathname.startsWith('/transfer')) {
+      window.history.pushState(null, '', '/');
+    }
+  };
   const [selectedAccountId, setSelectedAccountId] = useState<string | null>(null);
 
   const [accounts, setAccounts] = useState<BankAccount[]>(() => getStoredInstitutionalAccounts());
@@ -285,7 +291,13 @@ export const BankProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [recipients, setRecipients] = useState<Recipient[]>(() => {
     try {
       const saved = localStorage.getItem('fab_saved_recipients');
-      return saved ? JSON.parse(saved) : [];
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) {
+          return parsed.filter((r: any) => !r.id?.includes('sterling') && !r.name?.includes('Sterling'));
+        }
+      }
+      return [];
     } catch {
       return [];
     }
@@ -412,9 +424,21 @@ export const BankProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
-  const showToast = (type: ToastMessage['type'], title: string, message: string, durationMs: number = 3000) => {
+  const showToast = (type: any, title?: string, message?: string, durationMs: number = 3000) => {
+    let actualType: ToastMessage['type'] = 'INFO';
+    let actualTitle = title || '';
+    let actualMessage = message || '';
+
+    if (['SUCCESS', 'ERROR', 'WARNING', 'INFO'].includes(type)) {
+      actualType = type;
+    } else {
+      actualType = 'INFO';
+      actualTitle = String(type || '');
+      actualMessage = title || '';
+    }
+
     const id = `toast_${Date.now()}_${Math.random().toString().slice(-4)}`;
-    setToasts(prev => [...prev, { id, type, title, message }]);
+    setToasts(prev => [...prev, { id, type: actualType, title: actualTitle, message: actualMessage }]);
     setTimeout(() => removeToast(id), durationMs);
   };
 
@@ -475,6 +499,10 @@ export const BankProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             setCurrentUser(res.data.user);
             setCurrentRole('CUSTOMER');
             setRegion(res.data.user.region || 'US');
+            const currentHash = (window.location.hash || '').toLowerCase();
+            if (!currentHash || currentHash === '#/' || currentHash === '#' || currentHash === '#home') {
+              setCurrentView('DASHBOARD_OVERVIEW');
+            }
             await fetchUserData(savedToken, res.data.user.id);
             return;
           }
@@ -487,6 +515,10 @@ export const BankProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
               setCurrentUser(parsed);
               setRegion(parsed.region || 'US');
               setCurrentRole('CUSTOMER');
+              const currentHash = (window.location.hash || '').toLowerCase();
+              if (!currentHash || currentHash === '#/' || currentHash === '#' || currentHash === '#home') {
+                setCurrentView('DASHBOARD_OVERVIEW');
+              }
               await fetchUserData(token || parsed.id, parsed.id);
             }
           } catch (e) {}

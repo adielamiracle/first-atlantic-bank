@@ -45,7 +45,7 @@ export const TransferSuccessScreen: React.FC = () => {
     maximumFractionDigits: 2
   })}`;
 
-  const recipientName = completedTransaction?.recipient || beneficiaryName || 'Johnny Mike';
+  const recipientName = completedTransaction?.recipient || beneficiaryName || 'Recipient';
   const recipientBankName = completedTransaction?.recipientBank || beneficiaryBank || 'Chase Bank';
   const recipientAcct = completedTransaction?.recipientAccount || beneficiaryAccount || '4829104829';
   const recipientRoutingNum = completedTransaction?.recipientRouting || beneficiaryRouting || '021000021';

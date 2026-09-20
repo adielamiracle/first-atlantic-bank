@@ -69,6 +69,13 @@ export const DepositCheckPage: React.FC = () => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [depositSuccess, setDepositSuccess] = useState<any>(null);
 
+  // Sync destination account when accounts load asynchronously
+  useEffect(() => {
+    if (!accountId && accounts.length > 0) {
+      setAccountId(accounts[0].id);
+    }
+  }, [accounts, accountId]);
+
   const handleDeposit = async (e: React.FormEvent) => {
     e.preventDefault();
     const amountMinor = Math.round(parseFloat(amountStr || '0') * 100);
@@ -1052,7 +1059,7 @@ export const MessagesPage: React.FC = () => {
       id: '1',
       sender: 'Alistair Vance (Senior VP, Private Wealth)',
       timestamp: 'Today at 09:14 AM',
-      body: `Good morning ${currentUser?.firstName || 'Mr. Sterling'}. Your quarterly transatlantic treasury summary and fixed income allocation updates have been finalized. Please let me know if you would like to schedule a private advisory call this Thursday.`,
+      body: `Good morning ${currentUser?.firstName ? currentUser.firstName : 'Valued Client'}. Your quarterly transatlantic treasury summary and fixed income allocation updates have been finalized. Please let me know if you would like to schedule a private advisory call this Thursday.`,
       isStaff: true
     }
   ]);
@@ -1152,14 +1159,22 @@ export const ProfilePage: React.FC = () => {
   } = useBank();
 
   const [activeTab, setActiveTab] = useState<'personal' | 'routing' | 'security' | 'preferences'>('personal');
-  const [firstName, setFirstName] = useState(currentUser?.firstName || 'Jonathan');
-  const [lastName, setLastName] = useState(currentUser?.lastName || 'Sterling');
-  const [email, setEmail] = useState(currentUser?.email || 'sterling.private@firstatlantic.com');
-  const [phone, setPhone] = useState(currentUser?.phone || '(212) 849-2000');
-  const [address, setAddress] = useState(currentUser?.address || '740 Park Avenue, Apt 14B, New York, NY 10021');
+
+  const formatAddressString = (addr: any): string => {
+    if (!addr) return '';
+    if (typeof addr === 'string') return addr;
+    const parts = [addr.line1, addr.line2, addr.city, addr.stateOrCounty, addr.postalCode, addr.country].filter(Boolean);
+    return parts.join(', ');
+  };
+
+  const [firstName, setFirstName] = useState(currentUser?.firstName || '');
+  const [lastName, setLastName] = useState(currentUser?.lastName || '');
+  const [email, setEmail] = useState(currentUser?.email || '');
+  const [phone, setPhone] = useState(currentUser?.phone || '');
+  const [address, setAddress] = useState<string>(() => formatAddressString(currentUser?.address) || '');
   
   // Passport Identity Details
-  const [passportPhoto, setPassportPhoto] = useState(currentUser?.passportPhoto || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&auto=format&fit=crop&q=80');
+  const [passportPhoto, setPassportPhoto] = useState(currentUser?.passportPhoto || '');
   const [passportNumber, setPassportNumber] = useState(currentUser?.passportNumber || 'P98420193');
   const [nationality, setNationality] = useState(currentUser?.nationality || 'United States');
   const [isSavingPassport, setIsSavingPassport] = useState(false);
@@ -1195,7 +1210,7 @@ export const ProfilePage: React.FC = () => {
       if (currentUser.lastName) setLastName(currentUser.lastName);
       if (currentUser.email) setEmail(currentUser.email);
       if (currentUser.phone) setPhone(currentUser.phone);
-      if (currentUser.address) setAddress(currentUser.address);
+      if (currentUser.address) setAddress(formatAddressString(currentUser.address));
       if (currentUser.passportPhoto) setPassportPhoto(currentUser.passportPhoto);
       if (currentUser.passportNumber) setPassportNumber(currentUser.passportNumber);
       if (currentUser.nationality) setNationality(currentUser.nationality);
@@ -1209,10 +1224,35 @@ export const ProfilePage: React.FC = () => {
   };
 
   const handleCopy = (text: string, label: string) => {
-    navigator.clipboard.writeText(text);
+    try {
+      if (navigator?.clipboard?.writeText) {
+        navigator.clipboard.writeText(text).catch(() => {
+          fallbackCopy(text);
+        });
+      } else {
+        fallbackCopy(text);
+      }
+    } catch {
+      fallbackCopy(text);
+    }
     setCopiedCode(label);
     showToast('SUCCESS', 'Copied to Clipboard', `${label} copied: ${text}`);
     setTimeout(() => setCopiedCode(null), 2500);
+  };
+
+  const fallbackCopy = (text: string) => {
+    try {
+      const el = document.createElement('textarea');
+      el.value = text;
+      el.style.position = 'fixed';
+      el.style.left = '-9999px';
+      document.body.appendChild(el);
+      el.select();
+      document.execCommand('copy');
+      document.body.removeChild(el);
+    } catch (e) {
+      console.warn('Clipboard write fallback error', e);
+    }
   };
 
   const handleSaveContact = async (e: React.FormEvent) => {
@@ -1228,8 +1268,8 @@ export const ProfilePage: React.FC = () => {
     setIsSavingProfile(false);
   };
 
-  const handleSavePassport = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSavePassport = async (e?: React.SyntheticEvent) => {
+    if (e) e.preventDefault();
     setIsSavingPassport(true);
     const res = await updatePassportDetails({
       passportPhoto,
@@ -1237,7 +1277,7 @@ export const ProfilePage: React.FC = () => {
       nationality
     });
     setIsSavingPassport(false);
-    if (res.success) {
+    if (res?.success) {
       setShowPassportModal(false);
     }
   };
@@ -1266,8 +1306,17 @@ export const ProfilePage: React.FC = () => {
     }
   };
 
+  const handleSafePrint = (docTitle: string) => {
+    try {
+      window.print();
+      showToast('SUCCESS', 'Print Document', `Sent ${docTitle} to printer.`);
+    } catch {
+      showToast('INFO', 'Print Document', 'Printing initialized. You can also save as PDF via your browser print menu.');
+    }
+  };
+
   const primaryAccount = accounts.find(a => a.type === 'CHECKING_PREMIER') || accounts[0];
-  const totalVaultBalance = accounts.reduce((acc, a) => acc + a.balance, 0);
+  const totalVaultBalance = accounts.reduce((acc, a) => acc + (a.balanceMinor || 0), 0) / 100;
 
   return (
     <div className="max-w-6xl mx-auto space-y-6 pb-12 font-boa">
@@ -2113,7 +2162,18 @@ export const ProfilePage: React.FC = () => {
                     placeholder="••••"
                     className="w-full px-3 py-2 text-sm font-mono text-center tracking-[0.4em] bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-md text-slate-900 dark:text-slate-100 focus:outline-none focus:border-[#012169]"
                   />
-                  <span className="text-[10px] text-slate-500 mt-1 block">Default demo: 1234 or 8492</span>
+                  <div className="flex items-center justify-between text-[10px] text-slate-500 mt-1">
+                    <span>Account Security PIN</span>
+                    {currentUser?.loginPin && (
+                      <button
+                        type="button"
+                        onClick={() => setCurrentPin(currentUser.loginPin || '')}
+                        className="text-[#012169] dark:text-blue-400 font-semibold hover:underline cursor-pointer"
+                      >
+                        Auto-fill ({currentUser.loginPin})
+                      </button>
+                    )}
+                  </div>
                 </div>
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
@@ -2295,11 +2355,11 @@ export const ProfilePage: React.FC = () => {
                 <div className="grid grid-cols-2 gap-4 text-xs">
                   <div>
                     <span className="text-slate-500 uppercase block text-[10px]">Employee / Account Holder:</span>
-                    <strong className="text-sm font-semibold">{currentUser?.firstName || 'Jonathan'} {currentUser?.lastName || 'Sterling'}</strong>
+                    <strong className="text-sm font-semibold">{currentUser ? `${currentUser.firstName} ${currentUser.lastName}` : 'Account Holder'}</strong>
                   </div>
                   <div>
                     <span className="text-slate-500 uppercase block text-[10px]">Account Number:</span>
-                    <strong className="text-sm font-mono">{primaryAccount?.accountNumber || '•••• 8819'}</strong>
+                    <strong className="text-sm font-mono">{primaryAccount?.accountNumber || primaryAccount?.accountNumberFull || '•••• 6841'}</strong>
                   </div>
                   <div>
                     <span className="text-slate-500 uppercase block text-[10px]">Bank Name:</span>
@@ -2328,10 +2388,8 @@ export const ProfilePage: React.FC = () => {
             {/* Modal Actions */}
             <div className="p-4 bg-slate-100 dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 flex justify-end gap-3">
               <button
-                onClick={() => {
-                  window.print();
-                  showToast('SUCCESS', 'Printing Form', 'Sent direct deposit authorization form to printer.');
-                }}
+                type="button"
+                onClick={() => handleSafePrint('Direct Deposit Authorization Form')}
                 className="boa-btn-secondary text-xs flex items-center gap-1.5 cursor-pointer"
               >
                 <Printer className="w-3.5 h-3.5" />
@@ -2390,7 +2448,7 @@ export const ProfilePage: React.FC = () => {
                 </div>
 
                 <div className="text-xs leading-relaxed text-slate-700 dark:text-slate-300 text-justify">
-                  This letter confirms that <strong>{currentUser?.firstName || 'Jonathan'} {currentUser?.lastName || 'Sterling'}</strong> has maintained deposit accounts in good and exemplary standing with First Atlantic Bank &amp; Trust. All funds are held in compliant, insured custodial accounts.
+                  This letter confirms that <strong>{currentUser ? `${currentUser.firstName} ${currentUser.lastName}` : 'The Account Holder'}</strong> has maintained deposit accounts in good and exemplary standing with First Atlantic Bank &amp; Trust. All funds are held in compliant, insured custodial accounts.
                 </div>
 
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-xs bg-white dark:bg-slate-900 p-3 rounded border border-slate-200 dark:border-slate-800 font-mono">
@@ -2422,10 +2480,8 @@ export const ProfilePage: React.FC = () => {
 
             <div className="p-4 bg-slate-100 dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 flex justify-end gap-3">
               <button
-                onClick={() => {
-                  window.print();
-                  showToast('SUCCESS', 'Certificate Exported', 'Print voucher sent to printer.');
-                }}
+                type="button"
+                onClick={() => handleSafePrint('Certificate of Banking Standing')}
                 className="boa-btn-secondary text-xs flex items-center gap-1.5 cursor-pointer"
               >
                 <Printer className="w-3.5 h-3.5" />

@@ -91,6 +91,58 @@ const MainAppRouter: React.FC = () => {
         return;
       }
 
+      // Customer Dashboard direct hashes
+      if (hash === '#dashboard' || hash === '#/dashboard' || hash === '#overview' || hash === '#/overview') {
+        if (currentRole === 'CUSTOMER') setCurrentView('DASHBOARD_OVERVIEW');
+        return;
+      }
+      if (hash === '#cards' || hash === '#/cards') {
+        if (currentRole === 'CUSTOMER') setCurrentView('DASHBOARD_CARDS');
+        return;
+      }
+      if (hash === '#billpay' || hash === '#/billpay' || hash === '#bills') {
+        if (currentRole === 'CUSTOMER') setCurrentView('DASHBOARD_BILLPAY');
+        return;
+      }
+      if (hash === '#deposit' || hash === '#/deposit') {
+        if (currentRole === 'CUSTOMER') setCurrentView('DASHBOARD_DEPOSIT');
+        return;
+      }
+      if (hash === '#statements' || hash === '#/statements' || hash === '#activity') {
+        if (currentRole === 'CUSTOMER') setCurrentView('DASHBOARD_STATEMENTS');
+        return;
+      }
+      if (hash === '#security' || hash === '#/security-center') {
+        if (currentRole === 'CUSTOMER') setCurrentView('DASHBOARD_SECURITY');
+        return;
+      }
+      if (hash === '#messages' || hash === '#/messages' || hash === '#ai') {
+        if (currentRole === 'CUSTOMER') setCurrentView('DASHBOARD_MESSAGES');
+        return;
+      }
+      if (hash === '#profile' || hash === '#/profile' || hash === '#settings') {
+        if (currentRole === 'CUSTOMER') setCurrentView('DASHBOARD_PROFILE');
+        return;
+      }
+      if (hash === '#accounts' || hash === '#/accounts') {
+        if (currentRole === 'CUSTOMER') setCurrentView('DASHBOARD_ACCOUNT_DETAIL');
+        return;
+      }
+
+      // Public auth direct routes
+      if (hash === '#login' || hash === '#/login' || pathname === '/login') {
+        if (currentRole !== 'CUSTOMER' && currentRole !== 'ADMIN') {
+          setCurrentView('AUTH_LOGIN');
+          return;
+        }
+      }
+      if (hash === '#enroll' || hash === '#/enroll' || pathname === '/enroll') {
+        if (currentRole !== 'CUSTOMER' && currentRole !== 'ADMIN') {
+          setCurrentView('AUTH_ENROLL');
+          return;
+        }
+      }
+
       // Admin routes with strict Role-Based Access Control
       if (
         hash.includes('admin') ||
@@ -179,11 +231,7 @@ const MainAppRouter: React.FC = () => {
           {/* Main Content Pane */}
           <div className="relative z-10 flex-1 flex flex-col min-w-0 pb-0 md:pb-0">
             <CustomerHeader />
-            <main className={`flex-1 w-full mx-auto overflow-x-hidden min-w-0 ${
-              currentView === 'DASHBOARD_OVERVIEW' 
-                ? 'p-0 max-w-full' 
-                : 'p-2.5 xs:p-3.5 sm:p-5 lg:p-6 max-w-7xl pb-16 md:pb-6'
-            }`}>
+            <main className="flex-1 w-full mx-auto overflow-x-hidden min-w-0 p-2.5 xs:p-3.5 sm:p-5 lg:p-6 max-w-7xl pb-20 md:pb-6">
               <AnimatePresence mode="wait">
                 <motion.div
                   key={currentView}
@@ -193,7 +241,7 @@ const MainAppRouter: React.FC = () => {
                   transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
                   className="w-full"
                 >
-                  {currentView === 'DASHBOARD_OVERVIEW' && <DashboardOverview />}
+                  {(currentView === 'DASHBOARD_OVERVIEW' || currentView === 'PUBLIC_HOME') && <DashboardOverview />}
                   {currentView === 'DASHBOARD_ACCOUNT_DETAIL' && <AccountDetailPage />}
                   {currentView === 'DASHBOARD_TRANSFERS' && <TransfersPage />}
                   {currentView === 'DASHBOARD_BILLPAY' && <BillPayPage />}
@@ -209,8 +257,8 @@ const MainAppRouter: React.FC = () => {
             </main>
           </div>
 
-          {/* Mobile Bottom Bar (Rendered for sub-pages, while DASHBOARD_OVERVIEW has its dedicated dock) */}
-          {currentView !== 'DASHBOARD_OVERVIEW' && <MobileBottomNav />}
+          {/* Unified Mobile Bottom Navigation */}
+          <MobileBottomNav />
         </div>
       </UserRoute>
     );

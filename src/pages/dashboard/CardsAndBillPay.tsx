@@ -33,6 +33,13 @@ export const BillPayPage: React.FC = () => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [search, setSearch] = useState('');
 
+  // Sync source account when accounts load asynchronously
+  useEffect(() => {
+    if (!sourceAccountId && accounts.length > 0) {
+      setSourceAccountId(accounts[0].id);
+    }
+  }, [accounts, sourceAccountId]);
+
   useEffect(() => {
     fetch('/api/payments/vendors')
       .then(async (res) => {
@@ -68,8 +75,9 @@ export const BillPayPage: React.FC = () => {
 
     setIsProcessing(true);
     try {
+      const activeSourceId = sourceAccount?.id || sourceAccountId;
       const res = await executeBillPay(
-        sourceAccountId,
+        activeSourceId,
         selectedVendorId,
         amountMinor,
         accountNumberWithVendor
@@ -233,6 +241,13 @@ export const CardsPage: React.FC = () => {
   const [flipped, setFlipped] = useState(false);
   const [showPinModal, setShowPinModal] = useState(false);
   const [pinInput, setPinInput] = useState('');
+
+  // Sync selected card when cards load asynchronously
+  useEffect(() => {
+    if (!selectedCardId && cards.length > 0) {
+      setSelectedCardId(cards[0].id);
+    }
+  }, [cards, selectedCardId]);
 
   const selectedCard = cards.find((c) => c.id === selectedCardId) || cards[0];
 

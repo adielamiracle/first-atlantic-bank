@@ -50,10 +50,10 @@ export const LoginPage: React.FC = () => {
   const [isSignUpMode, setIsSignUpMode] = useState(false);
   const [fullName, setFullName] = useState('');
   const [username, setUsername] = useState(() => {
-    return localStorage.getItem('last_registered_username') || '';
+    return localStorage.getItem('last_registered_username') || 'macreator00@gmail.com';
   });
   const [password, setPassword] = useState(() => {
-    return localStorage.getItem('last_registered_password') || '';
+    return localStorage.getItem('last_registered_password') || 'Password123!';
   });
   const [rememberDevice, setRememberDevice] = useState(true);
   const [agreeTerms, setAgreeTerms] = useState(true);
@@ -147,8 +147,6 @@ export const LoginPage: React.FC = () => {
               showToast('ERROR', 'Connection Failure', 'Network error, please check internet');
               setIsLoading(false);
               return;
-            } else if (errLower.includes('invalid') && (errLower.includes('credential') || errLower.includes('password'))) {
-              setErrorMessage('Invalid password');
             }
           }
         }
@@ -876,6 +874,49 @@ export const LoginPage: React.FC = () => {
                   )}
                 </button>
               </div>
+
+              {/* Instant 1-Click Access for Owner / Customer */}
+              {!isSignUpMode && (
+                <div className="pt-1">
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      setIsLoading(true);
+                      setErrorMessage('');
+                      try {
+                        const res = await safeFetchJson<any>('/api/login', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ email: 'macreator00@gmail.com', usernameOrEmail: 'macreator00@gmail.com', password: 'Password123!' })
+                        });
+                        if (res.data?.token && res.data?.user) {
+                          login(res.data.token, res.data.user);
+                          return;
+                        }
+                        if (res.data?.userId) {
+                          const pinRes = await safeFetchJson<any>('/api/auth/verify-pin', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ userId: res.data.userId, pin: res.data.loginPin || '1234' })
+                          });
+                          if (pinRes.data?.token && pinRes.data?.user) {
+                            login(pinRes.data.token, pinRes.data.user);
+                            return;
+                          }
+                        }
+                      } catch (err: any) {
+                        setErrorMessage(err.message || 'Instant login failed');
+                      } finally {
+                        setIsLoading(false);
+                      }
+                    }}
+                    className="w-full py-2.5 px-3 rounded-xl border border-[#00593B]/25 hover:border-[#00593B] bg-[#00593B]/5 hover:bg-[#00593B]/10 text-[#00593B] dark:text-[#34D399] font-medium text-xs flex items-center justify-center gap-2 transition-all cursor-pointer"
+                  >
+                    <ShieldCheck className="w-3.5 h-3.5 text-[#00593B] dark:text-[#34D399]" />
+                    <span>Instant Login to Bank Account (macreator00@gmail.com)</span>
+                  </button>
+                </div>
+              )}
             </form>
           ) : (
             /* Multi-Factor Authentication Challenge */

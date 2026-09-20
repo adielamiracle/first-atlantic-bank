@@ -131,29 +131,7 @@ export interface TransferState {
 
 const DEFAULT_ACCOUNTS: TransferAccount[] = [];
 
-const INITIAL_BENEFICIARIES: Beneficiary[] = [
-  {
-    id: 'ben_1',
-    name: 'Johnny Mike',
-    account: '4829104829',
-    bank: 'Chase Bank',
-    avatar_url: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80'
-  },
-  {
-    id: 'ben_2',
-    name: 'Sarah Connor',
-    account: '1092837461',
-    bank: 'Bank of America',
-    avatar_url: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&auto=format&fit=crop&q=80'
-  },
-  {
-    id: 'ben_3',
-    name: 'David Miller',
-    account: '83920194',
-    bank: 'Barclays Bank UK',
-    avatar_url: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80'
-  }
-];
+const INITIAL_BENEFICIARIES: Beneficiary[] = [];
 
 export const useTransferStore = create<TransferState>((set, get) => ({
   amount: 0,
@@ -165,14 +143,14 @@ export const useTransferStore = create<TransferState>((set, get) => ({
   senderAccountDisplay: 'Primary Account',
 
   // Beneficiary Details
-  beneficiaryName: 'Johnny Mike',
-  beneficiaryAccount: '4829104829',
-  beneficiaryBank: 'Chase Bank',
-  beneficiaryRouting: '021000021',
-  beneficiarySwift: 'CHASUS33',
-  beneficiaryCountry: 'United States',
-  beneficiaryAvatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
-  selectedBeneficiaryId: 'ben_1',
+  beneficiaryName: '',
+  beneficiaryAccount: '',
+  beneficiaryBank: '',
+  beneficiaryRouting: '',
+  beneficiarySwift: '',
+  beneficiaryCountry: '',
+  beneficiaryAvatarUrl: '',
+  selectedBeneficiaryId: null,
 
   // Regulatory & Security Clearance Codes
   cotCode: 'COT-7849',
@@ -401,13 +379,13 @@ export const useTransferStore = create<TransferState>((set, get) => ({
 
       const payload = {
         amount: state.amount,
-        beneficiary_name: state.beneficiaryName || 'Johnny Mike',
-        beneficiary_account: state.beneficiaryAccount || '4829104829',
-        bankName: state.beneficiaryBank || 'Chase Bank',
-        to_bank: state.beneficiaryBank || 'Chase Bank',
-        routing: state.beneficiaryRouting || '021000021',
-        swift: state.beneficiarySwift || 'CHASUS33',
-        country: state.beneficiaryCountry || 'United States',
+        beneficiary_name: state.beneficiaryName,
+        beneficiary_account: state.beneficiaryAccount,
+        bankName: state.beneficiaryBank,
+        to_bank: state.beneficiaryBank,
+        routing: state.beneficiaryRouting,
+        swift: state.beneficiarySwift,
+        country: state.beneficiaryCountry,
         senderName: state.senderName || 'Account Holder',
         sourceAccountId: state.selectedAccountId,
         reference: state.reference || 'Personal Transfer',
@@ -437,12 +415,12 @@ export const useTransferStore = create<TransferState>((set, get) => ({
 
         const completedTx: CompletedTransaction = {
           id: txId,
-          recipient: state.beneficiaryName || 'Johnny Mike',
-          recipientAccount: state.beneficiaryAccount || '4829104829',
-          recipientBank: state.beneficiaryBank || 'Chase Bank',
-          recipientRouting: state.beneficiaryRouting || '021000021',
-          recipientSwift: state.beneficiarySwift || 'CHASUS33',
-          recipientCountry: state.beneficiaryCountry || 'United States',
+          recipient: state.beneficiaryName,
+          recipientAccount: state.beneficiaryAccount,
+          recipientBank: state.beneficiaryBank,
+          recipientRouting: state.beneficiaryRouting,
+          recipientSwift: state.beneficiarySwift,
+          recipientCountry: state.beneficiaryCountry,
           senderName: state.senderName || 'Account Holder',
           senderAccount: senderAccountStr,
           amount: state.amount,
@@ -493,18 +471,18 @@ export const useTransferStore = create<TransferState>((set, get) => ({
     set({
       amount: 0,
       amountInput: '',
-      beneficiaryName: 'Johnny Mike',
-      beneficiaryAccount: '4829104829',
-      beneficiaryBank: 'Chase Bank',
-      beneficiaryRouting: '021000021',
-      beneficiarySwift: 'CHASUS33',
-      beneficiaryCountry: 'United States',
-      beneficiaryAvatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
-      selectedBeneficiaryId: 'ben_1',
-      cotCode: 'COT-7849',
-      imfCode: 'IMF-9921',
-      taxCode: 'TAX-8842',
-      amlCode: 'AML-1094',
+      beneficiaryName: '',
+      beneficiaryAccount: '',
+      beneficiaryBank: '',
+      beneficiaryRouting: '',
+      beneficiarySwift: '',
+      beneficiaryCountry: '',
+      beneficiaryAvatarUrl: '',
+      selectedBeneficiaryId: null,
+      cotCode: '',
+      imfCode: '',
+      taxCode: '',
+      amlCode: '',
       codesValidated: true,
       selectedAccountId: defaultAcc ? defaultAcc.id : null,
       selectedAccount: defaultAcc,
